@@ -5,6 +5,7 @@ import { ConsentsStep } from './ConsentsStep';
 import { ResidenceHistoryStep } from './ResidenceHistoryStep';
 import { EmploymentHistoryStep } from './EmploymentHistoryStep';
 import { EducationStep } from './EducationStep';
+import { ProfessionalLicensesStep } from './ProfessionalLicensesStep';
 import { Signature } from './Signature';
 
 // Define valid step IDs
@@ -56,6 +57,8 @@ export const FormStep: React.FC<FormStepProps> = ({ stepId }) => {
         return <EmploymentHistoryStep />;
       case 'education':
         return <EducationStep />;
+      case 'professional-licenses':
+        return <ProfessionalLicensesStep />;
       case 'signature':
         return <Signature />;
       default:

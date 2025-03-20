@@ -63,6 +63,28 @@ export const translations = {
     "education.valid": "Education information is complete",
     "education.invalid": "Please complete all required education information",
     
+    // Professional Licenses
+    "licenses.title": "Professional Licenses",
+    "licenses.intro": "Please provide information about your professional licenses and certifications.",
+    "licenses.entries_title": "Your Professional Licenses",
+    "licenses.add_title": "Add Professional License",
+    "licenses.edit_title": "Edit Professional License",
+    "licenses.add_button": "Add Professional License",
+    "licenses.license_type": "License Type",
+    "licenses.license_number": "License Number",
+    "licenses.issuing_authority": "Issuing Authority",
+    "licenses.state": "State/Province",
+    "licenses.country": "Country",
+    "licenses.issue_date": "Issue Date",
+    "licenses.expiration_date": "Expiration Date",
+    "licenses.is_active": "This license is currently active",
+    "licenses.active": "Active",
+    "licenses.description": "Description",
+    "licenses.description_placeholder": "Additional information about this license",
+    "licenses.save_button": "Save License",
+    "licenses.valid": "Professional license information is complete",
+    "licenses.invalid": "Please complete all required professional license information",
+    
     // Signature
     "signature.title": "Your Signature",
     "signature.instructions": "Please sign using your mouse or touch screen below.",

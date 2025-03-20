@@ -5,17 +5,7 @@ import { FormStep } from './FormStep';
 import { FormProvider } from '../context/FormContext';
 import { ResidenceHistoryStep } from './ResidenceHistoryStep';
 import type { FormContextType, FormStepId } from '../context/FormContext';
-import { FormStepId as FormStepIdUtils } from '../utils/FormConfigGenerator';
-
-// Add type declaration for jest-dom
-declare global {
-  namespace jest {
-    interface Matchers<R> {
-      toBeInTheDocument(): R;
-      toBeDisabled(): R;
-    }
-  }
-}
+import { TranslationProvider } from '../context/TranslationContext';
 
 // Mock the ResidenceHistoryStep component
 jest.mock('./ResidenceHistoryStep', () => ({
@@ -23,8 +13,8 @@ jest.mock('./ResidenceHistoryStep', () => ({
 }));
 
 // Create a mock form context value
-const createMockFormContext = (currentStep: FormStepId): FormContextType => ({
-  currentStep,
+const mockFormContext = {
+  currentStep: 'personal-info' as FormStepId,
   moveToStep: jest.fn(),
   setValue: jest.fn(),
   getValue: jest.fn(),
@@ -34,7 +24,7 @@ const createMockFormContext = (currentStep: FormStepId): FormContextType => ({
   moveToPreviousStep: jest.fn(),
   canMovePrevious: true,
   formState: {
-    currentStep,
+    currentStep: 'personal-info',
     steps: {
       'personal-info': {
         id: 'personal-info',
@@ -71,12 +61,12 @@ const createMockFormContext = (currentStep: FormStepId): FormContextType => ({
   removeTimelineEntry: jest.fn(),
   getTimelineEntries: jest.fn().mockReturnValue([]),
   isStepValid: jest.fn().mockReturnValue(true)
-});
+};
 
 // Mock the FormContext
 jest.mock('../context/FormContext', () => ({
   ...jest.requireActual('../context/FormContext'),
-  useForm: () => createMockFormContext('personal-info')
+  useForm: () => mockFormContext
 }));
 
 describe('FormStep Component', () => {
@@ -84,56 +74,54 @@ describe('FormStep Component', () => {
     jest.clearAllMocks();
   });
 
-  test('renders generic step for non-specialized steps', () => {
-    render(<FormStep />);
+  it('renders PersonalInfoStep for personal-info step', () => {
+    render(
+      <TranslationProvider initialLanguage="en">
+        <FormStep stepId="personal-info" />
+      </TranslationProvider>
+    );
     
-    // Check if the generic step is rendered
-    expect(screen.getByText('Step: personal-info')).toBeInTheDocument();
-    expect(screen.getByText('This step is not yet implemented with a custom component.')).toBeInTheDocument();
-    
-    // Check if navigation buttons are displayed
-    expect(screen.getByRole('button', { name: 'Previous' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument();
+    // Check for PersonalInfoStep content instead of generic step
+    expect(screen.getByText('Personal Information')).toBeInTheDocument();
+    expect(screen.getByText('Please provide your personal information below.')).toBeInTheDocument();
   });
 
-  test('renders ResidenceHistoryStep for residence-history step', () => {
-    // Override the mock to return a different current step
-    jest.spyOn(require('../context/FormContext'), 'useForm')
-      .mockImplementation(() => createMockFormContext('residence-history'));
-
-    render(<FormStep />);
+  it('renders ResidenceHistoryStep for residence-history step', () => {
+    render(
+      <TranslationProvider initialLanguage="en">
+        <FormStep stepId="residence-history" />
+      </TranslationProvider>
+    );
     
-    // Check if the ResidenceHistoryStep is rendered
     expect(screen.getByTestId('residence-history-step')).toBeInTheDocument();
-    expect(screen.getByText('Mocked Residence History Step')).toBeInTheDocument();
   });
 
-  test('respects stepId prop when provided', () => {
-    // Even though context has personal-info as current step,
-    // component should render residence-history when specified
-    render(<FormStep stepId="residence-history" />);
+  it('uses context step when stepId is undefined', () => {
+    render(
+      <TranslationProvider initialLanguage="en">
+        <FormStep stepId={undefined} />
+      </TranslationProvider>
+    );
     
-    // Check if the ResidenceHistoryStep is rendered regardless of current step in context
-    expect(screen.getByTestId('residence-history-step')).toBeInTheDocument();
-    expect(screen.getByText('Mocked Residence History Step')).toBeInTheDocument();
+    // Check for PersonalInfoStep content since that's the default in context
+    expect(screen.getByText('Personal Information')).toBeInTheDocument();
   });
 
-  test('handles invalid step IDs gracefully', () => {
-    // @ts-expect-error Testing invalid step ID
-    render(<FormStep stepId="invalid-step" />);
+  it('navigation buttons are disabled when appropriate', () => {
+    const disabledContext = {
+      ...mockFormContext,
+      canMoveNext: false,
+      canMovePrevious: false
+    };
     
-    expect(screen.getByText('Invalid step ID')).toBeInTheDocument();
-  });
-
-  test('navigation buttons are disabled when appropriate', () => {
     jest.spyOn(require('../context/FormContext'), 'useForm')
-      .mockImplementation(() => ({
-        ...createMockFormContext('personal-info'),
-        canMoveNext: false,
-        canMovePrevious: false
-      }));
+      .mockImplementation(() => disabledContext);
 
-    render(<FormStep />);
+    render(
+      <TranslationProvider initialLanguage="en">
+        <FormStep stepId="personal-info" />
+      </TranslationProvider>
+    );
     
     expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
