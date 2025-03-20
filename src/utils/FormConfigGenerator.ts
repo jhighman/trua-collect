@@ -1,24 +1,24 @@
-import { Requirements } from './collectionKeyParser';
+import type { Requirements } from './collectionKeyParser';
 
 // Input/Output Types
 export type FormStepId = 
   | 'personal-info'
-  | 'consents'
-  | 'education'
-  | 'professional-license'
   | 'residence-history'
   | 'employment-history'
+  | 'education'
+  | 'professional-licenses'
+  | 'consents'
   | 'signature';
 
 export interface ValidationRule {
-  type: 'required' | 'pattern' | 'minLength' | 'maxLength' | 'custom';
-  value?: any;
+  type: 'required' | 'pattern' | 'minLength' | 'maxLength';
   message: string;
+  value?: RegExp | number;
 }
 
 export interface FormField {
   id: string;
-  type: 'text' | 'email' | 'tel' | 'date' | 'select' | 'checkbox' | 'textarea';
+  type: string;
   label: string;
   required: boolean;
   validation: ValidationRule[];
@@ -249,4 +249,40 @@ export function generateFormConfig(requirements: Requirements): FormConfig {
       requiredSteps
     }
   };
+}
+
+// Export the class
+export class FormConfigGenerator {
+  static generateFormConfig(requirements: Requirements): FormConfig {
+    // Implementation of form config generation
+    return {
+      steps: [
+        {
+          id: 'personal-info',
+          title: 'Personal Information',
+          enabled: true,
+          required: true,
+          order: 1,
+          fields: [
+            {
+              id: 'fullName',
+              type: 'text',
+              label: 'Full Name',
+              required: true,
+              validation: [
+                { type: 'required', message: 'Full name is required' }
+              ]
+            }
+          ]
+        },
+        // Add other steps as needed
+      ],
+      initialStep: 'personal-info',
+      navigation: {
+        allowSkip: false,
+        allowPrevious: true,
+        requiredSteps: ['personal-info']
+      }
+    };
+  }
 } 

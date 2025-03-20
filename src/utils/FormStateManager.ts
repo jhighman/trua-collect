@@ -1,4 +1,5 @@
-import { FormConfig, FormStepId, FormStep, FormField, ValidationRule } from './FormConfigGenerator';
+import { FormConfig, FormStepId, FormStep, FormField } from './FormConfigGenerator';
+import type { ValidationRule } from './FormConfigGenerator';
 
 // Types
 export interface FormValue {
@@ -173,10 +174,13 @@ export class FormStateManager {
       case 'required':
         return !value ? rule.message : null;
       case 'pattern':
+        if (!rule.value || !(rule.value instanceof RegExp)) return null;
         return value && !rule.value.test(value) ? rule.message : null;
       case 'minLength':
+        if (typeof rule.value !== 'number') return null;
         return value && value.length < rule.value ? rule.message : null;
       case 'maxLength':
+        if (typeof rule.value !== 'number') return null;
         return value && value.length > rule.value ? rule.message : null;
       default:
         return null;

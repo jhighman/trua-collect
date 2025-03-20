@@ -1,14 +1,22 @@
 import React, { createContext, useContext, useCallback, useMemo, useState } from 'react';
 import { FormStateManager } from '../utils/FormStateManager';
-import { FormConfigGenerator } from '../utils/FormConfigGenerator';
+import { FormConfigGenerator, FormConfig, FormStepId } from '../utils/FormConfigGenerator';
 import type { 
   FormState, 
-  FormStepId, 
   TimelineEntry,
   ValidationResult,
   NavigationState
 } from '../utils/FormStateManager';
 import type { Requirements } from '../utils/collectionKeyParser';
+
+// Define the StepId type
+export type StepId = 
+  | 'personal-info'
+  | 'residence-history'
+  | 'employment-history'
+  | 'education'
+  | 'professional-licenses'
+  | 'consents';
 
 // Context Interface
 export interface FormContextType {
@@ -33,15 +41,14 @@ export interface FormContextType {
   isStepValid: (stepId: FormStepId) => boolean;
   
   // Timeline entries
-  addTimelineEntry: (stepId: FormStepId, entry: TimelineEntry) => void;
-  updateTimelineEntry: (stepId: FormStepId, index: number, entry: TimelineEntry) => void;
+  addTimelineEntry: (stepId: FormStepId, entry: any) => void;
+  updateTimelineEntry: (stepId: FormStepId, index: number, entry: any) => void;
   removeTimelineEntry: (stepId: FormStepId, index: number) => void;
-  getTimelineEntries: (stepId: FormStepId) => TimelineEntry[];
+  getTimelineEntries: (stepId: FormStepId) => any[];
   
   // Form submission
-  isSubmitting: boolean;
-  submitForm: () => Promise<void>;
   formErrors: Record<string, string>;
+  submitForm: () => Promise<void>;
 }
 
 // Create Context
@@ -51,7 +58,7 @@ const FormContext = createContext<FormContextType | undefined>(undefined);
 interface FormProviderProps {
   children: React.ReactNode;
   requirements: Requirements;
-  onSubmit: (formData: FormState) => Promise<void>;
+  onSubmit: (formData: any) => Promise<void>;
 }
 
 // Provider Component
@@ -62,7 +69,7 @@ export const FormProvider: React.FC<FormProviderProps> = ({
 }) => {
   // Initialize form manager with configuration
   const formManager = useMemo(() => {
-    const config = FormConfigGenerator.generateFormConfig(requirements);
+    const config: FormConfig = FormConfigGenerator.generateFormConfig(requirements);
     return new FormStateManager(config);
   }, [requirements]);
 
@@ -121,7 +128,7 @@ export const FormProvider: React.FC<FormProviderProps> = ({
   }, []);
 
   // Timeline entry methods
-  const addTimelineEntry = useCallback((stepId: FormStepId, entry: TimelineEntry) => {
+  const addTimelineEntry = useCallback((stepId: FormStepId, entry: any) => {
     const currentEntries = formManager.getState().steps[stepId]?.values.entries || [];
     setValue(stepId, 'entries', [...currentEntries, entry]);
   }, [setValue]);
@@ -129,7 +136,7 @@ export const FormProvider: React.FC<FormProviderProps> = ({
   const updateTimelineEntry = useCallback((
     stepId: FormStepId, 
     index: number, 
-    entry: TimelineEntry
+    entry: any
   ) => {
     const currentEntries = formManager.getState().steps[stepId]?.values.entries || [];
     const newEntries = [...currentEntries];
@@ -139,11 +146,11 @@ export const FormProvider: React.FC<FormProviderProps> = ({
 
   const removeTimelineEntry = useCallback((stepId: FormStepId, index: number) => {
     const currentEntries = formManager.getState().steps[stepId]?.values.entries || [];
-    const newEntries = currentEntries.filter((_, i) => i !== index);
+    const newEntries = currentEntries.filter((_: unknown, i: number) => i !== index);
     setValue(stepId, 'entries', newEntries);
   }, [setValue]);
 
-  const getTimelineEntries = useCallback((stepId: FormStepId): TimelineEntry[] => {
+  const getTimelineEntries = useCallback((stepId: FormStepId): any[] => {
     return formManager.getState().steps[stepId]?.values.entries || [];
   }, []);
 
@@ -232,8 +239,9 @@ export const useForm = () => {
 // Export types
 export type { 
   FormState,
-  FormStepId,
   TimelineEntry,
   ValidationResult,
   NavigationState
-}; 
+};
+
+export type { FormStepId }; 
