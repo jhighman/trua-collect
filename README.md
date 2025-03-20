@@ -1,20 +1,10 @@
-_______                __      __           _  __       
- |__   __|               \ \    / /          (_)/ _|      
-    | |_ __ _   _  __ _   \ \  / /__ _ __ ___ _| |_ _   _ 
-    | | '__| | | |/ _` |   \ \/ / _ \ '__/ _ \ |  _| | | |
-    | | |  | |_| | (_| |    \  /  __/ | |  __/ | | | |_| |
-    |_|_|   \__,_|\__,_|     \/ \___|_|  \___|_|_|  \__, |
-                                                      __/ |
-                                                     |___/ 
-```
-
 # 🔐 Trua Verify: Employment History Verification System
 
 > *Truth, Trust & Ownership in Employment Verification*
 
-[![Flask](https://img.shields.io/badge/Flask-2.0.1-blue)](https://flask.palletsprojects.com/)
-[![Python](https://img.shields.io/badge/Python-3.9+-green)](https://www.python.org/)
-[![Internationalization](https://img.shields.io/badge/i18n-Supported-orange)](https://flask-babel.tkte.ch/)
+[![React](https://img.shields.io/badge/React-18-blue)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-green)](https://www.typescriptlang.org/)
+[![Internationalization](https://img.shields.io/badge/i18n-Supported-orange)](https://react.i18next.com/)
 
 ## 📋 Overview
 
@@ -32,41 +22,18 @@ Trua Verify is a web-based system designed to facilitate employment history veri
 
 ## 🏗️ System Architecture
 
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│                 │     │                 │     │                 │
-│    Frontend     │◄───►│  Flask Backend  │◄───►│  File Storage   │
-│  (HTML/JS/CSS)  │     │    (Python)     │     │  (PDF/JSON)     │
-│                 │     │                 │     │                 │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-```
+The Trua Verify system is built with React for the UI components and TypeScript for type-safe business logic. The application generates and stores verification documents in both PDF and JSON formats.
 
-### 📂 Directory Structure
+### 📂 Project Structure
 
-```
-/
-├── app.py                 # Main Flask application
-├── babel.cfg              # Babel extraction configuration
-├── init_translations.py   # Script to initialize translations
-├── claims/                # Directory for storing claim files
-├── docs/                  # Documentation
-├── static/                # Static assets
-│   ├── css/
-│   │   └── styles.css     # Main stylesheet
-│   └── js/
-│       ├── form.js        # Form handling and validation
-│       └── signature_pad.min.js  # Signature capture library
-├── templates/             # HTML templates
-│   ├── confirmation.html  # Confirmation page
-│   ├── error.html         # Error page
-│   ├── form.html          # Main form template
-│   └── index.html         # Landing page
-└── translations/          # Internationalization files
-    ├── en/                # English translations
-    ├── es/                # Spanish translations
-    ├── fr/                # French translations
-    └── it/                # Italian translations
-```
+The project follows a standard React TypeScript structure:
+
+- **src/components/** - React UI components
+- **src/context/** - React context providers for state management
+- **src/services/** - Service modules for document generation
+- **src/utils/** - Utility functions and helpers
+- **src/types/** - TypeScript type definitions
+- **docs/** - Project documentation
 
 ## 👥 Key Actors
 
@@ -76,24 +43,16 @@ Trua Verify is a web-based system designed to facilitate employment history veri
 
 ## 🔄 Core Workflow
 
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│             │     │             │     │             │     │             │
-│  Invitation │────►│  Personal   │────►│ Employment  │────►│   Degree    │
-│   Access    │     │ Information │     │  Timeline   │     │Verification*│
-│             │     │             │     │             │     │             │
-└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
-                                                                   │
-                                                                   ▼
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│             │     │             │     │             │     │             │
-│  Download   │◄────│Confirmation │◄────│  Digital    │◄────│ Attestation │
-│    PDF      │     │    Page     │     │  Signature  │     │             │
-│             │     │             │     │             │     │             │
-└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+The verification process follows these key steps:
 
-* Optional, based on verification requirements
-```
+1. **Invitation Access** - Candidate receives a unique verification link
+2. **Personal Information** - Candidate provides basic personal details
+3. **Employment Timeline** - Candidate creates a comprehensive employment history
+4. **Degree Verification** - Optional education credentials verification
+5. **Attestation** - Candidate reviews and confirms information accuracy
+6. **Digital Signature** - Candidate signs the verification claim
+7. **Confirmation** - System confirms successful submission
+8. **Download PDF** - Candidate and/or verifier can download the verification document
 
 ## 🌐 Internationalization
 
@@ -118,10 +77,72 @@ When required, the system collects detailed information about the candidate's ed
 
 ## 🚀 Getting Started
 
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) (v14 or higher)
+- [npm](https://www.npmjs.com/) (v6 or higher) or [yarn](https://yarnpkg.com/) (v1.22 or higher)
+
+### Installation
+
 1. Clone the repository
-2. Install dependencies: `pip install -r requirements.txt`
-3. Run the application: `python app.py`
-4. Access the application at: `http://localhost:8080/verify?tracking_id=test123&years=7`
+2. Install dependencies:
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+
+### Running Tests
+
+The project includes Jest tests for components:
+
+```bash
+npm test
+# or
+yarn test
+```
+
+### Development Setup
+
+Since this is a React TypeScript project, you'll need to set up a development environment:
+
+1. Install a React development environment like Create React App or Vite:
+   ```bash
+   # Using Create React App
+   npm install -g create-react-app
+   # or using Vite
+   npm install -g vite
+   ```
+
+2. Configure your development server in package.json by adding:
+   ```json
+   "scripts": {
+     "start": "react-scripts start",
+     "build": "react-scripts build",
+     "test": "jest"
+   }
+   ```
+
+3. Run the development server:
+   ```bash
+   npm start
+   # or
+   yarn start
+   ```
+
+4. Access the application at: `http://localhost:3000`
+
+### Production Build
+
+To create a production build:
+
+```bash
+npm run build
+# or
+yarn build
+```
+
+This will create optimized files in the `build` directory that can be deployed to a web server.
 
 ## 📚 Documentation
 
@@ -136,9 +157,10 @@ For more detailed information, see the documentation in the `docs/` directory:
 
 ## 🔒 Security Features
 
-- CSRF protection using Flask-WTF
-- Input validation on both client and server sides
-- Secure file naming conventions
+- TypeScript type safety for preventing type-related errors
+- Client-side validation for immediate user feedback
+- Server-side validation for data integrity
+- Secure document generation and storage
 
 ## 📄 License
 
