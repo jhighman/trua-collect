@@ -1,482 +1,199 @@
-# Residence History Implementation Plan
+# Residence History Component Implementation
 
-This document outlines the implementation plan for adding the Residence History Attestation feature to the Trua Verify system.
+This document outlines the implementation of the Residence History component, which provides functionality for users to add, edit, and manage their residence history in the Trua Collect application.
 
 ## Overview
 
-The Residence History Attestation feature will allow candidates to provide their residence history as part of the verification process. This feature will be optional and configurable via a URL parameter (`residenceHistoryRequired`), similar to the existing degree verification feature.
+The Residence History component allows users to document their residence history as part of the background check process. It provides a comprehensive interface for adding multiple residence entries with detailed information including address, city, state/province, postal code, country, and dates of residence. The component also integrates with the Timeline component to visualize the coverage of the residence history.
 
-## Architecture Considerations
+## Implementation Details
 
-The current modular architecture of the Trua Verify system is well-suited for this extension. The implementation will follow the same patterns used for the employment history and degree verification features.
+### Component Structure
 
-### Key Components to Modify
+The Residence History implementation consists of two main components:
 
-1. **Form Navigation**: Add a new step for residence history between personal information and employment history
-2. **Data Model**: Add a new `ResidenceEntry` data structure
-3. **Form Validation**: Implement validation rules for residence entries
-4. **PDF/JSON Generation**: Update to include residence history
-5. **Translations**: Add residence-related translations
+1. **ResidenceHistoryStep**: Container component that manages the list of residence entries and provides the overall UI for the step
+2. **ResidenceEntry**: Component for displaying and editing individual residence entries
 
-## Implementation Plan
+The implementation follows a pattern similar to other multi-entry components in the application (like Employment History and Education) with the following key features:
 
-```mermaid
-gantt
-    title Residence History Implementation Timeline
-    dateFormat  YYYY-MM-DD
-    section Configuration
-    Extend URL Parameters           :a1, 2025-03-19, 1d
-    Update Hidden Inputs            :a2, after a1, 1d
-    section Data Model
-    Create ResidenceEntry Structure :b1, 2025-03-19, 2d
-    Update JSON Schema              :b2, after b1, 1d
-    section UI Components
-    Create Residence Form Template  :c1, 2025-03-20, 2d
-    Implement Entry Management      :c2, after c1, 2d
-    section Form Logic
-    Update Form Navigation          :d1, 2025-03-21, 2d
-    Implement Validation            :d2, after d1, 2d
-    section Backend
-    Update PDF Generation           :e1, 2025-03-23, 2d
-    Update JSON Generation          :e2, after e1, 1d
-    section Testing
-    Unit Tests                      :f1, 2025-03-25, 2d
-    Integration Tests               :f2, after f1, 2d
-    End-to-End Tests                :f3, after f2, 1d
-```
+1. **Entry Management**: Add, edit, and remove residence entries
+2. **Timeline Integration**: Visual representation of residence history coverage
+3. **Form Validation**: Validate required fields and date ranges
+4. **State Management**: Integration with the application's form context
+5. **Responsive Design**: Adapts to different screen sizes
+6. **Internationalization**: Support for multiple languages
+7. **Accessibility**: ARIA attributes and keyboard navigation
 
-## Detailed Implementation Steps
+### Files Created/Modified
 
-### 1. Configuration Extension
+- `src/components/ResidenceHistoryStep.tsx`: Main container component
+- `src/components/ResidenceEntry.tsx`: Individual residence entry component
+- `src/components/ResidenceHistoryStep.test.tsx`: Unit tests for the container component
+- `src/components/ResidenceEntry.test.tsx`: Unit tests for the entry component
+- `src/utils/translations.ts`: Added translations for residence-related text
 
-#### 1.1 URL Parameter Handling
+### Component API
 
-Add support for the `residenceHistoryRequired` parameter in the URL:
+#### ResidenceEntry Component
 
-```python
-# app.py
-@app.route('/verify')
-def verify():
-    tracking_id = request.args.get('tracking_id', '')
-    years = request.args.get('years', '7')
-    degree_required = request.args.get('degree_required', 'false').lower() == 'true'
-    residence_history_required = request.args.get('residence_history_required', 'false').lower() == 'true'
-    
-    return render_template('index.html', 
-                          tracking_id=tracking_id, 
-                          years=years, 
-                          degree_required=degree_required,
-                          residence_history_required=residence_history_required)
-```
-
-#### 1.2 Hidden Form Inputs
-
-Add a hidden input to store the residence history requirement:
-
-```html
-<!-- templates/form.html -->
-<input type="hidden" name="residence_history_required" value="{{ residence_history_required|lower }}">
-```
-
-### 2. Data Model Extension
-
-#### 2.1 ResidenceEntry Structure
-
-Create a new data structure for residence entries:
-
-```javascript
-// src/modules/residenceManagement.js
-const residenceEntry = {
-  address: "",
-  city: "",
-  state_province: "",
-  zip_postal: "",
-  country: "",
-  start_date: "",
-  end_date: "",
-  is_current: false
-};
-```
-
-#### 2.2 JSON Schema Update
-
-Update the claim JSON schema to include residence history:
-
-```javascript
-// Example updated claim structure
-const claim = {
-  tracking_id: "abc123",
-  submission_date: "2025-03-18",
-  years_requested: 7,
-  claimant: {
-    full_name: "John Smith",
-    email: "john.smith@example.com",
-    phone: "555-987-6543"
-  },
-  residence_history: [
-    {
-      address: "123 Main St",
-      city: "Springfield",
-      state_province: "IL",
-      zip_postal: "62701",
-      country: "United States",
-      start_date: "2023-06-01",
-      end_date: null,
-      is_current: true
-    },
-    // Additional residence entries...
-  ],
-  timeline: [
-    // Employment entries...
-  ],
-  signature: "data:image/png;base64,..."
-};
-```
-
-### 3. UI Components
-
-#### 3.1 Residence Form Template
-
-Create a new form section for residence history:
-
-```html
-<!-- templates/form.html -->
-<section class="form-section" id="step-residence" data-step="2">
-  <h2>Residence History</h2>
-  <p>Please provide your complete residence history, beginning with your current or most recent address.</p>
-  
-  <div id="residence-entries-list" class="entries-list">
-    <!-- Residence entries will be added here -->
-  </div>
-  
-  <div class="form-navigation">
-    <button type="button" class="button secondary prev-step" data-prev="1">Previous</button>
-    <button type="button" class="button secondary" id="add-residence-btn">Add Residence</button>
-    <button type="button" class="button primary next-step" id="to-next-btn" data-next="3">Next</button>
-  </div>
-</section>
-```
-
-#### 3.2 Residence Entry Template
-
-Create a template for individual residence entries:
-
-```html
-<!-- templates/form.html -->
-<script type="text/template" id="residence-entry-template">
-  <div class="residence-entry" data-index="{index}">
-    <h3>Residence #{index_plus_one}</h3>
-    
-    <div class="form-group">
-      <label for="residence_address_{index}">Street Address <span aria-hidden="true">*</span></label>
-      <input type="text" id="residence_address_{index}" name="residence_address_{index}" required>
-    </div>
-    
-    <div class="form-group">
-      <label for="residence_city_{index}">City <span aria-hidden="true">*</span></label>
-      <input type="text" id="residence_city_{index}" name="residence_city_{index}" required>
-    </div>
-    
-    <div class="form-group">
-      <label for="residence_state_{index}">State/Province <span aria-hidden="true">*</span></label>
-      <input type="text" id="residence_state_{index}" name="residence_state_{index}" required>
-    </div>
-    
-    <div class="form-group">
-      <label for="residence_zip_{index}">ZIP/Postal Code <span aria-hidden="true">*</span></label>
-      <input type="text" id="residence_zip_{index}" name="residence_zip_{index}" required>
-    </div>
-    
-    <div class="form-group">
-      <label for="residence_country_{index}">Country <span aria-hidden="true">*</span></label>
-      <select id="residence_country_{index}" name="residence_country_{index}" required>
-        <option value="">Select Country</option>
-        <option value="United States">United States</option>
-        <!-- Additional countries... -->
-      </select>
-    </div>
-    
-    <div class="form-group">
-      <label for="residence_start_date_{index}">Start Date <span aria-hidden="true">*</span></label>
-      <input type="month" id="residence_start_date_{index}" name="residence_start_date_{index}" required>
-    </div>
-    
-    <div class="form-group end-date-group">
-      <label for="residence_end_date_{index}">End Date <span aria-hidden="true">*</span></label>
-      <input type="month" id="residence_end_date_{index}" name="residence_end_date_{index}" required>
-    </div>
-    
-    <div class="form-group current-residence-checkbox">
-      <input type="checkbox" id="residence_is_current_{index}" name="residence_is_current_{index}">
-      <label for="residence_is_current_{index}">I currently live at this address</label>
-    </div>
-    
-    <div class="form-actions">
-      <button type="button" class="button secondary remove-residence" data-index="{index}">Remove</button>
-    </div>
-  </div>
-</script>
-```
-
-### 4. JavaScript Modules
-
-#### 4.1 Residence Management Module
-
-Create a new module for managing residence entries:
-
-```javascript
-// src/modules/residenceManagement.js
-import { goToStep } from './formNavigation.js';
-import { validateResidence } from './validation.js';
-
-let residenceCount = 0;
-let t; // Translations
-
-export function initResidenceManagement(translations) {
-  t = translations;
-  
-  // Add residence button
-  const addResidenceBtn = document.getElementById('add-residence-btn');
-  if (addResidenceBtn) {
-    addResidenceBtn.addEventListener('click', function() {
-      createNewResidence();
-    });
-  }
-  
-  // Save residence button
-  const saveResidenceBtn = document.getElementById('save-residence-btn');
-  if (saveResidenceBtn) {
-    saveResidenceBtn.addEventListener('click', function(event) {
-      event.preventDefault();
-      saveCurrentResidence();
-    });
-  }
+```typescript
+interface ResidenceEntryData {
+  address: string;
+  city: string;
+  state_province: string;
+  zip_postal: string;
+  country: string;
+  start_date: string;
+  end_date: string | null;
+  is_current: boolean;
+  duration_years?: number;
 }
 
-export function createNewResidence() {
-  // Implementation similar to createNewEntry in entryManagement.js
-  // ...
-}
-
-function saveCurrentResidence() {
-  // Implementation similar to saveCurrentEntry in entryManagement.js
-  // ...
-}
-
-// Additional functions for editing, deleting, and managing residence entries
-// ...
-```
-
-#### 4.2 Form Navigation Update
-
-Update the form navigation to include the residence history step:
-
-```javascript
-// src/modules/formNavigation.js
-export function initMultiStepForm(isDegreeRequired, isResidenceRequired, translations) {
-  // ...
-  
-  // Determine next step based on configuration
-  function determineNextStep(currentStep) {
-    if (currentStep === 1) {
-      // After personal information
-      return isResidenceRequired ? 2 : (isDegreeRequired ? 3 : 4);
-    } else if (currentStep === 2 && isResidenceRequired) {
-      // After residence history
-      return isDegreeRequired ? 3 : 4;
-    }
-    // ... other step logic
-  }
-  
-  // ...
+interface ResidenceEntryProps {
+  entry: ResidenceEntryData;
+  index: number;
+  onUpdate: (updatedEntry: ResidenceEntryData) => void;
+  onRemove: () => void;
 }
 ```
 
-#### 4.3 Validation Extension
+#### ResidenceHistoryStep Component
 
-Add validation for residence entries:
+This component doesn't accept props as it uses the FormContext for state management.
 
-```javascript
-// src/modules/validation.js
-export function validateResidence(residenceEntry) {
-  // Validate required fields
-  if (!residenceEntry.address || !residenceEntry.city || 
-      !residenceEntry.state_province || !residenceEntry.zip_postal || 
-      !residenceEntry.country || !residenceEntry.start_date) {
-    return false;
-  }
-  
-  // Validate end date if not current residence
-  if (!residenceEntry.is_current && !residenceEntry.end_date) {
-    return false;
-  }
-  
-  // Validate date order
-  if (residenceEntry.start_date && residenceEntry.end_date) {
-    if (new Date(residenceEntry.start_date) >= new Date(residenceEntry.end_date)) {
-      return false;
-    }
-  }
-  
-  return true;
-}
-```
+### Key Features
 
-### 5. Backend Updates
+1. **Address Management**:
+   - Full address information (street, city, state/province, postal code, country)
+   - Validation of required address fields
+   - Formatting for display
 
-#### 5.1 Form Processing
+2. **Date Handling**:
+   - Support for current residence (no end date)
+   - Automatic calculation of duration in years
+   - Proper formatting of dates for display
 
-Update the form submission handler to process residence entries:
+3. **Timeline Integration**:
+   - Visual representation of residence history coverage
+   - Calculation of total years covered
+   - Identification of gaps in residence history
 
-```python
-# app.py
-@app.route('/submit', methods=['POST'])
-def submit():
-    # ... existing code ...
-    
-    # Process residence history
-    residence_history = []
-    residence_keys = [k for k in request.form.keys() if k.startswith('residence_address_')]
-    for key in residence_keys:
-        index = key.split('_')[-1]
-        residence = {
-            'address': request.form.get(f'residence_address_{index}', ''),
-            'city': request.form.get(f'residence_city_{index}', ''),
-            'state_province': request.form.get(f'residence_state_{index}', ''),
-            'zip_postal': request.form.get(f'residence_zip_{index}', ''),
-            'country': request.form.get(f'residence_country_{index}', ''),
-            'start_date': request.form.get(f'residence_start_date_{index}', ''),
-            'end_date': request.form.get(f'residence_end_date_{index}', ''),
-            'is_current': request.form.get(f'residence_is_current_{index}', '') == 'on'
-        }
-        residence_history.append(residence)
-    
-    # Add to claim data
-    claim_data['residence_history'] = residence_history
-    
-    # ... rest of submission processing ...
-```
+4. **Entry Management**:
+   - Add new residence entries
+   - Edit existing entries
+   - Remove entries
+   - Display a list of all added entries
 
-#### 5.2 PDF Generation
+5. **Form Validation**:
+   - Required field validation
+   - Date validation (start date before end date)
+   - Visual error indicators
+   - Disabled save button when form is invalid
 
-Update the PDF generation to include residence history:
+### Integration with Form Flow
 
-```python
-# app.py or pdf_generator.py
-def generate_pdf(claim_data):
-    # ... existing code ...
-    
-    # Add residence history section
-    if 'residence_history' in claim_data and claim_data['residence_history']:
-        pdf.add_page()
-        pdf.set_font('Arial', 'B', 16)
-        pdf.cell(0, 10, 'Residence History', 0, 1, 'L')
-        pdf.ln(5)
-        
-        for residence in claim_data['residence_history']:
-            pdf.set_font('Arial', 'B', 12)
-            address_line = f"{residence['address']}, {residence['city']}, {residence['state_province']} {residence['zip_postal']}, {residence['country']}"
-            pdf.cell(0, 10, address_line, 0, 1, 'L')
-            
-            pdf.set_font('Arial', '', 12)
-            date_range = f"From: {residence['start_date']} To: {'Present' if residence['is_current'] else residence['end_date']}"
-            pdf.cell(0, 10, date_range, 0, 1, 'L')
-            pdf.ln(5)
-    
-    # ... rest of PDF generation ...
-```
+The Residence History component is integrated into the form flow as follows:
 
-### 6. Translations
+1. It's rendered by the FormStep component when the current step is 'residence-history'
+2. It stores residence entries in the form state under the 'residence-history.entries' key
+3. It calculates and stores the total years covered in the form state
+4. It validates that the required years of history are covered
+5. It allows navigation to the next step when valid
 
-Add residence-related translations to all supported languages:
+### Styling
 
-```javascript
-// Example English translations
-const residenceTranslations = {
-  residenceHistory: "Residence History",
-  address: "Street Address",
-  city: "City",
-  stateProvince: "State/Province/Region",
-  zipPostal: "ZIP / Postal Code",
-  country: "Country",
-  currentResidence: "I currently live at this address",
-  addResidence: "Add Another Residence",
-  pleaseAddResidence: "Please add at least one residence.",
-  residenceDatesOverlap: "Please ensure residence dates are in correct chronological order and do not overlap."
-};
-```
+The component uses CSS for styling with responsive design considerations:
 
-### 7. Testing
+- **List View**:
+  - Card-based layout for each residence entry
+  - Clean display of address information
+  - Action buttons for edit and remove
 
-#### 7.1 Unit Tests
+- **Entry Form**:
+  - Clean form layout with labeled fields
+  - Visual error states
+  - Consistent button styling
 
-Create unit tests for the residence management module:
+- **Timeline Integration**:
+  - Visual representation of residence history coverage
+  - Progress indicator showing years covered vs. required years
+  - Clickable timeline entries for easy editing
 
-```javascript
-// src/modules/__tests__/residenceManagement.test.js
-describe('Residence Management', () => {
-  test('should validate residence entry correctly', () => {
-    // Test validation logic
-  });
-  
-  test('should create new residence entry', () => {
-    // Test creation logic
-  });
-  
-  // Additional tests...
-});
-```
+### Accessibility Features
 
-#### 7.2 End-to-End Tests
+The Residence History component includes the following accessibility features:
 
-Create Cypress tests for the residence history feature:
+1. **Semantic HTML**:
+   - Proper heading hierarchy
+   - Semantic form elements
+   - Logical tab order
 
-```javascript
-// cypress/e2e/residence.cy.js
-describe('Residence History Form', () => {
-  beforeEach(() => {
-    // Visit with residence history required
-    cy.visit('/?residence_history_required=true');
-  });
-  
-  it('should add and validate residence entries', () => {
-    // Fill out personal information
-    // ...
-    
-    // Add residence entry
-    cy.get('#add-residence-btn').click();
-    cy.get('#residence_address_0').type('123 Main St');
-    cy.get('#residence_city_0').type('Springfield');
-    // ... more fields
-    cy.get('#save-residence-btn').click();
-    
-    // Verify entry was added
-    cy.get('#residence-entries-list').should('contain', '123 Main St');
-    
-    // Proceed to next step
-    cy.get('#to-next-btn').click();
-    // ... rest of test
-  });
-});
-```
+2. **ARIA Attributes**:
+   - Descriptive labels for all form fields
+   - Required field indicators
+   - Error message association with form fields
+   - Appropriate roles for interactive elements
 
-## Technical Considerations
+3. **Keyboard Navigation**:
+   - All interactive elements are keyboard accessible
+   - Logical tab order through the form
+   - Button actions accessible via keyboard
 
-1. **Backward Compatibility**: The `residenceHistoryRequired` parameter defaults to false to ensure existing implementations continue to work.
+4. **Screen Reader Support**:
+   - Descriptive text for screen readers
+   - Appropriate ARIA live regions for dynamic content
+   - Hidden text for context where needed
 
-2. **Performance**: The additional step and data should have minimal impact on performance, but we should monitor page load times and form submission size.
+### Internationalization
 
-3. **Accessibility**: All new form elements will have proper ARIA attributes and keyboard navigation.
+The component supports internationalization through the TranslationContext:
 
-4. **Mobile Responsiveness**: The residence form will be tested on various screen sizes.
+- All user-facing text uses translation keys
+- Supports all application languages (English, Spanish, French, Italian)
+- Date formatting respects locale settings
+- Placeholder text is translated
 
-5. **Error Handling**: Clear error messages will be implemented for residence-specific validation issues.
+Translation keys are organized under the "residence" namespace in the translations file, with entries for all form labels, buttons, and messages.
 
-## Timeline
+## Testing
 
-- **Phase 1 (2-3 days)**: Configuration, data model, and basic module structure
-- **Phase 2 (3-4 days)**: UI components, form navigation, and validation
-- **Phase 3 (2-3 days)**: PDF/JSON generation and translations
-- **Phase 4 (2 days)**: Testing and bug fixes
+The Residence History implementation includes comprehensive unit tests covering:
 
-Total estimated time: 9-12 days
+1. **Rendering**:
+   - Component rendering with and without data
+   - Proper display of residence entries
+   - Form field rendering
+
+2. **Interactions**:
+   - Adding new entries
+   - Editing existing entries
+   - Removing entries
+   - Form submission
+
+3. **Validation**:
+   - Required field validation
+   - Date validation
+   - Form state integration
+
+4. **Special Cases**:
+   - Current residence handling
+   - Timeline integration
+   - Error handling
+
+## Future Enhancements
+
+Potential future enhancements for the Residence History component:
+
+1. **Address Verification**: Integration with address verification services
+2. **Autocomplete**: Address autocomplete using mapping services
+3. **Map Integration**: Visual representation of residences on a map
+4. **Document Upload**: Allow users to upload proof of residence
+5. **Landlord Information**: Optional fields for landlord contact information
+6. **Roommate Information**: Optional fields for roommate information
+7. **Advanced Validation**: More sophisticated validation rules for residence history, such as detecting overlapping periods or suspicious patterns
+8. **International Address Formats**: Support for different address formats based on country
+
+## Conclusion
+
+The Residence History component provides a comprehensive solution for capturing and managing residence history information as part of the background check process. It follows the application's design patterns and integrates seamlessly with the overall form flow while providing a user-friendly interface for managing multiple residence entries.

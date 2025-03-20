@@ -166,7 +166,13 @@ The following are gaps between the documentation and the actual implementation:
 
 6. **Education Form**: The education form component is now fully implemented and documented in the `education-implementation.md` file.
 
-7. **Implementation Status**: While the use case diagram includes an implementation status section, other documentation doesn't clearly indicate what's implemented vs. planned.
+7. **Professional Licenses Form**: The professional licenses component is now fully implemented and documented in the `professional-licenses-implementation.md` file.
+
+8. **Residence History Form**: The residence history component is implemented, but the documentation in `residence-history-implementation.md` is currently an implementation plan rather than complete documentation.
+
+9. **Employment History Form**: The employment history component is implemented, but there is no dedicated implementation documentation file yet.
+
+10. **Implementation Status**: While the use case diagram includes an implementation status section, other documentation doesn't clearly indicate what's implemented vs. planned.
 
 ## Conclusion
 
