@@ -254,35 +254,7 @@ export function generateFormConfig(requirements: Requirements): FormConfig {
 // Export the class
 export class FormConfigGenerator {
   static generateFormConfig(requirements: Requirements): FormConfig {
-    // Implementation of form config generation
-    return {
-      steps: [
-        {
-          id: 'personal-info',
-          title: 'Personal Information',
-          enabled: true,
-          required: true,
-          order: 1,
-          fields: [
-            {
-              id: 'fullName',
-              type: 'text',
-              label: 'Full Name',
-              required: true,
-              validation: [
-                { type: 'required', message: 'Full name is required' }
-              ]
-            }
-          ]
-        },
-        // Add other steps as needed
-      ],
-      initialStep: 'personal-info',
-      navigation: {
-        allowSkip: false,
-        allowPrevious: true,
-        requiredSteps: ['personal-info']
-      }
-    };
+    // Use the standalone function implementation
+    return generateFormConfig(requirements);
   }
-} 
+}

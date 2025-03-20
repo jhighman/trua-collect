@@ -5,7 +5,15 @@ import './PersonalInfoStep.css';
 
 export const PersonalInfoStep: React.FC = () => {
   const { t } = useTranslation();
-  const { setValue, getValue, getStepErrors, isStepValid } = useForm();
+  const {
+    setValue,
+    getValue,
+    getStepErrors,
+    isStepValid,
+    moveToNextStep,
+    canMoveNext,
+    availableSteps
+  } = useForm();
   const [errors, setErrors] = useState<Record<string, string>>({});
   
   // Get form values
@@ -87,6 +95,23 @@ export const PersonalInfoStep: React.FC = () => {
               {t('personal_info.invalid') || 'Please complete all required fields'}
             </div>
           )}
+        </div>
+        
+        {/* Navigation buttons */}
+        <div className="navigation-buttons mt-6 flex justify-end">
+          <button
+            type="button"
+            onClick={moveToNextStep}
+            disabled={!canMoveNext || !isStepValid('personal-info')}
+            className={`px-4 py-2 rounded ${
+              canMoveNext && isStepValid('personal-info')
+                ? 'bg-blue-500 text-white hover:bg-blue-600'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
+            aria-label="Next step"
+          >
+            Next
+          </button>
         </div>
       </div>
     </div>

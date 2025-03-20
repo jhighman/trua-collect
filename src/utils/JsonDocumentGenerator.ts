@@ -6,6 +6,7 @@ import { FormState } from '../context/FormContext';
 export interface JsonDocument {
   metadata: {
     trackingId: string;
+    referenceToken?: string;
     submissionDate: string;
     version: string;
   };
@@ -13,7 +14,7 @@ export interface JsonDocument {
     fullName: string;
     email: string;
     phone?: string;
-    [key: string]: any;
+    [key: string]: string | number | boolean | undefined;
   };
   consents?: {
     [key: string]: boolean;
@@ -31,7 +32,7 @@ export interface JsonDocument {
         email?: string;
         phone?: string;
       };
-      [key: string]: any;
+      [key: string]: string | number | boolean | null | undefined | object;
     }>;
     residenceHistory?: Array<{
       address: string;
@@ -41,7 +42,7 @@ export interface JsonDocument {
       startDate: string;
       endDate: string | null;
       isCurrent: boolean;
-      [key: string]: any;
+      [key: string]: string | number | boolean | null | undefined | object;
     }>;
     education?: Array<{
       institution: string;
@@ -50,7 +51,7 @@ export interface JsonDocument {
       startDate: string;
       endDate: string | null;
       isCurrent: boolean;
-      [key: string]: any;
+      [key: string]: string | number | boolean | null | undefined | object;
     }>;
     professionalLicenses?: Array<{
       licenseType: string;
@@ -59,7 +60,7 @@ export interface JsonDocument {
       issueDate: string;
       expirationDate: string | null;
       isActive: boolean;
-      [key: string]: any;
+      [key: string]: string | number | boolean | null | undefined | object;
     }>;
   };
   signature: {
@@ -83,6 +84,9 @@ export class JsonDocumentGenerator {
     const now = new Date();
     const submissionDate = now.toISOString();
     
+    // Get reference token if available
+    const referenceToken = (formState as FormState & { referenceToken?: string }).referenceToken;
+    
     // Create the base document structure
     const document: JsonDocument = {
       metadata: {
@@ -94,6 +98,11 @@ export class JsonDocumentGenerator {
       timeline: this.extractTimeline(formState),
       signature: this.extractSignature(formState)
     };
+    
+    // Add reference token if available
+    if (referenceToken) {
+      document.metadata.referenceToken = referenceToken;
+    }
     
     // Add consents if available
     const consents = this.extractConsents(formState);

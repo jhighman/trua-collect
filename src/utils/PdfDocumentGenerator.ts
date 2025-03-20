@@ -16,7 +16,7 @@ interface EmploymentEntry {
     email?: string;
     phone?: string;
   };
-  [key: string]: any;
+  [key: string]: string | number | boolean | null | undefined | object;
 }
 
 interface ResidenceEntry {
@@ -27,7 +27,7 @@ interface ResidenceEntry {
   startDate: string;
   endDate: string | null;
   isCurrent: boolean;
-  [key: string]: any;
+  [key: string]: string | number | boolean | null | undefined | object;
 }
 
 interface EducationEntry {
@@ -37,7 +37,7 @@ interface EducationEntry {
   startDate: string;
   endDate: string | null;
   isCurrent: boolean;
-  [key: string]: any;
+  [key: string]: string | number | boolean | null | undefined | object;
 }
 
 interface ProfessionalLicenseEntry {
@@ -47,7 +47,7 @@ interface ProfessionalLicenseEntry {
   issueDate: string;
   expirationDate: string | null;
   isActive: boolean;
-  [key: string]: any;
+  [key: string]: string | number | boolean | null | undefined | object;
 }
 
 /**
@@ -79,6 +79,9 @@ export class PdfDocumentGenerator {
     // Set default font
     doc.setFont('helvetica');
     
+    // Get reference token if available
+    const referenceToken = (formState as FormState & { referenceToken?: string }).referenceToken;
+    
     // Add document metadata
     doc.setProperties({
       title: `Trua Verify - ${trackingId}`,
@@ -89,7 +92,7 @@ export class PdfDocumentGenerator {
     });
     
     // Generate document content
-    this.addHeader(doc, trackingId);
+    this.addHeader(doc, trackingId, referenceToken);
     this.addPersonalInfo(doc, formState);
     this.addConsents(doc, formState);
     this.addTimeline(doc, formState);
@@ -175,7 +178,7 @@ export class PdfDocumentGenerator {
   /**
    * Add document header
    */
-  private static addHeader(doc: jsPDF, trackingId: string): void {
+  private static addHeader(doc: jsPDF, trackingId: string, referenceToken?: string): void {
     const now = new Date();
     const dateStr = now.toLocaleDateString();
     
@@ -189,18 +192,24 @@ export class PdfDocumentGenerator {
     doc.setTextColor(this.SECONDARY_COLOR);
     doc.text('Employment Verification Report', this.PAGE_MARGIN, 30);
     
-    // Add tracking ID and date
+    // Add tracking ID, reference token, and date
     doc.setFontSize(10);
     doc.text(`Tracking ID: ${trackingId}`, this.PAGE_MARGIN, 40);
-    doc.text(`Date: ${dateStr}`, this.PAGE_MARGIN, 45);
+    if (referenceToken) {
+      doc.text(`Reference Token: ${referenceToken}`, this.PAGE_MARGIN, 45);
+      doc.text(`Date: ${dateStr}`, this.PAGE_MARGIN, 50);
+    } else {
+      doc.text(`Date: ${dateStr}`, this.PAGE_MARGIN, 45);
+    }
     
     // Add horizontal line
     doc.setDrawColor(this.PRIMARY_COLOR);
     doc.setLineWidth(0.5);
-    doc.line(this.PAGE_MARGIN, 50, this.PAGE_WIDTH - this.PAGE_MARGIN, 50);
+    const lineY = referenceToken ? 55 : 50;
+    doc.line(this.PAGE_MARGIN, lineY, this.PAGE_WIDTH - this.PAGE_MARGIN, lineY);
     
     // Reset position for next section
-    doc.setY(60);
+    doc.setY(lineY + 10);
   }
   
   /**
@@ -242,7 +251,6 @@ export class PdfDocumentGenerator {
         tableData.push([formattedKey, value?.toString() || '']);
       });
     
-    // @ts-ignore - jspdf-autotable adds this method
     doc.autoTable({
       startY: doc.getY(),
       head: [['Field', 'Value']],
@@ -289,7 +297,6 @@ export class PdfDocumentGenerator {
       });
     
     if (tableData.length > 0) {
-      // @ts-ignore - jspdf-autotable adds this method
       doc.autoTable({
         startY: doc.getY(),
         head: [['Consent Type', 'Provided']],
@@ -361,7 +368,6 @@ export class PdfDocumentGenerator {
       ];
     });
     
-    // @ts-ignore - jspdf-autotable adds this method
     doc.autoTable({
       startY: doc.getY(),
       head: [['Company', 'Position', 'Period', 'Contact']],
@@ -404,7 +410,6 @@ export class PdfDocumentGenerator {
       ];
     });
     
-    // @ts-ignore - jspdf-autotable adds this method
     doc.autoTable({
       startY: doc.getY(),
       head: [['Address', 'Period']],
@@ -449,7 +454,6 @@ export class PdfDocumentGenerator {
       ];
     });
     
-    // @ts-ignore - jspdf-autotable adds this method
     doc.autoTable({
       startY: doc.getY(),
       head: [['Institution', 'Degree', 'Field', 'Period']],
@@ -495,7 +499,6 @@ export class PdfDocumentGenerator {
       ];
     });
     
-    // @ts-ignore - jspdf-autotable adds this method
     doc.autoTable({
       startY: doc.getY(),
       head: [['Type', 'Number', 'Authority', 'Issue Date', 'Expiration']],
@@ -648,18 +651,25 @@ export class PdfDocumentGenerator {
     doc.setTextColor(this.SECONDARY_COLOR);
     doc.text('Employment Verification Report', this.PAGE_MARGIN, 30);
     
-    // Add tracking ID and date
+    // Add tracking ID, reference token, and date
     doc.setFontSize(10);
     doc.text(`Tracking ID: ${jsonDocument.metadata.trackingId}`, this.PAGE_MARGIN, 40);
-    doc.text(`Date: ${dateStr}`, this.PAGE_MARGIN, 45);
+    
+    if (jsonDocument.metadata.referenceToken) {
+      doc.text(`Reference Token: ${jsonDocument.metadata.referenceToken}`, this.PAGE_MARGIN, 45);
+      doc.text(`Date: ${dateStr}`, this.PAGE_MARGIN, 50);
+    } else {
+      doc.text(`Date: ${dateStr}`, this.PAGE_MARGIN, 45);
+    }
     
     // Add horizontal line
     doc.setDrawColor(this.PRIMARY_COLOR);
     doc.setLineWidth(0.5);
-    doc.line(this.PAGE_MARGIN, 50, this.PAGE_WIDTH - this.PAGE_MARGIN, 50);
+    const lineY = jsonDocument.metadata.referenceToken ? 55 : 50;
+    doc.line(this.PAGE_MARGIN, lineY, this.PAGE_WIDTH - this.PAGE_MARGIN, lineY);
     
     // Reset position for next section
-    doc.setY(60);
+    doc.setY(lineY + 10);
   }
   
   private static addPersonalInfoFromJson(doc: jsPDF, jsonDocument: JsonDocument): void {
@@ -693,7 +703,6 @@ export class PdfDocumentGenerator {
         tableData.push([formattedKey, value?.toString() || '']);
       });
     
-    // @ts-ignore - jspdf-autotable adds this method
     doc.autoTable({
       startY: doc.getY(),
       head: [['Field', 'Value']],
@@ -732,7 +741,6 @@ export class PdfDocumentGenerator {
         return [formattedKey, value ? 'Yes' : 'No'];
       });
     
-    // @ts-ignore - jspdf-autotable adds this method
     doc.autoTable({
       startY: doc.getY(),
       head: [['Consent Type', 'Provided']],
@@ -792,7 +800,6 @@ export class PdfDocumentGenerator {
       ];
     });
     
-    // @ts-ignore - jspdf-autotable adds this method
     doc.autoTable({
       startY: doc.getY(),
       head: [['Company', 'Position', 'Period', 'Contact']],
@@ -830,7 +837,6 @@ export class PdfDocumentGenerator {
       ];
     });
     
-    // @ts-ignore - jspdf-autotable adds this method
     doc.autoTable({
       startY: doc.getY(),
       head: [['Address', 'Period']],
@@ -870,7 +876,6 @@ export class PdfDocumentGenerator {
       ];
     });
     
-    // @ts-ignore - jspdf-autotable adds this method
     doc.autoTable({
       startY: doc.getY(),
       head: [['Institution', 'Degree', 'Field', 'Period']],
@@ -911,7 +916,6 @@ export class PdfDocumentGenerator {
       ];
     });
     
-    // @ts-ignore - jspdf-autotable adds this method
     doc.autoTable({
       startY: doc.getY(),
       head: [['Type', 'Number', 'Authority', 'Issue Date', 'Expiration']],
