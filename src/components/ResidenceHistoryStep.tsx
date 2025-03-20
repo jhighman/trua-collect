@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useForm, FormStepId } from '../context/FormContext';
 import { ResidenceEntry } from './ResidenceEntry';
+import Timeline from './Timeline';
+import './Timeline.css';
 
 // Define the base interface for residence entry data
 interface ResidenceEntryData {
@@ -163,18 +165,30 @@ export const ResidenceHistoryStep: React.FC = () => {
       <h2>Residence History</h2>
       <p>Please provide your complete residence history for the past {requiredYears} years, beginning with your current or most recent address.</p>
       
-      {/* Progress indicator */}
-      <div className="timeline-progress">
-        <div className="progress-bar">
-          <div 
-            className="progress-fill" 
-            style={{ width: `${Math.min(100, (totalYears / requiredYears) * 100)}%` }}
-          ></div>
-        </div>
-        <div className="progress-text">
-          {totalYears.toFixed(1)} / {requiredYears} years
-        </div>
-      </div>
+      {/* Timeline visualization */}
+      <Timeline
+        entries={entries.map(entry => ({
+          ...entry,
+          startDate: entry.start_date,
+          endDate: entry.end_date
+        }))}
+        type="residence"
+        requiredYears={requiredYears}
+        onEntryClick={(entry) => {
+          // Find the index of the entry in the entries array
+          const index = entries.findIndex(e =>
+            e.start_date === entry.start_date &&
+            e.end_date === entry.end_date
+          );
+          if (index !== -1) {
+            // Open the edit form for this entry
+            const entryElement = document.querySelector(`.residence-entry:nth-child(${index + 1}) .button.icon[aria-label="Edit residence"]`);
+            if (entryElement) {
+              (entryElement as HTMLElement).click();
+            }
+          }
+        }}
+      />
       
       {errors._timeline && (
         <div className="error-message">{errors._timeline}</div>

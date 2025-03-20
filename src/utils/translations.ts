@@ -79,7 +79,14 @@ export const translations = {
     "validation.required": "This field is required",
     "validation.min_years": "Please provide at least {{required}} years of history. Currently: {{current}} years.",
     "validation.date_order": "End date must be after start date",
-    "validation.date_overlap": "Dates cannot overlap with other entries"
+    "validation.date_overlap": "Dates cannot overlap with other entries",
+    
+    // Timeline
+    "timeline.progress": "{{current}} / {{required}} years",
+    "timeline.progress_label": "Years accounted for",
+    "timeline.gap": "Gap in history",
+    "timeline.gap_description": "Gap in history ({{percentage}}% of timeline)",
+    "common.present": "Present"
   },
   
   es: {
@@ -162,7 +169,14 @@ export const translations = {
     "validation.required": "Este campo es obligatorio",
     "validation.min_years": "Por favor proporcione al menos {{required}} años de historial. Actualmente: {{current}} años.",
     "validation.date_order": "La fecha de finalización debe ser posterior a la fecha de inicio",
-    "validation.date_overlap": "Las fechas no pueden superponerse con otras entradas"
+    "validation.date_overlap": "Las fechas no pueden superponerse con otras entradas",
+    
+    // Timeline
+    "timeline.progress": "{{current}} / {{required}} años",
+    "timeline.progress_label": "Años contabilizados",
+    "timeline.gap": "Hueco en el historial",
+    "timeline.gap_description": "Hueco en el historial ({{percentage}}% de la línea de tiempo)",
+    "common.present": "Presente"
   },
   
   fr: {
@@ -240,7 +254,14 @@ export const translations = {
     "validation.required": "Ce champ est obligatoire",
     "validation.min_years": "Veuillez fournir au moins {{required}} ans d'historique. Actuellement: {{current}} ans.",
     "validation.date_order": "La date de fin doit être postérieure à la date de début",
-    "validation.date_overlap": "Les dates ne peuvent pas se chevaucher avec d'autres entrées"
+    "validation.date_overlap": "Les dates ne peuvent pas se chevaucher avec d'autres entrées",
+    
+    // Timeline
+    "timeline.progress": "{{current}} / {{required}} ans",
+    "timeline.progress_label": "Années comptabilisées",
+    "timeline.gap": "Écart dans l'historique",
+    "timeline.gap_description": "Écart dans l'historique ({{percentage}}% de la chronologie)",
+    "common.present": "Présent"
   },
   
   it: {
@@ -318,7 +339,14 @@ export const translations = {
     "validation.required": "Questo campo è obbligatorio",
     "validation.min_years": "Si prega di fornire almeno {{required}} anni di storico. Attualmente: {{current}} anni.",
     "validation.date_order": "La data di fine deve essere successiva alla data di inizio",
-    "validation.date_overlap": "Le date non possono sovrapporsi con altre voci"
+    "validation.date_overlap": "Le date non possono sovrapporsi con altre voci",
+    
+    // Timeline
+    "timeline.progress": "{{current}} / {{required}} anni",
+    "timeline.progress_label": "Anni contabilizzati",
+    "timeline.gap": "Lacuna nella cronologia",
+    "timeline.gap_description": "Lacuna nella cronologia ({{percentage}}% della timeline)",
+    "common.present": "Presente"
   }
 } as const;
 

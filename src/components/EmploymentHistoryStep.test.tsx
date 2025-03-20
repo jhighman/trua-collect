@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { EmploymentHistoryStep } from './EmploymentHistoryStep';
 import { TranslationProvider } from '../context/TranslationContext';
@@ -13,10 +13,13 @@ jest.mock('../utils/translations', () => ({
       'employment.title': 'Employment History',
       'employment.intro': 'Please provide your employment history',
       'employment.add_entry': 'Add Employment Entry',
-      'employment.progress': 'Progress',
-      'employment.progress_label': '{{years}} / {{required}} years',
-      'navigation.previous': 'Previous',
-      'navigation.next': 'Next'
+      'timeline.progress': '{{current}} / {{required}} years',
+      'timeline.progress_label': '{{current}} / {{required}} years',
+      'navigation.form_controls': 'Form Controls',
+      'navigation.previous_step': 'Previous Step',
+      'navigation.next_step': 'Next Step',
+      'common.previous': 'Previous',
+      'common.next': 'Next'
     },
     es: {
       'employment.title': 'Historial de Empleo',
@@ -30,7 +33,7 @@ jest.mock('../utils/translations', () => ({
   }
 }));
 
-const mockRequirements: Requirements = {
+const mockRequirements = {
   language: 'en',
   consents_required: {
     driver_license: false,
@@ -59,10 +62,16 @@ const mockRequirements: Requirements = {
   }
 };
 
-// Mock form context with proper values
+// Mock form context with initial state
 const mockFormContextValue = {
   currentStep: 'employment-history',
-  getValue: jest.fn().mockReturnValue([]),
+  getValue: jest.fn().mockReturnValue([{
+    type: 'Job',
+    company: 'Test Company',
+    start_date: '2020-01-01',
+    end_date: '2022-01-01',
+    duration_years: 2.0
+  }]),
   setValue: jest.fn(),
   getStepErrors: jest.fn().mockReturnValue({}),
   canMoveNext: true,
@@ -74,7 +83,7 @@ const mockFormContextValue = {
     steps: {
       'employment-history': {
         id: 'employment-history',
-        values: { entries: [], totalYears: 0 },
+        values: { entries: [], totalYears: 2.0 },
         touched: new Set(),
         errors: {},
         isComplete: false,
@@ -118,9 +127,14 @@ describe('EmploymentHistoryStep Component', () => {
 
   test('shows progress', () => {
     renderWithProviders(<EmploymentHistoryStep />);
-    expect(screen.getByText('Progress')).toBeInTheDocument();
+    
+    // Look for the time-text element with the exact text that's rendered
+    const timeText = screen.getByText('2 / 7 years');
+    expect(timeText).toBeInTheDocument();
+    
+    // Check if the progress bar exists with correct values
     const progressBar = screen.getByRole('progressbar');
-    expect(progressBar).toHaveAttribute('aria-valuenow', '0');
+    expect(progressBar).toHaveAttribute('aria-valuenow', '2');
     expect(progressBar).toHaveAttribute('aria-valuemax', '7');
   });
 

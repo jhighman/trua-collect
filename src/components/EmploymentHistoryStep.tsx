@@ -3,6 +3,8 @@ import { useForm, FormStepId } from '../context/FormContext';
 import { useTranslation } from '../context/TranslationContext';
 import { EmploymentEntry } from './EmploymentEntry';
 import type { EmploymentEntryData } from './EmploymentEntry';
+import Timeline from './Timeline';
+import './Timeline.css';
 
 export const EmploymentHistoryStep: React.FC = () => {
   const {
@@ -157,25 +159,30 @@ export const EmploymentHistoryStep: React.FC = () => {
       <h2>{t('employment.title')}</h2>
       <p>{t('employment.intro', { years: requiredYears.toString() })}</p>
       
-      {/* Progress indicator */}
-      <div className="timeline-progress" role="region" aria-label={t('employment.progress_label', { required: requiredYears.toString() })}>
-        <div className="progress-bar">
-          <div
-            className="progress-fill"
-            style={{ width: `${Math.min(100, (totalYears / requiredYears) * 100)}%` }}
-            role="progressbar"
-            aria-valuenow={parseFloat(totalYears.toFixed(1))}
-            aria-valuemin={0}
-            aria-valuemax={requiredYears}
-          ></div>
-        </div>
-        <div className="progress-text">
-          {t('employment.progress', {
-            current: totalYears.toFixed(1),
-            required: requiredYears.toString()
-          })}
-        </div>
-      </div>
+      {/* Timeline visualization */}
+      <Timeline
+        entries={entries.map(entry => ({
+          ...entry,
+          startDate: entry.start_date,
+          endDate: entry.end_date
+        }))}
+        type="employment"
+        requiredYears={requiredYears}
+        onEntryClick={(entry) => {
+          // Find the index of the entry in the entries array
+          const index = entries.findIndex(e =>
+            e.start_date === entry.start_date &&
+            e.end_date === entry.end_date
+          );
+          if (index !== -1) {
+            // Open the edit form for this entry
+            const entryElement = document.querySelector(`.employment-entry:nth-child(${index + 1}) .button.icon[aria-label="Edit employment"]`);
+            if (entryElement) {
+              (entryElement as HTMLElement).click();
+            }
+          }
+        }}
+      />
       
       {errors._timeline && (
         <div className="error-message" role="alert" aria-live="assertive">{errors._timeline}</div>

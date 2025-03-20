@@ -129,6 +129,7 @@ For more detailed information, see the documentation in the `docs/` directory:
 
 - [System Overview](docs/system-overview.md)
 - [Implementation Status](docs/implementation-status.md)
+- [Timeline Implementation](docs/timeline-implementation.md)
 - [User Guide](docs/user-guide.md)
 - [Developer Guide](docs/developer-guide.md)
 - [Recommendations](docs/recommendations.md)

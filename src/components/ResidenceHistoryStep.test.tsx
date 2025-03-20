@@ -2,7 +2,64 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { ResidenceHistoryStep } from './ResidenceHistoryStep';
+import { TranslationProvider } from '../context/TranslationContext';
 import { FormProvider } from '../context/FormContext';
+
+// Mock translations
+jest.mock('../utils/translations', () => ({
+  translations: {
+    en: {
+      'residence.title': 'Residence History',
+      'residence.add_entry': 'Add Residence',
+      'residence.progress': 'Progress',
+      'timeline.progress': '{{current}} / {{required}} years',
+      'common.previous': 'Previous',
+      'common.next': 'Next'
+    }
+  }
+}));
+
+const mockRequirements = {
+  language: 'en',
+  consents_required: {
+    driver_license: false,
+    drug_test: false,
+    biometric: false
+  },
+  verification_steps: {
+    education: {
+      enabled: false,
+      required_verifications: []
+    },
+    professional_license: {
+      enabled: false,
+      required_verifications: []
+    },
+    residence_history: {
+      enabled: true,
+      years: 7,
+      required_verifications: []
+    },
+    employment_history: {
+      enabled: true,
+      years: 7,
+      required_verifications: []
+    }
+  }
+};
+
+const renderWithProviders = (ui: React.ReactElement) => {
+  return render(
+    <TranslationProvider initialLanguage="en">
+      <FormProvider 
+        requirements={mockRequirements}
+        onSubmit={async () => {}}
+      >
+        {ui}
+      </FormProvider>
+    </TranslationProvider>
+  );
+};
 
 // Mock the FormContext
 jest.mock('../context/FormContext', () => ({
@@ -53,13 +110,13 @@ jest.mock('../context/FormContext', () => ({
 
 describe('ResidenceHistoryStep Component', () => {
   test('renders residence history step with existing entries', () => {
-    render(<ResidenceHistoryStep />);
+    renderWithProviders(<ResidenceHistoryStep />);
     
     // Check if the title is displayed
     expect(screen.getByText('Residence History')).toBeInTheDocument();
     
     // Check if the progress indicator is displayed
-    expect(screen.getByText(/2.0 \/ 7 years/)).toBeInTheDocument();
+    expect(screen.getByText('2 / 7 years')).toBeInTheDocument();
     
     // Check if the existing entry is displayed
     expect(screen.getByText('123 Test St')).toBeInTheDocument();
@@ -73,7 +130,7 @@ describe('ResidenceHistoryStep Component', () => {
   });
 
   test('shows add form when "Add Residence" button is clicked', () => {
-    render(<ResidenceHistoryStep />);
+    renderWithProviders(<ResidenceHistoryStep />);
     
     // Click the "Add Residence" button
     fireEvent.click(screen.getByText('Add Residence'));
@@ -96,7 +153,7 @@ describe('ResidenceHistoryStep Component', () => {
   });
 
   test('hides add form when "Cancel" button is clicked', () => {
-    render(<ResidenceHistoryStep />);
+    renderWithProviders(<ResidenceHistoryStep />);
     
     // Click the "Add Residence" button
     fireEvent.click(screen.getByText('Add Residence'));
@@ -112,7 +169,7 @@ describe('ResidenceHistoryStep Component', () => {
   });
 
   test('disables "Save Residence" button when required fields are empty', () => {
-    render(<ResidenceHistoryStep />);
+    renderWithProviders(<ResidenceHistoryStep />);
     
     // Click the "Add Residence" button
     fireEvent.click(screen.getByText('Add Residence'));
@@ -130,7 +187,7 @@ describe('ResidenceHistoryStep Component', () => {
   });
 
   test('enables "Save Residence" button when all required fields are filled', () => {
-    render(<ResidenceHistoryStep />);
+    renderWithProviders(<ResidenceHistoryStep />);
     
     // Click the "Add Residence" button
     fireEvent.click(screen.getByText('Add Residence'));
@@ -163,7 +220,7 @@ describe('ResidenceHistoryStep Component', () => {
   });
 
   test('shows end date field when "current residence" is unchecked', () => {
-    render(<ResidenceHistoryStep />);
+    renderWithProviders(<ResidenceHistoryStep />);
     
     // Click the "Add Residence" button
     fireEvent.click(screen.getByText('Add Residence'));
