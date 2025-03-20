@@ -164,7 +164,9 @@ The following are gaps between the documentation and the actual implementation:
 
 5. **Consents Form**: The consents form component is now fully implemented and documented in the `consents-implementation.md` file.
 
-6. **Implementation Status**: While the use case diagram includes an implementation status section, other documentation doesn't clearly indicate what's implemented vs. planned.
+6. **Education Form**: The education form component is now fully implemented and documented in the `education-implementation.md` file.
+
+7. **Implementation Status**: While the use case diagram includes an implementation status section, other documentation doesn't clearly indicate what's implemented vs. planned.
 
 ## Conclusion
 
