@@ -92,45 +92,32 @@ When required, the system collects detailed information about the candidate's ed
    yarn install
    ```
 
-### Running Tests
+### Development Server
 
-The project includes Jest tests for components:
+Run the development server:
 
 ```bash
-npm test
+npm run dev
 # or
-yarn test
+yarn dev
 ```
 
-### Development Setup
+This will start a local development server at `http://localhost:3000` and open it in your default browser.
 
-Since this is a React TypeScript project, you'll need to set up a development environment:
+### Available Scripts
 
-1. Install a React development environment like Create React App or Vite:
-   ```bash
-   # Using Create React App
-   npm install -g create-react-app
-   # or using Vite
-   npm install -g vite
-   ```
+The project includes several npm scripts for development and testing:
 
-2. Configure your development server in package.json by adding:
-   ```json
-   "scripts": {
-     "start": "react-scripts start",
-     "build": "react-scripts build",
-     "test": "jest"
-   }
-   ```
-
-3. Run the development server:
-   ```bash
-   npm start
-   # or
-   yarn start
-   ```
-
-4. Access the application at: `http://localhost:3000`
+- `npm run dev` - Start the development server
+- `npm run build` - Create a production build
+- `npm run preview` - Preview the production build locally
+- `npm test` - Run Jest tests
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:coverage` - Generate test coverage report
+- `npm run lint` - Check for linting errors
+- `npm run lint:fix` - Fix linting errors automatically
+- `npm run format` - Format code with Prettier
+- `npm run typecheck` - Check TypeScript types
 
 ### Production Build
 
@@ -142,7 +129,15 @@ npm run build
 yarn build
 ```
 
-This will create optimized files in the `build` directory that can be deployed to a web server.
+This will create optimized files in the `dist` directory that can be deployed to a web server.
+
+To preview the production build locally:
+
+```bash
+npm run preview
+# or
+yarn preview
+```
 
 ## 📚 Documentation
 

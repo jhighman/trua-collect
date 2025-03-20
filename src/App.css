@@ -1,0 +1,11 @@
+/* Custom styles */
+.app-header h1 {
+  color: #0066cc;
+  margin-bottom: 0.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .app-header h1 {
+    color: #66b3ff;
+  }
+}
