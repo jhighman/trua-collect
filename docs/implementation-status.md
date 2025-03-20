@@ -1,4 +1,4 @@
-# Trua Verify Implementation Status
+ # Trua Verify Implementation Status
 
 This document provides a comprehensive overview of the current implementation status of the Trua Verify system, highlighting what features are currently implemented and what features are planned for future development.
 
@@ -158,7 +158,11 @@ The following are gaps between the documentation and the actual implementation:
 
 2. **Timeline Visualization**: The timeline visualization component is now fully documented in the `timeline-implementation.md` file.
 
-3. **Implementation Status**: While the use case diagram includes an implementation status section, other documentation doesn't clearly indicate what's implemented vs. planned.
+3. **Digital Signature Capture**: The digital signature component is now fully implemented and documented in the `signature-implementation.md` file.
+
+4. **Personal Information Form**: The personal information form component is now fully implemented and documented in the `personal-info-implementation.md` file.
+
+5. **Implementation Status**: While the use case diagram includes an implementation status section, other documentation doesn't clearly indicate what's implemented vs. planned.
 
 ## Conclusion
 

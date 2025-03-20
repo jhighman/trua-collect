@@ -1,16 +1,19 @@
 import React from 'react';
 import { useForm, FormStepId } from '../context/FormContext';
+import { PersonalInfoStep } from './PersonalInfoStep';
 import { ResidenceHistoryStep } from './ResidenceHistoryStep';
 import { EmploymentHistoryStep } from './EmploymentHistoryStep';
+import { Signature } from './Signature';
 
 // Define valid step IDs
-export type StepId = 
+export type StepId =
   | 'personal-info'
   | 'residence-history'
   | 'employment-history'
   | 'education'
   | 'professional-licenses'
-  | 'consents';
+  | 'consents'
+  | 'signature';
 
 interface FormStepProps {
   stepId?: FormStepId;
@@ -41,10 +44,14 @@ export const FormStep: React.FC<FormStepProps> = ({ stepId }) => {
     }
 
     switch (activeStepId) {
+      case 'personal-info':
+        return <PersonalInfoStep />;
       case 'residence-history':
         return <ResidenceHistoryStep />;
       case 'employment-history':
         return <EmploymentHistoryStep />;
+      case 'signature':
+        return <Signature />;
       default:
         return (
           <div>

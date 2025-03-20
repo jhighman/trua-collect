@@ -19,6 +19,24 @@ export const translations = {
     "step.consents": "Consents",
     "step.signature": "Review & Sign",
     
+    // Personal Information
+    "personal_info.title": "Personal Information",
+    "personal_info.description": "Please provide your personal information below.",
+    "personal_info.full_name": "Full Name",
+    "personal_info.email": "Email Address",
+    "personal_info.valid": "All information is valid",
+    "personal_info.invalid": "Please complete all required fields",
+    
+    // Signature
+    "signature.title": "Your Signature",
+    "signature.instructions": "Please sign using your mouse or touch screen below.",
+    "signature.canvas_label": "Signature Canvas",
+    "signature.clear": "Clear",
+    "signature.clear_button_label": "Clear signature",
+    "signature.error_empty": "Please provide your signature",
+    "signature.attestation": "By signing above, I certify that all information provided is true and accurate to the best of my knowledge.",
+    "signature.confirm": "I confirm that this is my legal signature",
+    
     // Residence History
     "residence.title": "Residence History",
     "residence.intro": "Please provide your complete residence history for the past {{years}} years, beginning with your current or most recent address.",
@@ -108,6 +126,24 @@ export const translations = {
     "step.professional_licenses": "Licencias Profesionales",
     "step.consents": "Consentimientos",
     "step.signature": "Revisar y Firmar",
+    
+    // Personal Information
+    "personal_info.title": "Información Personal",
+    "personal_info.description": "Por favor proporcione su información personal a continuación.",
+    "personal_info.full_name": "Nombre Completo",
+    "personal_info.email": "Correo Electrónico",
+    "personal_info.valid": "Toda la información es válida",
+    "personal_info.invalid": "Por favor complete todos los campos requeridos",
+    
+    // Signature
+    "signature.title": "Su Firma",
+    "signature.instructions": "Por favor firme usando su ratón o pantalla táctil a continuación.",
+    "signature.canvas_label": "Lienzo de Firma",
+    "signature.clear": "Borrar",
+    "signature.clear_button_label": "Borrar firma",
+    "signature.error_empty": "Por favor proporcione su firma",
+    "signature.attestation": "Al firmar arriba, certifico que toda la información proporcionada es verdadera y precisa según mi conocimiento.",
+    "signature.confirm": "Confirmo que esta es mi firma legal",
     
     // Residence History
     "residence.title": "Historial de Residencia",
@@ -199,6 +235,24 @@ export const translations = {
     "step.consents": "Consentements",
     "step.signature": "Révision et Signature",
     
+    // Personal Information
+    "personal_info.title": "Informations Personnelles",
+    "personal_info.description": "Veuillez fournir vos informations personnelles ci-dessous.",
+    "personal_info.full_name": "Nom Complet",
+    "personal_info.email": "Adresse Email",
+    "personal_info.valid": "Toutes les informations sont valides",
+    "personal_info.invalid": "Veuillez compléter tous les champs obligatoires",
+    
+    // Signature
+    "signature.title": "Votre Signature",
+    "signature.instructions": "Veuillez signer en utilisant votre souris ou écran tactile ci-dessous.",
+    "signature.canvas_label": "Zone de Signature",
+    "signature.clear": "Effacer",
+    "signature.clear_button_label": "Effacer la signature",
+    "signature.error_empty": "Veuillez fournir votre signature",
+    "signature.attestation": "En signant ci-dessus, je certifie que toutes les informations fournies sont véridiques et exactes à ma connaissance.",
+    "signature.confirm": "Je confirme que ceci est ma signature légale",
+    
     // Residence History
     "residence.title": "Historique de Résidence",
     "residence.intro": "Veuillez fournir votre historique complet de résidence pour les {{years}} dernières années, en commençant par votre adresse actuelle ou la plus récente.",
@@ -283,6 +337,24 @@ export const translations = {
     "step.professional_licenses": "Licenze Professionali",
     "step.consents": "Consensi",
     "step.signature": "Revisione e Firma",
+    
+    // Personal Information
+    "personal_info.title": "Informazioni Personali",
+    "personal_info.description": "Si prega di fornire le proprie informazioni personali qui sotto.",
+    "personal_info.full_name": "Nome Completo",
+    "personal_info.email": "Indirizzo Email",
+    "personal_info.valid": "Tutte le informazioni sono valide",
+    "personal_info.invalid": "Si prega di completare tutti i campi obbligatori",
+    
+    // Signature
+    "signature.title": "La Tua Firma",
+    "signature.instructions": "Si prega di firmare utilizzando il mouse o lo schermo touch qui sotto.",
+    "signature.canvas_label": "Area di Firma",
+    "signature.clear": "Cancella",
+    "signature.clear_button_label": "Cancella firma",
+    "signature.error_empty": "Si prega di fornire la propria firma",
+    "signature.attestation": "Firmando sopra, certifico che tutte le informazioni fornite sono vere e accurate al meglio delle mie conoscenze.",
+    "signature.confirm": "Confermo che questa è la mia firma legale",
     
     // Residence History
     "residence.title": "Storico Residenze",
