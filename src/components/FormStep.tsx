@@ -1,6 +1,7 @@
 import React from 'react';
 import { useForm, FormStepId } from '../context/FormContext';
 import { PersonalInfoStep } from './PersonalInfoStep';
+import { ConsentsStep } from './ConsentsStep';
 import { ResidenceHistoryStep } from './ResidenceHistoryStep';
 import { EmploymentHistoryStep } from './EmploymentHistoryStep';
 import { Signature } from './Signature';
@@ -46,6 +47,8 @@ export const FormStep: React.FC<FormStepProps> = ({ stepId }) => {
     switch (activeStepId) {
       case 'personal-info':
         return <PersonalInfoStep />;
+      case 'consents':
+        return <ConsentsStep />;
       case 'residence-history':
         return <ResidenceHistoryStep />;
       case 'employment-history':

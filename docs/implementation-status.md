@@ -162,7 +162,9 @@ The following are gaps between the documentation and the actual implementation:
 
 4. **Personal Information Form**: The personal information form component is now fully implemented and documented in the `personal-info-implementation.md` file.
 
-5. **Implementation Status**: While the use case diagram includes an implementation status section, other documentation doesn't clearly indicate what's implemented vs. planned.
+5. **Consents Form**: The consents form component is now fully implemented and documented in the `consents-implementation.md` file.
+
+6. **Implementation Status**: While the use case diagram includes an implementation status section, other documentation doesn't clearly indicate what's implemented vs. planned.
 
 ## Conclusion
 

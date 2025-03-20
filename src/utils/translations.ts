@@ -27,6 +27,22 @@ export const translations = {
     "personal_info.valid": "All information is valid",
     "personal_info.invalid": "Please complete all required fields",
     
+    // Consents
+    "consents.title": "Required Consents",
+    "consents.description": "Please review and provide the following required consents to proceed.",
+    "consents.driver_license.title": "Driver License Verification Consent",
+    "consents.driver_license.text": "I consent to the verification of my driver license information as part of this background check process. I understand that this may include confirming the validity, status, and history of my driver license with relevant authorities.",
+    "consents.driver_license.checkbox": "I consent to driver license verification",
+    "consents.drug_test.title": "Drug Test Consent",
+    "consents.drug_test.text": "I consent to undergo drug testing as part of this employment screening process. I understand that test results will be shared with the requesting organization and may affect my eligibility for employment.",
+    "consents.drug_test.checkbox": "I consent to drug testing",
+    "consents.biometric.title": "Biometric Data Consent",
+    "consents.biometric.text": "I consent to the collection, storage, and use of my biometric data (including but not limited to fingerprints, facial recognition, or other unique physical characteristics) for identity verification purposes.",
+    "consents.biometric.checkbox": "I consent to biometric data collection and use",
+    "consents.none_required": "No consents are required for this verification process.",
+    "consents.valid": "All required consents have been provided",
+    "consents.invalid": "Please provide all required consents to proceed",
+    
     // Signature
     "signature.title": "Your Signature",
     "signature.instructions": "Please sign using your mouse or touch screen below.",
@@ -134,6 +150,22 @@ export const translations = {
     "personal_info.email": "Correo Electrónico",
     "personal_info.valid": "Toda la información es válida",
     "personal_info.invalid": "Por favor complete todos los campos requeridos",
+    
+    // Consents
+    "consents.title": "Consentimientos Requeridos",
+    "consents.description": "Por favor revise y proporcione los siguientes consentimientos requeridos para continuar.",
+    "consents.driver_license.title": "Consentimiento para Verificación de Licencia de Conducir",
+    "consents.driver_license.text": "Doy mi consentimiento para la verificación de la información de mi licencia de conducir como parte de este proceso de verificación de antecedentes. Entiendo que esto puede incluir la confirmación de la validez, el estado y el historial de mi licencia de conducir con las autoridades pertinentes.",
+    "consents.driver_license.checkbox": "Doy mi consentimiento para la verificación de la licencia de conducir",
+    "consents.drug_test.title": "Consentimiento para Prueba de Drogas",
+    "consents.drug_test.text": "Doy mi consentimiento para someterme a pruebas de drogas como parte de este proceso de selección de empleo. Entiendo que los resultados de las pruebas se compartirán con la organización solicitante y pueden afectar mi elegibilidad para el empleo.",
+    "consents.drug_test.checkbox": "Doy mi consentimiento para las pruebas de drogas",
+    "consents.biometric.title": "Consentimiento para Datos Biométricos",
+    "consents.biometric.text": "Doy mi consentimiento para la recopilación, almacenamiento y uso de mis datos biométricos (incluidas, entre otras, huellas dactilares, reconocimiento facial u otras características físicas únicas) con fines de verificación de identidad.",
+    "consents.biometric.checkbox": "Doy mi consentimiento para la recopilación y uso de datos biométricos",
+    "consents.none_required": "No se requieren consentimientos para este proceso de verificación.",
+    "consents.valid": "Se han proporcionado todos los consentimientos requeridos",
+    "consents.invalid": "Por favor proporcione todos los consentimientos requeridos para continuar",
     
     // Signature
     "signature.title": "Su Firma",
@@ -243,6 +275,22 @@ export const translations = {
     "personal_info.valid": "Toutes les informations sont valides",
     "personal_info.invalid": "Veuillez compléter tous les champs obligatoires",
     
+    // Consents
+    "consents.title": "Consentements Requis",
+    "consents.description": "Veuillez examiner et fournir les consentements requis suivants pour continuer.",
+    "consents.driver_license.title": "Consentement pour la Vérification du Permis de Conduire",
+    "consents.driver_license.text": "Je consens à la vérification des informations de mon permis de conduire dans le cadre de ce processus de vérification des antécédents. Je comprends que cela peut inclure la confirmation de la validité, du statut et de l'historique de mon permis de conduire auprès des autorités compétentes.",
+    "consents.driver_license.checkbox": "Je consens à la vérification du permis de conduire",
+    "consents.drug_test.title": "Consentement pour Test de Dépistage de Drogues",
+    "consents.drug_test.text": "Je consens à me soumettre à des tests de dépistage de drogues dans le cadre de ce processus de sélection d'emploi. Je comprends que les résultats des tests seront partagés avec l'organisation demandeuse et peuvent affecter mon éligibilité à l'emploi.",
+    "consents.drug_test.checkbox": "Je consens aux tests de dépistage de drogues",
+    "consents.biometric.title": "Consentement pour Données Biométriques",
+    "consents.biometric.text": "Je consens à la collecte, au stockage et à l'utilisation de mes données biométriques (y compris, mais sans s'y limiter, les empreintes digitales, la reconnaissance faciale ou d'autres caractéristiques physiques uniques) à des fins de vérification d'identité.",
+    "consents.biometric.checkbox": "Je consens à la collecte et à l'utilisation de données biométriques",
+    "consents.none_required": "Aucun consentement n'est requis pour ce processus de vérification.",
+    "consents.valid": "Tous les consentements requis ont été fournis",
+    "consents.invalid": "Veuillez fournir tous les consentements requis pour continuer",
+    
     // Signature
     "signature.title": "Votre Signature",
     "signature.instructions": "Veuillez signer en utilisant votre souris ou écran tactile ci-dessous.",
@@ -345,6 +393,22 @@ export const translations = {
     "personal_info.email": "Indirizzo Email",
     "personal_info.valid": "Tutte le informazioni sono valide",
     "personal_info.invalid": "Si prega di completare tutti i campi obbligatori",
+    
+    // Consents
+    "consents.title": "Consensi Richiesti",
+    "consents.description": "Si prega di esaminare e fornire i seguenti consensi richiesti per procedere.",
+    "consents.driver_license.title": "Consenso per la Verifica della Patente di Guida",
+    "consents.driver_license.text": "Acconsento alla verifica delle informazioni della mia patente di guida come parte di questo processo di controllo dei precedenti. Comprendo che ciò può includere la conferma della validità, dello stato e della storia della mia patente di guida presso le autorità competenti.",
+    "consents.driver_license.checkbox": "Acconsento alla verifica della patente di guida",
+    "consents.drug_test.title": "Consenso per Test Antidroga",
+    "consents.drug_test.text": "Acconsento a sottopormi a test antidroga come parte di questo processo di selezione per l'impiego. Comprendo che i risultati dei test saranno condivisi con l'organizzazione richiedente e potrebbero influire sulla mia idoneità all'impiego.",
+    "consents.drug_test.checkbox": "Acconsento ai test antidroga",
+    "consents.biometric.title": "Consenso per Dati Biometrici",
+    "consents.biometric.text": "Acconsento alla raccolta, all'archiviazione e all'uso dei miei dati biometrici (inclusi, ma non limitati a, impronte digitali, riconoscimento facciale o altre caratteristiche fisiche uniche) per scopi di verifica dell'identità.",
+    "consents.biometric.checkbox": "Acconsento alla raccolta e all'uso dei dati biometrici",
+    "consents.none_required": "Nessun consenso è richiesto per questo processo di verifica.",
+    "consents.valid": "Tutti i consensi richiesti sono stati forniti",
+    "consents.invalid": "Si prega di fornire tutti i consensi richiesti per procedere",
     
     // Signature
     "signature.title": "La Tua Firma",
