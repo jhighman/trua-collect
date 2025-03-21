@@ -522,7 +522,8 @@ function determineInitialStep(requirements: Requirements, isDefaultKey: boolean)
    - Parameters are preserved during routing to maintain consistent behavior
 
 2. **Default vs. Custom Collection Keys**
-   - Default collection key (`en000111100100`) enables all steps and starts at personal-info
+   - Default collection key is configured in the environment settings (.env file)
+   - Default key (typically `en000111100100`) enables all steps and starts at personal-info
    - Custom collection keys can enable specific steps and start at any enabled step
    - This provides flexibility for both general testing and focused testing of specific sections
 
@@ -530,3 +531,9 @@ function determineInitialStep(requirements: Requirements, isDefaultKey: boolean)
    - Development mode allows overriding the collection key via URL parameters
    - This enables testing different configurations without changing the code
    - The system detects whether a default or custom key is being used and adjusts behavior accordingly
+
+4. **Environment Configuration**
+   - Default collection key is stored in the .env file as `DEFAULT_COLLECTION_KEY`
+   - Example configuration is provided in .env.example
+   - This allows different environments (development, staging, production) to use different default keys
+   - Prevents hardcoding configuration values in the application code

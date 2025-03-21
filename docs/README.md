@@ -8,6 +8,9 @@ This folder contains comprehensive documentation for the Trua Verify system, whi
 2. [Implementation Status](./implementation-status.md) - Current state of development and planned features
    - Now includes internationalization (i18n) support for multiple languages
    - Added education verification functionality
+   - Added dynamic initial step feature
+3. [Collection Flow](./collection-flow.md) - Detailed flow of the collection process
+4. [Form Management Implementation](./form-management-implementation.md) - Form state management and navigation
 
 ## Design Documentation
 
@@ -22,10 +25,11 @@ This folder contains comprehensive documentation for the Trua Verify system, whi
 
 9. [User Guide](./user-guide.md) - Instructions for candidates using the system
 10. [Developer Guide](./developer-guide.md) - Technical information for developers
+11. [Environment Configuration](./environment-configuration.md) - Configuration using environment variables
 
 ## Future Development
 
-11. [Recommendations](./recommendations.md) - Suggested improvements and enhancements
+12. [Recommendations](./recommendations.md) - Suggested improvements and enhancements
 
 ## Purpose
 

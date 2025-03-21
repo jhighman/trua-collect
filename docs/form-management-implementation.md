@@ -198,7 +198,8 @@ The form is configured based on requirements parsed from collection keys. The co
 The system supports starting the form at any enabled step based on the collection key:
 
 1. **Default vs. Custom Keys**:
-   - Default collection key (`en000111100100`) always starts at personal-info
+   - Default collection key is configured in the environment settings (.env file)
+   - Default key (typically `en000111100100`) always starts at personal-info
    - Custom collection keys can start at any enabled step
 
 2. **Initial Step Determination**:
@@ -215,6 +216,12 @@ The system supports starting the form at any enabled step based on the collectio
    - currentContextStep tracks the step separately from form state
    - FormContext forces synchronization when mismatches occur
    - This prevents state inconsistencies during navigation
+
+5. **Environment Configuration**:
+   - Default collection key is stored in the .env file as `DEFAULT_COLLECTION_KEY`
+   - The application loads this value at startup using environment configuration
+   - If no environment variable is found, a fallback default is used
+   - This approach allows for different configurations in different environments
 
 ### Validation System
 

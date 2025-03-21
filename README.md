@@ -91,6 +91,11 @@ When required, the system collects detailed information about the candidate's ed
    # or
    yarn install
    ```
+3. Set up environment configuration:
+   ```bash
+   cp .env.example .env
+   ```
+4. Edit the `.env` file to configure the application (see [Environment Configuration](docs/environment-configuration.md))
 
 ### Development Server
 
@@ -103,6 +108,17 @@ yarn dev
 ```
 
 This will start a local development server at `http://localhost:3000` and open it in your default browser.
+
+### Environment Configuration
+
+The application uses environment variables for configuration. These are stored in a `.env` file in the project root.
+
+Key configuration options include:
+- `DEFAULT_COLLECTION_KEY`: The default collection key to use when none is provided in the URL
+- `PORT`: The port on which the development server runs
+- `DEV_MODE`: Enable/disable development mode features
+
+For more details, see the [Environment Configuration](docs/environment-configuration.md) documentation.
 
 ### Available Scripts
 
@@ -145,7 +161,10 @@ For more detailed information, see the documentation in the `docs/` directory:
 
 - [System Overview](docs/system-overview.md)
 - [Implementation Status](docs/implementation-status.md)
+- [Collection Flow](docs/collection-flow.md)
 - [Timeline Implementation](docs/timeline-implementation.md)
+- [Form Management Implementation](docs/form-management-implementation.md)
+- [Environment Configuration](docs/environment-configuration.md)
 - [User Guide](docs/user-guide.md)
 - [Developer Guide](docs/developer-guide.md)
 - [Recommendations](docs/recommendations.md)
