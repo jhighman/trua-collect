@@ -6,20 +6,39 @@ This document illustrates how data flows through the Trua Verify system, from in
 
 ```mermaid
 flowchart TD
-    A[Candidate] -->|Accesses| B[Invitation URL]
+    A[Candidate] -->|Accesses| B[Invitation URL with Collection Key]
     B -->|Loads| C[Landing Page]
-    C -->|Navigates to| D[Employment Form]
+    C -->|Parses Collection Key| C1{Determine Initial Step}
     
-    D -->|Enters| E[Personal Information]
-    D -->|Adds| F[Timeline Entries]
-    D -->|Signs| G[Digital Signature]
+    C1 -->|Default Key| D1[Personal Info Form]
+    C1 -->|Custom Key & Residence History Enabled| D2[Residence History Form]
+    C1 -->|Custom Key & Professional Licenses Enabled| D3[Professional Licenses Form]
+    C1 -->|Custom Key & Education Enabled| D4[Education Form]
     
-    E --> H[Form Submission]
-    F --> H
-    G --> H
+    D1 -->|Completes| E1[Next Step]
+    D2 -->|Completes| E2[Next Step]
+    D3 -->|Completes| E3[Next Step]
+    D4 -->|Completes| E4[Next Step]
+    
+    E1 --> F[Form Steps]
+    E2 --> F
+    E3 --> F
+    E4 --> F
+    
+    F -->|Enters| G1[Personal Information]
+    F -->|Adds| G2[Timeline Entries]
+    F -->|Provides| G3[Education Details]
+    F -->|Provides| G4[Professional Licenses]
+    F -->|Signs| G5[Digital Signature]
+    
+    G1 --> H[Form Submission]
+    G2 --> H
+    G3 --> H
+    G4 --> H
+    G5 --> H
     
     H -->|Validates| I{Valid?}
-    I -->|No| D
+    I -->|No| F
     I -->|Yes| J[Generate Artifacts]
     
     J -->|Create| K[JSON Document]
@@ -39,9 +58,26 @@ flowchart TD
 
 - **Invitation URL Parameters**:
   - `tracking_id`: Unique identifier for the verification request
-  - `years`: Required timeframe to account for (e.g., 7 years)
+  - `key`: Collection key that determines form configuration and initial step
+  - `token`: Reference token for tracking the submission
 
-### 2. Form Data Collection
+### 2. Collection Key Processing
+
+- **Collection Key Parsing**:
+  - Language prefix (2 characters): Sets UI language (e.g., "en" for English)
+  - Configuration bits (12 bits): Determines enabled steps and requirements
+  - Bits 1-3: Consents required (driver's license, drug test, biometric)
+  - Bits 4-6: Steps enabled (education, professional licenses, residence history)
+  - Bits 7-9: Residence history years required
+  - Bits 10-13: Employment history years required
+
+- **Initial Step Determination**:
+  - Default collection key: Always starts at personal-info step
+  - Custom collection key: Determines initial step based on enabled steps
+  - Priority order: residence-history, professional-licenses, education, consents
+  - URL parameters preserved during routing to maintain consistent behavior
+
+### 3. Form Data Collection
 
 - **Personal Information**:
   - Full Name (required)
@@ -64,19 +100,21 @@ flowchart TD
   - Canvas-based signature capture
   - Converted to Base64-encoded PNG image
 
-### 3. Data Validation
+### 4. Data Validation
 
 - **Client-side Validation**:
   - Required field checks
   - Date consistency (start before end)
   - Timeframe coverage calculation
   - Signature presence check
+  - Step validation based on current entry point
 
 - **Server-side Validation**:
   - Form data completeness
   - Data type verification
+  - Validation of all required steps regardless of entry point
 
-### 4. Data Transformation
+### 5. Data Transformation
 
 - **JSON Document Creation**:
   - Structured representation of all form data
@@ -89,7 +127,7 @@ flowchart TD
   - Attestation statement
   - Stored as `truaverify_<tracking_id>_<date>.pdf`
 
-### 5. Data Output
+### 6. Data Output
 
 - **Confirmation Page Data**:
   - Success message

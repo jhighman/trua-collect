@@ -27,6 +27,7 @@ The system currently has the following components fully implemented:
 | Confirmation Page | ✅ Implemented | Success message with PDF download link |
 | Internationalization | ✅ Implemented | Multi-language support with language switcher |
 | TypeScript Implementation | ✅ Implemented | Full TypeScript support with interfaces and type safety |
+| Dynamic Initial Step | ✅ Implemented | Support for starting at any enabled step based on collection key |
 
 ### Backend Components
 
@@ -57,6 +58,7 @@ The system currently has the following components fully implemented:
 | UC8: Process Claim Data Programmatically | ✅ Implemented | JSON generation supports this |
 | UC9: Revisit and Resubmit Claim | ✅ Implemented | Form allows editing before submission |
 | UC10: Use System in Different Languages | ✅ Implemented | Users can switch between English, Spanish, French, and Italian |
+| UC11: Start at Specific Form Section | ✅ Implemented | Support for starting at any enabled step based on collection key |
 
 ## TypeScript Implementation
 

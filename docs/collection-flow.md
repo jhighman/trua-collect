@@ -17,14 +17,23 @@ flowchart TD
    %% Dynamic Steps Driven by Collection Key
    D -->|Collects| E[Collection Key e.g. en101110101100]
    E -->|Parses| F[Parse Key: Sets Language e.g. en and Bits e.g. 101110101100]
-   F -->|Uses Bits 1-3 for Consents, 4-13 for Steps and Timelines| G
+   F -->|Uses Bits 1-3 for Consents, 4-13 for Steps and Timelines| F1{Determine Initial Step}
    %% Callout: Collection Key is a 14-char hybrid string (e.g., "en101110101100")
    %% Prefix (2 chars) sets UI language; Bits: 0=Personal (always 1), 1-3=Consents, 4-9=Steps, 10-13=Timelines
+   
+   %% Dynamic Initial Step
+   F1 -->|Default Key| G
+   F1 -->|Custom Key & Bit 6=1| P
+   F1 -->|Custom Key & Bit 5=1| N
+   F1 -->|Custom Key & Bit 4=1| L
+   F1 -->|Custom Key & Any Bit 1-3=1| I
+   %% Callout: System can start at any enabled step based on collection key
+   %% This allows testing specific sections without going through earlier steps
 
 
    %% Core Data Collection
    subgraph Core Steps [Always Included Steps]
-       F -->|Step: Enters| G[Personal Information]
+       F1 -->|Default: Step: Enters| G[Personal Information]
        %% Callout: Captures claimant details (Bit 0 always 1)
        %% Fields: Full Name, DOB, Email, Phone, SSN (optional)
        %% UX: Text inputs; DOB as date picker; Email validation; 'Required' asterisk
@@ -189,6 +198,9 @@ The Collection Key is a 14-character hybrid string that drives the dynamic behav
    - Multi-step wizard with progress indicator
    - Next/Previous navigation buttons
    - Parses the collection key to determine required steps
+   - Determines the initial step based on the collection key and whether it's a default or custom key
+   - For default keys, starts at the personal-info step
+   - For custom keys, can start at any enabled step (residence-history, professional-licenses, education, etc.)
 
 ### 2. Personal Information (Always Required)
 
@@ -413,6 +425,33 @@ function getRequirements(collectionKey: string): Requirements {
     }
   };
 }
+
+// Determine the initial step based on collection key and isDefaultKey flag
+function determineInitialStep(requirements: Requirements, isDefaultKey: boolean): string {
+  // If using default key, always start at personal-info
+  if (isDefaultKey) {
+    return 'personal-info';
+  }
+  
+  // For custom keys, determine the first enabled step
+  const { verification_steps } = requirements;
+  
+  // Check each step in priority order
+  if (verification_steps.residence_history.enabled) {
+    return 'residence-history';
+  } else if (verification_steps.professional_license.enabled) {
+    return 'professional-licenses';
+  } else if (verification_steps.education.enabled) {
+    return 'education';
+  } else if (requirements.consents_required.driver_license ||
+             requirements.consents_required.drug_test ||
+             requirements.consents_required.biometric) {
+    return 'consents';
+  }
+  
+  // Default to personal-info if no other steps are enabled
+  return 'personal-info';
+}
 ```
 
 ## User Experience Considerations
@@ -420,23 +459,33 @@ function getRequirements(collectionKey: string): Requirements {
 1. **Progressive Disclosure**
    - Only show steps that are required based on the collection key
    - Dynamically adjust the progress indicator to reflect the enabled steps
+   - Support starting at any enabled step based on the collection key
 
 2. **Validation Feedback**
    - Provide clear error messages for incomplete or invalid entries
    - Show progress toward timeline requirements (e.g., "4 of 5 years covered")
+   - Validate each step independently regardless of entry point
 
 3. **Navigation**
-   - Allow users to go back and edit previous steps
+   - Allow users to go back and edit previous steps when available
    - Disable the "Next" button until the current step is complete
+   - Support skipping to any enabled step for testing purposes
 
 4. **Accessibility**
    - Ensure all form elements are properly labeled
    - Provide keyboard navigation
    - Support screen readers
+   - Maintain accessibility regardless of entry point
 
 5. **Responsive Design**
    - Adapt the layout for different screen sizes
    - Ensure touch-friendly controls on mobile devices
+   - Maintain consistent experience across devices
+
+6. **Testing Mode**
+   - Provide visual indication when in testing mode (using custom collection key)
+   - Show which steps are enabled and which are the current entry point
+   - Allow easy switching between different collection keys for testing
 
 ## Implementation Considerations
 
@@ -459,3 +508,25 @@ function getRequirements(collectionKey: string): Requirements {
 5. **Performance**
    - Optimize the form rendering for complex steps
    - Minimize unnecessary re-renders
+
+6. **Dynamic Initial Step**
+   - Support starting the form at any enabled step based on the collection key
+   - Allow testing specific sections of the form without going through earlier steps
+   - Maintain proper navigation rules when starting at a non-default step
+
+## Testing and Development Features
+
+1. **URL Parameter-Based Testing**
+   - Use URL parameters to control the form behavior for testing
+   - Example: `http://localhost:3000/?key=en000001100100` to start at residence history step
+   - Parameters are preserved during routing to maintain consistent behavior
+
+2. **Default vs. Custom Collection Keys**
+   - Default collection key (`en000111100100`) enables all steps and starts at personal-info
+   - Custom collection keys can enable specific steps and start at any enabled step
+   - This provides flexibility for both general testing and focused testing of specific sections
+
+3. **Collection Key Override**
+   - Development mode allows overriding the collection key via URL parameters
+   - This enables testing different configurations without changing the code
+   - The system detects whether a default or custom key is being used and adjusts behavior accordingly

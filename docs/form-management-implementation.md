@@ -41,6 +41,7 @@ These components work together to provide a complete form management solution:
 export interface FormContextType {
   // Current state
   currentStep: FormStepId;
+  currentContextStep: FormStepId | null; // Tracks step separately from form state
   formState: FormState;
   navigationState: NavigationState;
   
@@ -52,6 +53,7 @@ export interface FormContextType {
   moveToNextStep: () => void;
   moveToPreviousStep: () => void;
   moveToStep: (stepId: FormStepId) => void;
+  forceNextStep: () => void; // Force navigation regardless of validation
   
   // Form values
   setValue: (stepId: FormStepId, fieldId: string, value: any) => void;
@@ -81,14 +83,18 @@ export class FormStateManager {
   getState(): FormState;
   getCurrentStep(): FormStepState;
   setValue(stepId: FormStepId, fieldId: string, value: any): FormState;
+  updateConfig(config: FormConfig): void; // Update configuration without recreating instance
   
   // Navigation
   getNavigationState(): NavigationState;
   moveToStep(stepId: FormStepId): FormState;
+  forceSetCurrentStep(stepId: FormStepId): void; // Force step change regardless of validation
+  canMoveNext(stepId: FormStepId): boolean; // Check if can move to next step
   
   // Validation
   validateStep(stepId: FormStepId, values: FormValue): ValidationResult;
   validateField(field: FormField, value: any): string | null;
+  isStepComplete(stepId: FormStepId): boolean; // Check if step is complete
 }
 ```
 
@@ -96,7 +102,7 @@ export class FormStateManager {
 
 ```typescript
 export class FormConfigGenerator {
-  static generateFormConfig(requirements: Requirements): FormConfig;
+  static generateFormConfig(requirements: Requirements, isDefaultKey: boolean = true): FormConfig;
 }
 ```
 
@@ -113,18 +119,21 @@ export function getRequirements(collectionKey: string): Requirements;
    - Steps can be enabled or disabled based on configuration
    - Validation rules are defined in the configuration
    - Required fields are specified in the configuration
+   - Dynamic initial step determination based on collection key
 
 2. **Form State Management**:
    - Centralized state management for all form data
    - Step-based organization of form values
    - Tracking of touched fields for validation
    - Error tracking for each field and step
+   - Singleton instance to prevent state resets during navigation
 
 3. **Form Navigation**:
    - Control of navigation between steps
    - Prevention of navigation to invalid steps
    - Tracking of completed steps
    - Support for non-linear navigation when allowed
+   - Support for starting at any enabled step based on collection key
 
 4. **Validation System**:
    - Field-level validation based on rules
@@ -174,6 +183,7 @@ The form is configured based on requirements parsed from collection keys. The co
    - Order of steps
    - Required fields in each step
    - Validation rules for each step
+   - Initial step determination based on collection key
 
 2. **Timeline Requirements**:
    - Required years of history
@@ -182,6 +192,29 @@ The form is configured based on requirements parsed from collection keys. The co
 3. **Consent Requirements**:
    - Which consents are required
    - Validation rules for consents
+
+### Dynamic Initial Step
+
+The system supports starting the form at any enabled step based on the collection key:
+
+1. **Default vs. Custom Keys**:
+   - Default collection key (`en000111100100`) always starts at personal-info
+   - Custom collection keys can start at any enabled step
+
+2. **Initial Step Determination**:
+   - For default keys, the initial step is always personal-info
+   - For custom keys, the initial step is determined by checking which steps are enabled
+   - Priority order: residence-history, professional-licenses, education, consents
+
+3. **URL Parameter Integration**:
+   - URL parameters can specify a custom collection key
+   - Parameters are preserved during routing to maintain consistent behavior
+   - Example: `http://localhost:3000/?key=en000001100100` starts at residence-history
+
+4. **State Synchronization**:
+   - currentContextStep tracks the step separately from form state
+   - FormContext forces synchronization when mismatches occur
+   - This prevents state inconsistencies during navigation
 
 ### Validation System
 

@@ -8,30 +8,64 @@ This document outlines the key components of the Trua Verify system and their re
 graph TD
     subgraph "Frontend Components"
         A[Landing Page Component]
-        B[Employment Form Component]
-        C[Timeline Entry Component]
-        D[Signature Capture Component]
-        E[Confirmation Component]
+        B[Form Context Provider]
+        C[Form Step Renderer]
+        D[Personal Info Step]
+        E[Residence History Step]
+        F[Employment History Step]
+        G[Education Step]
+        H[Professional Licenses Step]
+        I[Consents Step]
+        J[Signature Component]
+        K[Timeline Component]
+        L[Confirmation Component]
     end
     
-    subgraph "Backend Components"
-        F[Flask Routes Controller]
-        G[Form Validator]
-        H[PDF Generator]
-        I[JSON Generator]
-        J[Claims Storage Manager]
+    subgraph "State Management"
+        M[Form State Manager]
+        N[Form Config Generator]
+        O[Collection Key Parser]
+        P[Translation Context]
     end
     
-    A --> B
-    B --> C
-    B --> D
-    B --> F
-    F --> G
-    G --> H
-    G --> I
-    H --> J
-    I --> J
-    F --> E
+    subgraph "Document Generation"
+        Q[PDF Service]
+        R[JSON Document Generator]
+        S[Document Service]
+    end
+    
+    A -->|Parses URL Params| O
+    O -->|Determines Requirements| N
+    N -->|Generates Config| M
+    B -->|Uses| M
+    B -->|Provides Context| C
+    
+    C -->|Renders| D
+    C -->|Renders| E
+    C -->|Renders| F
+    C -->|Renders| G
+    C -->|Renders| H
+    C -->|Renders| I
+    C -->|Renders| J
+    
+    E -->|Uses| K
+    F -->|Uses| K
+    
+    B -->|On Submit| S
+    S -->|Generates| Q
+    S -->|Generates| R
+    S -->|Redirects to| L
+    
+    P -->|Provides Translations| B
+    P -->|Provides Translations| C
+    P -->|Provides Translations| D
+    P -->|Provides Translations| E
+    P -->|Provides Translations| F
+    P -->|Provides Translations| G
+    P -->|Provides Translations| H
+    P -->|Provides Translations| I
+    P -->|Provides Translations| J
+    P -->|Provides Translations| L
 ```
 
 ## Component Descriptions
@@ -43,46 +77,69 @@ graph TD
 
 **Responsibilities**:
 - Display welcome message and explanation
-- Present "Start Verification" button
-- Pass tracking ID and years parameters to the form
+- Parse URL parameters (collection key, token)
+- Initialize the form with the correct configuration
+- Support multiple languages based on collection key
 
 **Implementation**:
-- HTML template: `templates/index.html`
-- Minimal JavaScript for button handling
+- React component: `src/App.tsx`
+- Routing: React Router
 
-#### 2. Employment Form Component
-**Purpose**: Collect all required information from the candidate.
+#### 2. Form Context Provider
+**Purpose**: Provide centralized form state management and context.
 
 **Responsibilities**:
-- Manage personal information collection
-- Coordinate timeline entries
-- Handle signature capture
-- Validate form completeness
-- Submit data to server
+- Initialize form state based on collection key
+- Manage form navigation between steps
+- Track form completion status
+- Handle form submission
+- Support dynamic initial step based on collection key
 
 **Implementation**:
-- HTML template: `templates/form.html`
-- JavaScript: `static/js/form.js` (main form logic)
-- CSS: `static/css/styles.css`
+- React context: `src/context/FormContext.tsx`
+- Uses FormStateManager for state management
 
-#### 3. Timeline Entry Component
-**Purpose**: Manage individual employment history entries.
+#### 3. Form Step Renderer
+**Purpose**: Render the appropriate form step based on current state.
 
 **Responsibilities**:
-- Provide UI for different entry types (Job, Education, Unemployed, Other)
-- Show/hide relevant fields based on entry type
-- Calculate time coverage
-- Allow adding/removing entries
+- Determine which step component to render
+- Pass appropriate props to step components
+- Handle step transitions
+- Support starting at any enabled step
 
 **Implementation**:
-- HTML template section in `templates/form.html`
-- JavaScript functions in `static/js/form.js`:
-  - `addTimelineEntry()`
-  - `setupEntryEventListeners()`
-  - `updateEntryFields()`
-  - `calculateYearsAccounted()`
+- React component: `src/components/FormStepRenderer.tsx`
 
-#### 4. Signature Capture Component
+#### 4. Step Components
+**Purpose**: Collect specific information for each verification step.
+
+**Components**:
+- **Personal Info Step**: Basic personal information
+- **Residence History Step**: Address history with timeline
+- **Employment History Step**: Job history with timeline
+- **Education Step**: Education credentials
+- **Professional Licenses Step**: License information
+- **Consents Step**: Required consents
+
+**Implementation**:
+- React components in `src/components/`
+- Each step has its own component, CSS, and tests
+
+#### 5. Timeline Component
+**Purpose**: Visualize and manage timeline entries.
+
+**Responsibilities**:
+- Display timeline entries chronologically
+- Calculate coverage and gaps
+- Validate against requirements
+- Support adding, editing, and removing entries
+
+**Implementation**:
+- React component: `src/components/Timeline.tsx`
+- Used by both Residence and Employment history steps
+
+#### 6. Signature Component
 **Purpose**: Capture the candidate's digital signature.
 
 **Responsibilities**:
@@ -92,11 +149,10 @@ graph TD
 - Validate signature presence
 
 **Implementation**:
-- HTML canvas in `templates/form.html`
-- JavaScript library: `static/js/signature_pad.min.js`
-- Integration in `static/js/form.js`
+- React component: `src/components/Signature.tsx`
+- Uses signature_pad.js library
 
-#### 5. Confirmation Component
+#### 7. Confirmation Component
 **Purpose**: Confirm successful submission and provide next steps.
 
 **Responsibilities**:
@@ -105,109 +161,150 @@ graph TD
 - Explain next steps to candidate
 
 **Implementation**:
-- HTML template: `templates/confirmation.html`
+- React component: `src/components/ConfirmationPage.tsx`
 
-### Backend Components
+### State Management Components
 
-#### 1. Flask Routes Controller
-**Purpose**: Handle HTTP requests and route to appropriate handlers.
+#### 1. Form State Manager
+**Purpose**: Manage the form state and business logic.
 
 **Responsibilities**:
-- Process URL parameters
-- Render appropriate templates
-- Handle form submission
-- Manage file downloads
+- Maintain form state across steps
+- Handle validation of steps and fields
+- Control navigation between steps
+- Track completion status
+- Support dynamic initial step based on collection key
 
 **Implementation**:
-- Python: Route handlers in `app.py`:
-  - `index()`: Redirect to verify
-  - `verify()`: Landing page
-  - `form()`: Employment form
-  - `submit()`: Form processing
-  - `download()`: PDF retrieval
+- TypeScript class: `src/utils/FormStateManager.ts`
+- Singleton instance to prevent state resets
 
-#### 2. Form Validator
-**Purpose**: Ensure submitted data meets requirements.
+#### 2. Form Config Generator
+**Purpose**: Generate form configuration based on requirements.
 
 **Responsibilities**:
-- Validate required fields
-- Check data types and formats
-- Ensure timeframe coverage
+- Create step configuration based on collection key
+- Determine which steps are enabled
+- Set validation rules for each step
+- Determine initial step based on collection key and isDefaultKey flag
 
 **Implementation**:
-- Python: Validation logic in `submit()` function in `app.py`
-- JavaScript: Client-side validation in `validateForm()` in `static/js/form.js`
+- TypeScript utility: `src/utils/FormConfigGenerator.ts`
 
-#### 3. PDF Generator
-**Purpose**: Create PDF documents from claim data.
+#### 3. Collection Key Parser
+**Purpose**: Parse collection keys to determine requirements.
 
 **Responsibilities**:
-- Format claim data for PDF
+- Extract language prefix from collection key
+- Parse configuration bits to determine enabled steps
+- Determine required years for history steps
+- Support custom and default collection keys
+
+**Implementation**:
+- TypeScript utility: `src/utils/collectionKeyParser.ts`
+
+#### 4. Translation Context
+**Purpose**: Provide internationalization support.
+
+**Responsibilities**:
+- Load translations based on language
+- Provide translation functions to components
+- Support language switching
+
+**Implementation**:
+- React context: `src/context/TranslationContext.tsx`
+
+### Document Generation Components
+
+#### 1. PDF Service
+**Purpose**: Create PDF documents from form data.
+
+**Responsibilities**:
+- Format form data for PDF
 - Structure document with sections
 - Embed signature image
 - Generate standardized PDF file
 
 **Implementation**:
-- Python: `generate_pdf()` function in `app.py`
-- Uses ReportLab library for PDF generation
+- TypeScript service: `src/services/PdfService.ts`
+- Uses jsPDF library
 
-#### 4. JSON Generator
-**Purpose**: Create structured JSON representation of claim data.
+#### 2. JSON Document Generator
+**Purpose**: Create structured JSON representation of form data.
 
 **Responsibilities**:
-- Structure claim data in consistent format
+- Structure form data in consistent format
 - Include all relevant fields
 - Format dates appropriately
 
 **Implementation**:
-- Python: JSON creation in `submit()` function in `app.py`
-- Uses Python's built-in `json` module
+- TypeScript utility: `src/utils/JsonDocumentGenerator.ts`
 
-#### 5. Claims Storage Manager
-**Purpose**: Manage persistent storage of claims.
+#### 3. Document Service
+**Purpose**: Coordinate document generation and handling.
 
 **Responsibilities**:
-- Ensure claims directory exists
-- Generate unique filenames
-- Store both PDF and JSON formats
+- Generate both PDF and JSON documents
+- Handle document download
+- Manage document storage
 
 **Implementation**:
-- Python: File operations in `submit()` function in `app.py`
-- Uses `os` module for directory and file operations
+- TypeScript service: `src/services/DocumentService.ts`
 
 ## Component Interactions
 
+### Form Initialization Flow
+
+1. **Landing Page Component** parses URL parameters (collection key, token)
+2. **Collection Key Parser** extracts language and configuration bits
+3. **Form Config Generator** creates form configuration based on requirements
+4. **Form State Manager** initializes form state with configuration
+5. **Form Context Provider** provides form state to components
+6. **Form Step Renderer** renders the initial step based on collection key
+
+### Dynamic Initial Step Flow
+
+1. **Landing Page Component** passes collection key and isDefaultKey flag
+2. **Form Config Generator** determines initial step based on collection key and isDefaultKey
+3. **Form State Manager** initializes with the determined initial step
+4. **Form Context Provider** tracks currentContextStep separately from form state
+5. **Form Step Renderer** renders the appropriate step component
+6. **Step Components** initialize with the current step's data
+
+### Form Navigation Flow
+
+1. **Step Components** validate input and update form state
+2. **Form State Manager** tracks completion status of each step
+3. **Form Context Provider** provides navigation methods (moveToNextStep, moveToPreviousStep)
+4. **Form Step Renderer** updates to show the new current step
+5. **Form State Manager** ensures proper state synchronization during navigation
+
 ### Form Submission Flow
 
-1. **Employment Form Component** collects and validates data
-2. Data is submitted to **Flask Routes Controller** (`/submit` endpoint)
-3. **Form Validator** checks data completeness and validity
-4. **JSON Generator** creates structured data representation
-5. **PDF Generator** creates formatted PDF document
-6. **Claims Storage Manager** saves both files
-7. **Flask Routes Controller** renders **Confirmation Component**
-
-### PDF Download Flow
-
-1. **Confirmation Component** displays download link
-2. User clicks link, sending request to **Flask Routes Controller** (`/download/<filename>` endpoint)
-3. **Claims Storage Manager** retrieves PDF file
-4. **Flask Routes Controller** sends file to user
+1. **Form Context Provider** collects and validates all form data
+2. **Document Service** coordinates document generation
+3. **JSON Document Generator** creates structured data representation
+4. **PDF Service** creates formatted PDF document
+5. **Form Context Provider** redirects to **Confirmation Component**
 
 ## Component Dependencies
 
 | Component | Dependencies |
 |-----------|--------------|
-| Landing Page Component | None |
-| Employment Form Component | Timeline Entry Component, Signature Capture Component |
-| Timeline Entry Component | None |
-| Signature Capture Component | signature_pad.min.js library |
+| Landing Page Component | React Router |
+| Form Context Provider | FormStateManager, FormConfigGenerator |
+| Form Step Renderer | FormContext |
+| Step Components | FormContext, Timeline Component (for history steps) |
+| Timeline Component | None |
+| Signature Component | signature_pad.js library |
 | Confirmation Component | None |
-| Flask Routes Controller | Flask framework |
-| Form Validator | None |
-| PDF Generator | ReportLab library |
-| JSON Generator | json module |
-| Claims Storage Manager | os module |
+| Form State Manager | None |
+| Form Config Generator | Collection Key Parser |
+| Collection Key Parser | None |
+| Translation Context | i18next library |
+| PDF Service | jsPDF library |
+| JSON Document Generator | None |
+| Document Service | PDF Service, JSON Document Generator |
 
 ## Future Component Considerations
 
@@ -218,3 +315,7 @@ The current component architecture could be extended with:
 3. **Database Manager Component**: Replace file-based storage with database operations
 4. **API Gateway Component**: Provide programmatic access to the system
 5. **Notification Component**: Send emails or notifications to users
+6. **Form State Persistence Component**: Save and restore form state for resuming later
+7. **Dynamic Step Component**: Support conditional steps based on previous answers
+8. **Testing Mode Component**: Enhanced support for testing specific form sections
+9. **Analytics Component**: Track form usage and completion metrics
