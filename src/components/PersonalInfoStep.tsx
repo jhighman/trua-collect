@@ -11,9 +11,7 @@ export const PersonalInfoStep: React.FC = () => {
     getStepErrors,
     isStepValid,
     moveToNextStep,
-    canMoveNext,
-    availableSteps
-  } = useForm();
+    canMoveNext  } = useForm();
   const [errors, setErrors] = useState<Record<string, string>>({});
   
   // Get form values

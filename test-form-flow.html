@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Form Flow</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .test-links {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .test-link {
+            display: block;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 5px;
+            text-decoration: none;
+            color: #333;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            width: 300px;
+        }
+        .test-link:hover {
+            background-color: #f0f0f0;
+        }
+        .description {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        .key-bits {
+            font-family: monospace;
+            margin-top: 5px;
+            font-size: 14px;
+            color: #0066cc;
+        }
+        .instructions {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .instructions ol {
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin-bottom: 10px;
+        }
+        .note {
+            background-color: #fffde7;
+            padding: 10px;
+            border-left: 4px solid #ffd600;
+            margin-top: 20px;
+        }
+        .debug-panel {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .debug-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .debug-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Form Flow</h1>
+    
+    <div class="instructions">
+        <h2>Instructions</h2>
+        <ol>
+            <li>Click on one of the test links below to open the form with a specific collection key.</li>
+            <li>Fill out the Personal Information step with any valid data.</li>
+            <li>If the form has Education step, select any education level and click Next.</li>
+            <li>Observe if the form correctly skips the Professional Licenses step when it's disabled.</li>
+            <li>Check the browser console for detailed logs (press F12 to open developer tools).</li>
+        </ol>
+        
+        <div class="note">
+            <strong>Note:</strong> The console logs will show detailed information about the form navigation, including available steps, current step, and next step calculations.
+        </div>
+    </div>
+    
+    <h2>Test Cases</h2>
+    <div class="test-links">
+        <a href="http://localhost:3000/?key=en000111100100" class="test-link" target="_blank">
+            <strong>Default Collection Key (All Steps Enabled)</strong>
+            <div class="description">All verification steps enabled (education, professional licenses, residence history, employment history)</div>
+            <div class="key-bits">en000111100100</div>
+        </a>
+        
+        <a href="http://localhost:3000/?key=en000101100100" class="test-link" target="_blank">
+            <strong>Professional Licenses Disabled</strong>
+            <div class="description">Professional licenses disabled (bit 4 set to 0)</div>
+            <div class="key-bits">en000101100100</div>
+        </a>
+        
+        <a href="http://localhost:3000/?key=en000110100100" class="test-link" target="_blank">
+            <strong>Residence History Disabled</strong>
+            <div class="description">Residence history disabled (bit 5 set to 0)</div>
+            <div class="key-bits">en000110100100</div>
+        </a>
+        
+        <a href="http://localhost:3000/?key=en000011100100" class="test-link" target="_blank">
+            <strong>Education Disabled</strong>
+            <div class="description">Education disabled (bit 3 set to 0)</div>
+            <div class="key-bits">en000011100100</div>
+        </a>
+        
+        <a href="http://localhost:3000/?key=en000001100100" class="test-link" target="_blank">
+            <strong>Education & Professional Licenses Disabled</strong>
+            <div class="description">Both education and professional licenses disabled</div>
+            <div class="key-bits">en000001100100</div>
+        </a>
+    </div>
+    
+    <h2>Debug Tools</h2>
+    <div>
+        <button id="parseKey" class="debug-button">Parse Collection Key</button>
+        <input type="text" id="collectionKey" value="en000101100100" placeholder="Enter collection key" style="padding: 8px; width: 200px;">
+    </div>
+    <div id="debugOutput" class="debug-panel">Debug output will appear here...</div>
+    
+    <h2>Bit Positions Explanation</h2>
+    <pre>
+Format: en000111100100
+Language: en
+Bits 0-2: Consents (000) - No consents enabled
+Bits 3-5: Verification steps
+  Bit 3: Education enabled (1/0)
+  Bit 4: Professional licenses enabled (1/0)
+  Bit 5: Residence history enabled (1/0)
+Bits 6-8: Residence history years (100 = 10 years)
+Bit 9: Employment history enabled (1/0)
+Bits 10-12: Employment history years (100 = 10 years)
+    </pre>
+    
+    <script>
+        // This script will be used to parse collection keys and display the results
+        document.getElementById('parseKey').addEventListener('click', function() {
+            const key = document.getElementById('collectionKey').value;
+            const debugOutput = document.getElementById('debugOutput');
+            
+            try {
+                // Parse the collection key
+                const { language, bits } = parseCollectionKey(key);
+                
+                // Get the requirements
+                const requirements = getRequirements(key);
+                
+                // Display the results
+                let output = `Collection Key: ${key}\n`;
+                output += `Language: ${language}\n`;
+                output += `Bits: ${bits}\n\n`;
+                
+                output += `Verification Steps:\n`;
+                output += `- Education: ${requirements.verification_steps.education.enabled ? 'Enabled' : 'Disabled'}\n`;
+                output += `- Professional Licenses: ${requirements.verification_steps.professional_license.enabled ? 'Enabled' : 'Disabled'}\n`;
+                output += `- Residence History: ${requirements.verification_steps.residence_history.enabled ? 'Enabled' : 'Disabled'}\n`;
+                output += `- Employment History: ${requirements.verification_steps.employment_history.enabled ? 'Enabled' : 'Disabled'}\n`;
+                
+                debugOutput.textContent = output;
+            } catch (error) {
+                debugOutput.textContent = `Error: ${error.message}`;
+            }
+        });
+        
+        // Collection key parser implementation
+        function parseCollectionKey(key) {
+            if (!key || key.length !== 14) {
+                throw new Error('Invalid collection key: must be 14 characters');
+            }
+            return {
+                language: key.slice(0, 2),
+                bits: key.slice(2)
+            };
+        }
+        
+        function isBitEnabled(bits, position) {
+            if (position < 0 || position >= bits.length) {
+                throw new Error('Invalid bit position');
+            }
+            return bits.charAt(position) === '1';
+        }
+        
+        function getTimelineYears(bits, startPosition) {
+            if (startPosition < 0 || startPosition >= bits.length) {
+                throw new Error('Invalid start position for timeline years');
+            }
+            
+            const availableBits = bits.slice(startPosition, startPosition + 3);
+            const timelineBits = availableBits.length < 3 ? availableBits.padEnd(3, '0') : availableBits;
+            
+            switch (timelineBits) {
+                case '000': return 1;
+                case '001': return 3;
+                case '010': return 5;
+                case '011': return 7;
+                case '100': return 10;
+                default: return 1;
+            }
+        }
+        
+        function getRequirements(collectionKey) {
+            const { language, bits } = parseCollectionKey(collectionKey);
+            
+            return {
+                language,
+                consents_required: {
+                    driver_license: isBitEnabled(bits, 0),
+                    drug_test: isBitEnabled(bits, 1),
+                    biometric: isBitEnabled(bits, 2)
+                },
+                verification_steps: {
+                    education: {
+                        enabled: isBitEnabled(bits, 3),
+                        required_verifications: ["degree", "institution", "graduation_date"]
+                    },
+                    professional_license: {
+                        enabled: isBitEnabled(bits, 4),
+                        required_verifications: ["status", "expiration_date"]
+                    },
+                    residence_history: {
+                        enabled: isBitEnabled(bits, 5),
+                        years: getTimelineYears(bits, 6),
+                        required_verifications: ["address", "duration"]
+                    },
+                    employment_history: {
+                        enabled: isBitEnabled(bits, 9),
+                        years: getTimelineYears(bits, 10),
+                        required_verifications: ["employment", "duration", "position"]
+                    }
+                }
+            };
+        }
+    </script>
+</body>
+</html>

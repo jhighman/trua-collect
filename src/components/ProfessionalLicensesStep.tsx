@@ -10,7 +10,11 @@ export const ProfessionalLicensesStep: React.FC = () => {
     setValue,
     getValue,
     getStepErrors,
-    isStepValid
+    isStepValid,
+    canMoveNext,
+    moveToNextStep,
+    moveToPreviousStep,
+    canMovePrevious
   } = useForm();
   
   const [entries, setEntries] = useState<ProfessionalLicenseEntryData[]>([]);
@@ -197,6 +201,40 @@ export const ProfessionalLicensesStep: React.FC = () => {
             {t('licenses.invalid') || 'Please complete all required professional license information'}
           </div>
         )}
+      </div>
+      
+      {/* Navigation buttons */}
+      <div className="form-navigation">
+        <button
+          type="button"
+          className="button secondary"
+          onClick={moveToPreviousStep}
+          disabled={!canMovePrevious}
+        >
+          {t('common.previous') || 'Previous'}
+        </button>
+        <button
+          type="button"
+          className="button primary"
+          onClick={() => {
+            console.log('Next button clicked');
+            console.log('Can move next:', canMoveNext);
+            
+            // Check if the professional-licenses step is complete
+            const isComplete = entries.length > 0;
+            console.log('Is professional-licenses complete:', isComplete);
+            
+            if (isComplete) {
+              console.log('Moving to next step');
+              moveToNextStep();
+            } else {
+              console.log('Professional-licenses step is not complete, cannot move next');
+            }
+          }}
+          disabled={!canMoveNext}
+        >
+          {t('common.next') || 'Next'}
+        </button>
       </div>
     </div>
   );

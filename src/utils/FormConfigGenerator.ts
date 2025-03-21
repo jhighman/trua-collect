@@ -162,22 +162,27 @@ export function generateFormConfig(requirements: Requirements): FormConfig {
       order: steps.length + 1,
       fields: [
         {
+          id: 'highestLevel',
+          type: 'select',
+          label: 'Highest Education Level',
+          required: true,
+          validation: [
+            { type: 'required', message: 'Highest education level is required' }
+          ]
+        },
+        {
           id: 'institution',
           type: 'text',
           label: 'Institution Name',
-          required: true,
-          validation: [
-            { type: 'required', message: 'Institution name is required' }
-          ]
+          required: false,
+          validation: []
         },
         {
           id: 'degree',
           type: 'text',
           label: 'Degree',
-          required: true,
-          validation: [
-            { type: 'required', message: 'Degree is required' }
-          ]
+          required: false,
+          validation: []
         }
       ],
       validationRules: {
@@ -185,6 +190,36 @@ export function generateFormConfig(requirements: Requirements): FormConfig {
       }
     });
     requiredSteps.push('education');
+  }
+
+  if (verification_steps.professional_license.enabled) {
+    steps.push({
+      id: 'professional-licenses',
+      title: 'Professional Licenses',
+      enabled: true,
+      required: true,
+      order: steps.length + 1,
+      fields: [
+        {
+          id: 'licenseType',
+          type: 'text',
+          label: 'License Type',
+          required: false,
+          validation: []
+        },
+        {
+          id: 'licenseNumber',
+          type: 'text',
+          label: 'License Number',
+          required: false,
+          validation: []
+        }
+      ],
+      validationRules: {
+        requiredVerifications: verification_steps.professional_license.required_verifications
+      }
+    });
+    requiredSteps.push('professional-licenses');
   }
 
   if (verification_steps.residence_history.enabled) {

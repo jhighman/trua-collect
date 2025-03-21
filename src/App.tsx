@@ -1,8 +1,10 @@
+/* eslint-disable no-console */
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import VerificationEntry from './components/VerificationEntry';
 import { FormState } from './context/FormContext';
 import { TranslationProvider } from './context/TranslationContext';
+import FormStateViewer from './components/FormStateViewer';
 import './App.css';
 
 const ConfirmationPage: React.FC = () => (
@@ -18,6 +20,7 @@ const ConfirmationPage: React.FC = () => (
 const App: React.FC = () => {
   // Mock submission handler
   const handleSubmit = async (formData: FormState & { referenceToken?: string }) => {
+    // eslint-disable-next-line no-console
     console.log('Form submitted:', formData);
     // In a real application, this would send the data to a server
     return new Promise<void>((resolve) => {
@@ -35,6 +38,7 @@ const App: React.FC = () => {
           <Route path="/" element={<Navigate to="/verify" />} />
           <Route path="/verify" element={<VerificationEntry onSubmit={handleSubmit} />} />
           <Route path="/confirmation" element={<ConfirmationPage />} />
+          <Route path="/logs" element={<FormStateViewer />} />
         </Routes>
       </Router>
     </TranslationProvider>

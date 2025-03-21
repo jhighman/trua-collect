@@ -26,9 +26,9 @@ export const ConsentsStep: React.FC = () => {
   
   // Determine which consents are required based on form state
   const requiredConsents = {
-    driverLicense: errors.hasOwnProperty('driverLicenseConsent'),
-    drugTest: errors.hasOwnProperty('drugTestConsent'),
-    biometric: errors.hasOwnProperty('biometricConsent')
+    driverLicense: Object.prototype.hasOwnProperty.call(errors, 'driverLicenseConsent'),
+    drugTest: Object.prototype.hasOwnProperty.call(errors, 'drugTestConsent'),
+    biometric: Object.prototype.hasOwnProperty.call(errors, 'biometricConsent')
   };
   
   return (

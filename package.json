@@ -13,7 +13,8 @@
     "lint": "eslint src --ext ts,tsx",
     "lint:fix": "eslint src --ext ts,tsx --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:form-flow": "ts-node src/scripts/testFormFlow.ts"
   },
   "keywords": [
     "employment",

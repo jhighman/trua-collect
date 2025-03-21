@@ -72,30 +72,39 @@ export function getTimelineYears(bits: string, startPosition: number): number {
 
 export function getRequirements(collectionKey: string): Requirements {
   const { language, bits } = parseCollectionKey(collectionKey);
+  
+  // Log the collection key and bits for debugging
+  console.log('Collection Key:', collectionKey);
+  console.log('Language:', language);
+  console.log('Bits:', bits);
+  console.log('Bit 0:', bits.charAt(0));
+  console.log('Bit 1:', bits.charAt(1));
+  console.log('Bit 2:', bits.charAt(2));
+  
   return {
     language,
     consents_required: {
-      driver_license: isBitEnabled(bits, 1),
-      drug_test: isBitEnabled(bits, 2),
-      biometric: isBitEnabled(bits, 3)
+      driver_license: isBitEnabled(bits, 0),
+      drug_test: isBitEnabled(bits, 1),
+      biometric: isBitEnabled(bits, 2)
     },
     verification_steps: {
       education: {
-        enabled: isBitEnabled(bits, 4),
+        enabled: isBitEnabled(bits, 3),
         required_verifications: ["degree", "institution", "graduation_date"]
       },
       professional_license: {
-        enabled: isBitEnabled(bits, 5),
+        enabled: isBitEnabled(bits, 4),
         required_verifications: ["status", "expiration_date"]
       },
       residence_history: {
-        enabled: isBitEnabled(bits, 6),
-        years: getTimelineYears(bits, 7), // Changed to 7 from 8
+        enabled: isBitEnabled(bits, 5),
+        years: getTimelineYears(bits, 6),
         required_verifications: ["address", "duration"]
       },
       employment_history: {
-        enabled: isBitEnabled(bits, 10),
-        years: getTimelineYears(bits, 11),
+        enabled: isBitEnabled(bits, 9),
+        years: getTimelineYears(bits, 10),
         required_verifications: ["employment", "duration", "position"]
       }
     }

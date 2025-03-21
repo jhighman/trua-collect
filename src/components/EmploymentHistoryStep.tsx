@@ -5,6 +5,7 @@ import { EmploymentEntry } from './EmploymentEntry';
 import type { EmploymentEntryData } from './EmploymentEntry';
 import Timeline from './Timeline';
 import './Timeline.css';
+import { getRequirements } from '../utils/collectionKeyParser';
 
 export const EmploymentHistoryStep: React.FC = () => {
   const {
@@ -42,8 +43,15 @@ export const EmploymentHistoryStep: React.FC = () => {
     contact_info: ''
   });
 
-  // Default to 7 years if not specified
-  const requiredYears = 7;
+  // Get the required years from the collection key parser
+  // First, check if we have a collection key in the URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const key = urlParams.get('key');
+  
+  // If we have a key, use it to get the requirements, otherwise use the default key
+  const collectionKey = key || 'en000111100100'; // Default key with 7 years for employment history
+  const requirements = getRequirements(collectionKey);
+  const requiredYears = requirements.verification_steps.employment_history.years;
   
   // Move the getValue call outside useEffect and memoize it
   const getExistingEntries = useCallback(() => {

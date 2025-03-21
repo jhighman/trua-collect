@@ -1,17 +1,12 @@
 /* eslint-disable no-console */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { parseCollectionKey, getRequirements } from '../utils/collectionKeyParser';
 import { v4 as uuidv4 } from 'uuid';
 import { FormProvider, FormState } from '../context/FormContext';
-import PersonalInfoStep from './PersonalInfoStep';
-import { ResidenceHistoryStep } from './ResidenceHistoryStep';
-import { EmploymentHistoryStep } from './EmploymentHistoryStep';
-import EducationStep from './EducationStep';
-import ProfessionalLicensesStep from './ProfessionalLicensesStep';
-import ConsentsStep from './ConsentsStep';
-import Signature from './Signature';
 import { FormStepId } from '../utils/FormConfigGenerator';
+import FormStepRenderer from './FormStepRenderer';
+import { FormLogger } from '../utils/FormLogger';
 
 interface VerificationEntryProps {
   onSubmit: (formData: FormState & { referenceToken?: string }) => Promise<void>;
@@ -22,14 +17,17 @@ interface VerificationEntryProps {
  * This includes all verification steps and maximum years for history
  */
 const generateDefaultCollectionKey = (): string => {
-  // Format: en111111100100
+  // Format: en000111100100
   // Language: en
-  // Bits 1-3: All consents enabled (111)
+  // Bits 1-3: No consents enabled (000) - for testing skipping consents
   // Bits 4-6: All verification steps enabled (111)
+  //   Bit 4: Education enabled (1)
+  //   Bit 5: Professional licenses enabled (1)
+  //   Bit 6: Residence history enabled (1)
   // Bits 7-9: Residence history years (100 = 10 years)
   // Bit 10: Employment history enabled (1)
   // Bits 11-13: Employment history years (100 = 10 years)
-  return 'en111111100100';
+  return 'en000111100100';
 };
 
 /**
@@ -45,6 +43,34 @@ const VerificationEntry: React.FC<VerificationEntryProps> = ({ onSubmit }) => {
   const [referenceToken, setReferenceToken] = useState<string | null>(null);
   const [collectionKey, setCollectionKey] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<FormStepId>('personal-info');
+  const [initialStepSet, setInitialStepSet] = useState<boolean>(false);
+  
+  // Custom step change handler that also logs the form state
+  const handleStepChange = (step: FormStepId) => {
+    console.log('VerificationEntry: handleStepChange called with step:', step);
+    console.log('VerificationEntry: Current step before change:', currentStep);
+    
+    // Update the current step state
+    setCurrentStep(step);
+    
+    console.log('VerificationEntry: Current step after change:', step);
+    
+    // Force a re-render to ensure the UI reflects the new step
+    setTimeout(() => {
+      console.log('VerificationEntry: Verifying current step after timeout:', step);
+    }, 0);
+    
+    // We'll log the form state in the FormProvider's onStepChange callback
+    // since we need access to the form state
+  };
+  
+  // Add a function to force sync the current step with the form state
+  const syncCurrentStep = useCallback((formState: FormState) => {
+    if (formState.currentStep !== currentStep) {
+      console.log('VerificationEntry: Syncing current step - UI:', currentStep, 'Form state:', formState.currentStep);
+      setCurrentStep(formState.currentStep);
+    }
+  }, [currentStep]);
   
   const navigate = useNavigate();
 
@@ -107,6 +133,13 @@ const VerificationEntry: React.FC<VerificationEntryProps> = ({ onSubmit }) => {
         referenceToken: referenceToken || undefined
       };
       
+      // Log the final form state
+      FormLogger.logFormState(
+        formData,
+        collectionKey || 'unknown',
+        { event: 'form_submission' }
+      );
+      
       await onSubmit(formDataWithToken);
       
       // Navigate to confirmation page
@@ -143,7 +176,17 @@ const VerificationEntry: React.FC<VerificationEntryProps> = ({ onSubmit }) => {
   // Render the form with the appropriate requirements
   return (
     <div className="max-w-4xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Trua Verify</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Trua Verify</h1>
+        <a
+          href="/logs"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        >
+          View Logs
+        </a>
+      </div>
       
       {isDevelopmentMode && (
         <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative mb-4" role="alert">
@@ -158,16 +201,67 @@ const VerificationEntry: React.FC<VerificationEntryProps> = ({ onSubmit }) => {
       <FormProvider
         requirements={requirements}
         onSubmit={handleSubmit}
-        initialStep={currentStep}
-        onStepChange={setCurrentStep}
+        initialStep={!initialStepSet ? currentStep : undefined}
+        onStepChange={(step, formState) => {
+          // Mark that we've set the initial step
+          if (!initialStepSet) {
+            setInitialStepSet(true);
+            console.log('VerificationEntry: Initial step set, will not reset on future renders');
+          }
+          // Log the step change with full form state
+          console.log('VerificationEntry: onStepChange called with step:', step, 'Previous step:', currentStep);
+          console.log('VerificationEntry: Form state to log:', formState);
+          console.log('VerificationEntry: Current step in form state:', formState.currentStep);
+          console.log('VerificationEntry: Current steps in form state:', Object.keys(formState.steps));
+          
+          // Verify the step change is reflected in the form state
+          if (formState.currentStep !== step) {
+            console.warn('VerificationEntry: Step mismatch! Callback step:', step, 'Form state step:', formState.currentStep);
+            
+            // Force sync the current step with the form state
+            syncCurrentStep(formState);
+          }
+          
+          // Check if the professional-licenses step is in the form state
+          if (formState.steps['professional-licenses']) {
+            console.log('VerificationEntry: professional-licenses step found in form state');
+          } else {
+            console.log('VerificationEntry: professional-licenses step NOT found in form state');
+          }
+          
+          FormLogger.logFormState(
+            formState,
+            collectionKey || 'unknown',
+            { event: 'step_change', previousStep: currentStep, newStep: step }
+          );
+          
+          // Update the current step
+          handleStepChange(step);
+          
+          // Log after the step change
+          console.log('VerificationEntry: After handleStepChange, current step is now:', step);
+          
+          // Force a re-render to ensure the UI reflects the new step
+          setTimeout(() => {
+            console.log('VerificationEntry: Verifying current step after timeout:', step);
+            console.log('VerificationEntry: Form state currentStep after timeout:', formState.currentStep);
+            
+            // Double-check that the UI and form state are in sync
+            if (formState.currentStep !== step) {
+              console.warn('VerificationEntry: Step still mismatched after timeout! UI step:', step, 'Form state step:', formState.currentStep);
+              syncCurrentStep(formState);
+            }
+          }, 50);
+        }}
       >
-        {currentStep === 'personal-info' && <PersonalInfoStep />}
-        {currentStep === 'residence-history' && <ResidenceHistoryStep />}
-        {currentStep === 'employment-history' && <EmploymentHistoryStep />}
-        {currentStep === 'education' && <EducationStep />}
-        {currentStep === 'professional-licenses' && <ProfessionalLicensesStep />}
-        {currentStep === 'consents' && <ConsentsStep />}
-        {currentStep === 'signature' && <Signature />}
+        <FormStepRenderer
+          currentStep={currentStep}
+          consentsRequired={
+            requirements.consents_required.driver_license ||
+            requirements.consents_required.drug_test ||
+            requirements.consents_required.biometric
+          }
+        />
       </FormProvider>
     </div>
   );

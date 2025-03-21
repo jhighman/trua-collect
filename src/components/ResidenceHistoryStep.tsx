@@ -3,6 +3,9 @@ import { useForm, FormStepId } from '../context/FormContext';
 import { ResidenceEntry } from './ResidenceEntry';
 import Timeline from './Timeline';
 import './Timeline.css';
+import './ResidenceHistoryStep.css';
+import { getRequirements } from '../utils/collectionKeyParser';
+import { useTranslation } from '../context/TranslationContext';
 
 // Define the base interface for residence entry data
 interface ResidenceEntryData {
@@ -25,7 +28,8 @@ interface ResidenceEntryState extends ResidenceEntryData {
 }
 
 export const ResidenceHistoryStep: React.FC = () => {
-  const { 
+  const { t } = useTranslation();
+  const {
     currentStep,
     setValue,
     getValue,
@@ -34,7 +38,8 @@ export const ResidenceHistoryStep: React.FC = () => {
     moveToNextStep,
     moveToPreviousStep,
     canMovePrevious,
-    formState
+    formState,
+    isStepValid
   } = useForm();
 
   const [entries, setEntries] = useState<ResidenceEntryState[]>(() => 
@@ -53,10 +58,15 @@ export const ResidenceHistoryStep: React.FC = () => {
     is_current: false
   });
 
-  // Get required years from form state
-  // Get the required years from the form configuration
-  const currentStepConfig = formState.steps['residence-history'];
-  const requiredYears = 7; // Default to 7 years if not specified
+  // Get the required years from the collection key parser
+  // First, check if we have a collection key in the URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const key = urlParams.get('key');
+  
+  // If we have a key, use it to get the requirements, otherwise use the default key
+  const collectionKey = key || 'en000111100100'; // Default key with 7 years for residence history
+  const requirements = getRequirements(collectionKey);
+  const requiredYears = requirements.verification_steps.residence_history.years;
   
   // Load existing entries from form state
   useEffect(() => {
@@ -162,8 +172,12 @@ export const ResidenceHistoryStep: React.FC = () => {
 
   return (
     <div className="residence-history-step">
-      <h2>Residence History</h2>
-      <p>Please provide your complete residence history for the past {requiredYears} years, beginning with your current or most recent address.</p>
+      <div className="step-header">
+        <h2>{t('residence.title') || 'Residence History'}</h2>
+        <p className="step-description">
+          {t('residence.intro') || `Please provide your complete residence history for the past ${requiredYears} years, beginning with your current or most recent address.`}
+        </p>
+      </div>
       
       {/* Timeline visualization */}
       <Timeline
@@ -343,32 +357,47 @@ export const ResidenceHistoryStep: React.FC = () => {
           </div>
         </div>
       ) : (
-        <button 
-          type="button" 
-          className="button secondary" 
-          onClick={handleAddEntry}
-        >
-          Add Residence
-        </button>
+        <div className="add-entry-container">
+          <button
+            type="button"
+            className="add-button"
+            onClick={handleAddEntry}
+          >
+            {t('residence.add_button') || 'Add Residence'}
+          </button>
+        </div>
       )}
+      
+      {/* Form status */}
+      <div className="form-status">
+        {isStepValid('residence-history') ? (
+          <div className="valid-status">
+            {t('residence.valid') || 'Residence history information is complete'}
+          </div>
+        ) : (
+          <div className="invalid-status">
+            {t('residence.invalid') || `Please provide a complete residence history for the past ${requiredYears} years`}
+          </div>
+        )}
+      </div>
       
       {/* Navigation buttons */}
       <div className="form-navigation">
-        <button 
-          type="button" 
-          className="button secondary" 
+        <button
+          type="button"
+          className="button secondary"
           onClick={moveToPreviousStep}
           disabled={!canMovePrevious}
         >
-          Previous
+          {t('common.previous') || 'Previous'}
         </button>
-        <button 
-          type="button" 
-          className="button primary" 
+        <button
+          type="button"
+          className="button primary"
           onClick={moveToNextStep}
           disabled={!canMoveNext}
         >
-          Next
+          {t('common.next') || 'Next'}
         </button>
       </div>
     </div>

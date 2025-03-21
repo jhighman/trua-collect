@@ -1,3 +1,97 @@
+.education-level-selection {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-radius: 0.5rem;
+  border: 1px solid #e9ecef;
+}
+
+.education-level-selection h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #343a40;
+}
+
+.education-level-selection select {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  background-color: white;
+}
+
+.education-level-selection select.has-error {
+  border-color: #dc3545;
+}
+
+.education-level-selection .error-message {
+  color: #dc3545;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.college-education-section {
+  margin-top: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.college-education-section h3 {
+  margin-top: 0;
+  color: #343a40;
+}
+
+.college-education-section .section-description {
+  margin-bottom: 1.5rem;
+  color: #6c757d;
+}
+
+.required {
+  color: #dc3545;
+  margin-left: 0.25rem;
+}
+
+.form-navigation {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.form-navigation button {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.form-navigation button.secondary {
+  background-color: #f8f9fa;
+  border: 1px solid #ced4da;
+  color: #495057;
+}
+
+.form-navigation button.secondary:hover:not(:disabled) {
+  background-color: #e9ecef;
+}
+
+.form-navigation button.primary {
+  background-color: #007bff;
+  border: 1px solid #007bff;
+  color: white;
+}
+
+.form-navigation button.primary:hover:not(:disabled) {
+  background-color: #0069d9;
+  border-color: #0062cc;
+}
+
+.form-navigation button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 .education-step {
   max-width: 800px;
   margin: 0 auto;
