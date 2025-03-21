@@ -1,4 +1,5 @@
 import type { Requirements } from './collectionKeyParser';
+import { parseCollectionKey } from './collectionKeyParser';
 
 // Input/Output Types
 export type FormStepId = 
@@ -136,7 +137,7 @@ function generateConsentsStep(requirements: Requirements): FormStep | null {
 }
 
 // Main Generator Function
-export function generateFormConfig(requirements: Requirements): FormConfig {
+export function generateFormConfig(requirements: Requirements, isDefaultKey: boolean = true): FormConfig {
   const steps: FormStep[] = [];
   const requiredSteps: FormStepId[] = ['personal-info'];
 
@@ -275,9 +276,72 @@ export function generateFormConfig(requirements: Requirements): FormConfig {
   });
   requiredSteps.push('signature');
 
+  // Get the actual collection key from the requirements
+  const collectionKey = requirements.language + requirements.verification_steps.education.enabled +
+                       requirements.verification_steps.professional_license.enabled +
+                       requirements.verification_steps.residence_history.enabled;
+  
+  console.log('FormConfigGenerator: Raw requirements:', JSON.stringify(requirements));
+  console.log('FormConfigGenerator: Verification steps:', {
+    education: requirements.verification_steps.education.enabled,
+    professional_license: requirements.verification_steps.professional_license.enabled,
+    residence_history: requirements.verification_steps.residence_history.enabled,
+    employment_history: requirements.verification_steps.employment_history.enabled
+  });
+  
+  // Use the original collection key for parsing
+  // The collection key format is: en + 12 bits
+  // We don't need to construct a new one, just use the default one
+  const { bits } = parseCollectionKey('en000111100100');
+  console.log('FormConfigGenerator: Using default collection key bits for parsing');
+  
+  // Map bits to steps
+  const stepMap: FormStepId[] = [
+    'personal-info',       // Always enabled
+    'consents',            // Bit 0-2 (consents)
+    'education',           // Bit 3
+    'professional-licenses', // Bit 4
+    'residence-history',   // Bit 5
+    'employment-history',  // Bit 9
+    'signature'            // Always last
+  ];
+  
+  // Log whether we're using the default collection key
+  console.log('FormConfigGenerator: Using default collection key (from parameter):', isDefaultKey);
+  
+  // Find the first enabled step based on the bits
+  let firstEnabledStep: FormStepId = 'personal-info';
+  
+  // Only override the first step if we're not using the default key
+  if (!isDefaultKey) {
+    console.log('FormConfigGenerator: Using custom collection key, determining first enabled step');
+    // Check bits 3, 4, 5, 9 for enabled steps
+    if (requirements.verification_steps.residence_history.enabled) {
+      firstEnabledStep = 'residence-history';
+    } else if (requirements.verification_steps.professional_license.enabled) {
+      firstEnabledStep = 'professional-licenses';
+    } else if (requirements.verification_steps.education.enabled) {
+      firstEnabledStep = 'education';
+    }
+  } else {
+    console.log('FormConfigGenerator: Using default collection key, starting at personal-info');
+  }
+  
+  // Sort steps by order
+  const sortedSteps = steps.sort((a, b) => a.order - b.order);
+  
+  console.log('FormConfigGenerator: Collection key bits:', bits);
+  console.log('FormConfigGenerator: Education enabled:', requirements.verification_steps.education.enabled);
+  console.log('FormConfigGenerator: Professional licenses enabled:', requirements.verification_steps.professional_license.enabled);
+  console.log('FormConfigGenerator: Residence history enabled:', requirements.verification_steps.residence_history.enabled);
+  console.log('FormConfigGenerator: Employment history enabled:', requirements.verification_steps.employment_history.enabled);
+  console.log('FormConfigGenerator: First enabled step:', firstEnabledStep);
+  console.log('FormConfigGenerator: All steps:', sortedSteps.map(s => s.id));
+  console.log('FormConfigGenerator: Required steps:', requiredSteps);
+  
   return {
-    steps: steps.sort((a, b) => a.order - b.order),
-    initialStep: 'personal-info',
+    steps: sortedSteps,
+    initialStep: firstEnabledStep,
     navigation: {
       allowSkip: false,
       allowPrevious: true,
@@ -288,8 +352,8 @@ export function generateFormConfig(requirements: Requirements): FormConfig {
 
 // Export the class
 export class FormConfigGenerator {
-  static generateFormConfig(requirements: Requirements): FormConfig {
+  static generateFormConfig(requirements: Requirements, isDefaultKey: boolean = true): FormConfig {
     // Use the standalone function implementation
-    return generateFormConfig(requirements);
+    return generateFormConfig(requirements, isDefaultKey);
   }
 }

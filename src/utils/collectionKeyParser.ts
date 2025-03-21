@@ -80,6 +80,10 @@ export function getRequirements(collectionKey: string): Requirements {
   console.log('Bit 0:', bits.charAt(0));
   console.log('Bit 1:', bits.charAt(1));
   console.log('Bit 2:', bits.charAt(2));
+  console.log('Bit 3 (Education):', bits.charAt(3));
+  console.log('Bit 4 (Professional Licenses):', bits.charAt(4));
+  console.log('Bit 5 (Residence History):', bits.charAt(5));
+  console.log('Bit 9 (Employment History):', bits.charAt(9));
   
   return {
     language,

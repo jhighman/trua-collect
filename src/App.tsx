@@ -18,6 +18,17 @@ const ConfirmationPage: React.FC = () => (
 );
 
 const App: React.FC = () => {
+  // Get URL parameters
+  const urlSearch = window.location.search;
+  const urlParams = new URLSearchParams(urlSearch);
+  const keyParam = urlParams.get('key');
+  const tokenParam = urlParams.get('token');
+  
+  // Debug raw URL and parameters
+  console.log('App - Raw window.location.href:', window.location.href);
+  console.log('App - Raw window.location.search:', urlSearch);
+  console.log('App - URL parameters:', { key: keyParam, token: tokenParam });
+  
   // Mock submission handler
   const handleSubmit = async (formData: FormState & { referenceToken?: string }) => {
     // eslint-disable-next-line no-console
@@ -35,8 +46,8 @@ const App: React.FC = () => {
     <TranslationProvider initialLanguage="en">
       <Router>
         <Routes>
-          <Route path="/" element={<Navigate to="/verify" />} />
-          <Route path="/verify" element={<VerificationEntry onSubmit={handleSubmit} />} />
+          <Route path="/" element={<Navigate to="/verify" replace={false} />} />
+          <Route path="/verify" element={<VerificationEntry onSubmit={handleSubmit} urlKey={keyParam || undefined} urlToken={tokenParam || undefined} />} />
           <Route path="/confirmation" element={<ConfirmationPage />} />
           <Route path="/logs" element={<FormStateViewer />} />
         </Routes>

@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import React, { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { parseCollectionKey, getRequirements } from '../utils/collectionKeyParser';
 import { v4 as uuidv4 } from 'uuid';
 import { FormProvider, FormState } from '../context/FormContext';
@@ -10,6 +10,8 @@ import { FormLogger } from '../utils/FormLogger';
 
 interface VerificationEntryProps {
   onSubmit: (formData: FormState & { referenceToken?: string }) => Promise<void>;
+  urlKey?: string;
+  urlToken?: string;
 }
 
 /**
@@ -37,11 +39,14 @@ const generateReferenceToken = (): string => {
   return uuidv4();
 };
 
-const VerificationEntry: React.FC<VerificationEntryProps> = ({ onSubmit }) => {
+const VerificationEntry: React.FC<VerificationEntryProps> = ({ onSubmit, urlKey, urlToken }) => {
+  // Log URL parameters from props
+  console.log('VerificationEntry - URL parameters from props:', { urlKey, urlToken });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [referenceToken, setReferenceToken] = useState<string | null>(null);
   const [collectionKey, setCollectionKey] = useState<string | null>(null);
+  const [isDefaultKey, setIsDefaultKey] = useState<boolean>(true);
   const [currentStep, setCurrentStep] = useState<FormStepId>('personal-info');
   const [initialStepSet, setInitialStepSet] = useState<boolean>(false);
   
@@ -73,56 +78,57 @@ const VerificationEntry: React.FC<VerificationEntryProps> = ({ onSubmit }) => {
   }, [currentStep]);
   
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get the URL directly from the window object
+  const directUrlSearch = window.location.search;
+  const directUrlParams = new URLSearchParams(directUrlSearch);
+  const directKeyParam = directUrlParams.get('key');
+  
+  // Log the raw URL at the component level
+  console.log('VerificationEntry - Direct window.location.href:', window.location.href);
+  console.log('VerificationEntry - Direct window.location.search:', directUrlSearch);
+  console.log('VerificationEntry - Direct key param:', directKeyParam);
 
   useEffect(() => {
-    // Parse URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    const key = urlParams.get('key');
+    // Use the URL parameters from props if available, otherwise try to get them from the URL
+    console.log('VerificationEntry - Using URL parameters from props in effect');
+    
+    // Get token from props or URL or generate a default
+    const token = urlToken || directUrlParams.get('token');
+    
+    // Use the key from props or URL
+    const key = urlKey || directKeyParam;
 
-    // Development mode - use default values if URL parameters are missing
-    if (!token || !key) {
-      // eslint-disable-next-line no-console
-      console.log('Development mode: Using default values for missing URL parameters');
-      
-      // Generate default reference token if missing
-      const defaultToken = token || generateReferenceToken();
-      
-      // Generate default collection key if missing
-      const defaultKey = key || generateDefaultCollectionKey();
-      
-      try {
-        // Validate the collection key (even if it's the default one)
-        parseCollectionKey(defaultKey);
-        
-        // Store token and key
-        setReferenceToken(defaultToken);
-        setCollectionKey(defaultKey);
-        setLoading(false);
-        
-        // Log the default values for debugging
-        if (!token) console.log('Using default reference token:', defaultToken);
-        if (!key) console.log('Using default collection key:', defaultKey);
-        
-        return;
-      } catch (error) {
-        setError('Invalid collection key format.');
-        setLoading(false);
-        return;
-      }
-    }
-
-    // Normal mode - validate the provided URL parameters
+    // Log the URL parameters for debugging
+    console.log('VerificationEntry - URL parameters from props or direct access:', { token, key });
+    
+    // Generate default reference token if missing
+    const defaultToken = token || generateReferenceToken();
+    
+    // Use the URL key if provided, otherwise use the default
+    const collectionKeyToUse = key || generateDefaultCollectionKey();
+    const keyIsDefault = !key;
+    
     try {
-      parseCollectionKey(key);
-      setReferenceToken(token);
-      setCollectionKey(key);
+      // Validate the collection key
+      parseCollectionKey(collectionKeyToUse);
+      
+      // Store token, key, and isDefaultKey flag
+      setReferenceToken(defaultToken);
+      setCollectionKey(collectionKeyToUse);
+      setIsDefaultKey(keyIsDefault);
       setLoading(false);
+      
+      // Log the values for debugging
+      console.log('VerificationEntry - Using collection key:', collectionKeyToUse);
+      console.log('VerificationEntry - Key from URL:', !!key);
+      console.log('VerificationEntry - Is default key:', keyIsDefault);
     } catch (error) {
-      setError('Invalid collection key. Please use a valid invitation link.');
+      setError('Invalid collection key format.');
       setLoading(false);
     }
-  }, []);
+  }, [urlKey, urlToken]); // Re-run when URL parameters from props change
 
   // Handle form submission with reference token
   const handleSubmit = async (formData: FormState) => {
@@ -171,7 +177,7 @@ const VerificationEntry: React.FC<VerificationEntryProps> = ({ onSubmit }) => {
   const requirements = getRequirements(collectionKey);
 
   // Check if we're using default values (development mode)
-  const isDevelopmentMode = !window.location.search.includes('token=') || !window.location.search.includes('key=');
+  const isDevelopmentMode = !directUrlParams.get('token') || !directKeyParam;
 
   // Render the form with the appropriate requirements
   return (
@@ -192,8 +198,8 @@ const VerificationEntry: React.FC<VerificationEntryProps> = ({ onSubmit }) => {
         <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative mb-4" role="alert">
           <strong className="font-bold">Development Mode: </strong>
           <span className="block sm:inline">
-            Using {!window.location.search.includes('token=') ? 'generated reference token' : 'provided token'} and
-            {!window.location.search.includes('key=') ? ' default collection key with maximum scope' : ' provided collection key'}.
+            Using {!directUrlParams.get('token') ? 'generated reference token' : 'provided token'} and
+            {!directKeyParam ? ' default collection key with maximum scope' : ' provided collection key'}.
           </span>
         </div>
       )}
@@ -202,6 +208,7 @@ const VerificationEntry: React.FC<VerificationEntryProps> = ({ onSubmit }) => {
         requirements={requirements}
         onSubmit={handleSubmit}
         initialStep={!initialStepSet ? currentStep : undefined}
+        isDefaultKey={isDefaultKey}
         onStepChange={(step, formState) => {
           // Mark that we've set the initial step
           if (!initialStepSet) {

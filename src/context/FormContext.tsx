@@ -23,6 +23,7 @@ export type StepId =
 export interface FormContextType {
   // Current state
   currentStep: FormStepId;
+  currentContextStep: FormStepId | null; // Add currentContextStep to the interface
   formState: FormState;
   navigationState: NavigationState;
   
@@ -73,6 +74,7 @@ interface FormProviderProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSubmit: (formData: any) => Promise<void>;
   initialStep?: FormStepId;
+  isDefaultKey?: boolean; // Add isDefaultKey property
   onStepChange?: (step: FormStepId, formState: FormState) => void;
 }
 
@@ -82,20 +84,37 @@ export const FormProvider: React.FC<FormProviderProps> = ({
   requirements,
   onSubmit,
   initialStep,
+  isDefaultKey = true, // Default to true if not provided
   onStepChange
 }) => {
+  console.log('FormProvider: Rendering with initialStep:', initialStep, 'isDefaultKey:', isDefaultKey);
   // Initialize form manager with configuration
   const formManager = useMemo(() => {
+    console.log('FormContext: Creating or updating FormStateManager with requirements:', requirements);
+    console.log('FormContext: isDefaultKey:', isDefaultKey);
+    
+    // Create a new config with the current requirements and isDefaultKey
+    const config: FormConfig = FormConfigGenerator.generateFormConfig(requirements, isDefaultKey);
+    console.log('FormContext: Generated config with initialStep:', config.initialStep);
+    
     // Only create a new instance if it doesn't exist
     if (!formManagerInstance) {
       console.log('FormContext: Creating new FormStateManager (singleton)');
-      const config: FormConfig = FormConfigGenerator.generateFormConfig(requirements);
       formManagerInstance = new FormStateManager(config);
     } else {
-      console.log('FormContext: Reusing existing FormStateManager instance');
+      console.log('FormContext: Updating existing FormStateManager with new config');
+      // Update the existing instance with the new config
+      formManagerInstance.updateConfig(config);
     }
+    
+    // Set the current step based on the config's initialStep if no initialStep is provided
+    if (!initialStep) {
+      console.log('FormContext: Setting currentStep from config:', config.initialStep);
+      setCurrentContextStep(config.initialStep);
+    }
+    
     return formManagerInstance;
-  }, []); // Empty dependency array - only create once
+  }, [requirements]); // Recreate when requirements change
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -674,6 +693,7 @@ export const FormProvider: React.FC<FormProviderProps> = ({
 
   const contextValue = useMemo(() => ({
     currentStep: formState.currentStep,
+    currentContextStep, // Add currentContextStep to the context
     formState,
     navigationState,
     canMoveNext: navigationState.canMoveNext,
@@ -697,6 +717,7 @@ export const FormProvider: React.FC<FormProviderProps> = ({
     formErrors
   }), [
     formState,
+    currentContextStep, // Add currentContextStep to the dependency array
     navigationState,
     moveToNextStep,
     moveToPreviousStep,

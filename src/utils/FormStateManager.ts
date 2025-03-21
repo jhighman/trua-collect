@@ -61,6 +61,36 @@ export class FormStateManager {
     this.state = this.initializeState();
     this.isInitialized = true;
   }
+  
+  // Update the config and reinitialize the state
+  public updateConfig(config: FormConfig): void {
+    console.log('FormStateManager: Updating config with new initialStep:', config.initialStep);
+    this.config = config;
+    
+    // Preserve the current state if possible
+    const currentState = this.state;
+    
+    // Reinitialize with the new config
+    this.state = this.initializeState();
+    
+    // If we had a previous state, try to preserve completed steps
+    if (currentState && currentState.steps) {
+      console.log('FormStateManager: Preserving completed steps from previous state');
+      
+      // Copy completed steps from the previous state
+      Object.keys(currentState.steps).forEach(stepId => {
+        const step = stepId as FormStepId;
+        if (currentState.steps[step] && currentState.steps[step].isComplete) {
+          console.log(`FormStateManager: Preserving completed step: ${step}`);
+          this.state.steps[step] = { ...currentState.steps[step] };
+        }
+      });
+    }
+    
+    // Set the current step to the config's initialStep
+    this.state.currentStep = config.initialStep;
+    console.log('FormStateManager: Updated currentStep to:', this.state.currentStep);
+  }
 
   private initializeState(): FormState {
     console.log('VERBOSE: FormStateManager: Initializing state');

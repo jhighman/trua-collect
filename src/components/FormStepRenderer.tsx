@@ -18,22 +18,29 @@ export const FormStepRenderer: React.FC<FormStepRendererProps> = ({
   currentStep,
   consentsRequired
 }) => {
-  const { moveToNextStep, navigationState, formState } = useForm();
+  const { moveToNextStep, navigationState, formState, currentContextStep } = useForm();
   const { availableSteps } = navigationState;
+  
+  // Log the current step from props and context for debugging
+  console.log('FormStepRenderer: currentStep prop:', currentStep);
+  console.log('FormStepRenderer: currentContextStep from context:', currentContextStep || 'not set');
+  
+  // Use the context step if available, otherwise use the prop
+  const stepToRender = currentContextStep || currentStep;
 
   // Skip steps that are not required based on the collection key
   React.useEffect(() => {
     // Log available steps and current step for debugging
     console.log('Available steps:', availableSteps);
-    console.log('Current step:', currentStep);
+    console.log('Current step:', stepToRender);
     console.log('Consents required:', consentsRequired);
     
     // If the current step is not in the available steps, move to the next step
-    if (!availableSteps.includes(currentStep)) {
+    if (!availableSteps.includes(stepToRender)) {
       console.log('Current step not in available steps, finding next step...');
       
       // Find the next available step
-      const currentStepIndex = availableSteps.indexOf(currentStep);
+      const currentStepIndex = availableSteps.indexOf(stepToRender);
       console.log('Current step index:', currentStepIndex);
       
       if (currentStepIndex === -1) {
@@ -49,7 +56,7 @@ export const FormStepRenderer: React.FC<FormStepRendererProps> = ({
           'signature'
         ];
         
-        const currentStepOrderIndex = stepOrder.indexOf(currentStep);
+        const currentStepOrderIndex = stepOrder.indexOf(stepToRender);
         console.log('Current step order index:', currentStepOrderIndex);
         
         // Find the first available step that comes after the current step in the order
@@ -72,13 +79,13 @@ export const FormStepRenderer: React.FC<FormStepRendererProps> = ({
     }
 
     // Special case for consents step
-    if (currentStep === 'consents' && !consentsRequired) {
+    if (stepToRender === 'consents' && !consentsRequired) {
       console.log('Consents step not required, moving to next step');
       moveToNextStep();
     }
     
     // Special case for education step when professional-licenses is not available
-    if (currentStep === 'education' && !availableSteps.includes('professional-licenses')) {
+    if (stepToRender === 'education' && !availableSteps.includes('professional-licenses')) {
       console.log('VERBOSE: Education step with professional-licenses not available');
       console.log('VERBOSE: Available steps:', availableSteps);
       console.log('VERBOSE: Current step:', currentStep);
@@ -133,15 +140,15 @@ export const FormStepRenderer: React.FC<FormStepRendererProps> = ({
         console.log('VERBOSE: Education step is not complete, not moving to next step');
       }
     }
-  }, [currentStep, consentsRequired, availableSteps, moveToNextStep, formState]);
+  }, [stepToRender, consentsRequired, availableSteps, moveToNextStep, formState]);
 
   // Log the current step for debugging
-  console.log('VERBOSE: FormStepRenderer: Rendering step:', currentStep);
+  console.log('VERBOSE: FormStepRenderer: Rendering step:', stepToRender);
   console.log('VERBOSE: FormStepRenderer: Available steps:', availableSteps);
   console.log('VERBOSE: FormStepRenderer: Is professional-licenses in available steps?', availableSteps.includes('professional-licenses'));
   
   // Render the appropriate step component based on the current step
-  switch (currentStep) {
+  switch (stepToRender) {
     case 'personal-info':
       console.log('VERBOSE: FormStepRenderer: Rendering PersonalInfoStep');
       console.log('VERBOSE: FormStepRenderer: Next step should be:', availableSteps[availableSteps.indexOf('personal-info') + 1]);
