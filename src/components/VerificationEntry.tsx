@@ -7,6 +7,7 @@ import { FormProvider, FormState } from '../context/FormContext';
 import { FormStepId } from '../utils/FormConfigGenerator';
 import FormStepRenderer from './FormStepRenderer';
 import { FormLogger } from '../utils/FormLogger';
+import { getConfig } from '../utils/EnvironmentConfig';
 
 interface VerificationEntryProps {
   onSubmit: (formData: FormState & { referenceToken?: string }) => Promise<void>;
@@ -19,6 +20,12 @@ interface VerificationEntryProps {
  * This includes all verification steps and maximum years for history
  */
 const generateDefaultCollectionKey = (): string => {
+  // Get the default collection key from environment configuration
+  const config = getConfig();
+  const defaultKey = config.defaultCollectionKey;
+  
+  console.log('VerificationEntry - Using default collection key from environment:', defaultKey);
+  
   // Format: en000111100100
   // Language: en
   // Bits 1-3: No consents enabled (000) - for testing skipping consents
@@ -29,7 +36,7 @@ const generateDefaultCollectionKey = (): string => {
   // Bits 7-9: Residence history years (100 = 10 years)
   // Bit 10: Employment history enabled (1)
   // Bits 11-13: Employment history years (100 = 10 years)
-  return 'en000111100100';
+  return defaultKey;
 };
 
 /**

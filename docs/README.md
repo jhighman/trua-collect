@@ -11,6 +11,7 @@ This folder contains comprehensive documentation for the Trua Verify system, whi
    - Added dynamic initial step feature
 3. [Collection Flow](./collection-flow.md) - Detailed flow of the collection process
 4. [Form Management Implementation](./form-management-implementation.md) - Form state management and navigation
+5. [Collection Key Scenarios](./collection-key-scenarios.md) - List of collection key combinations and testing scenarios
 
 ## Design Documentation
 

@@ -5,6 +5,7 @@ import VerificationEntry from './components/VerificationEntry';
 import { FormState } from './context/FormContext';
 import { TranslationProvider } from './context/TranslationContext';
 import FormStateViewer from './components/FormStateViewer';
+import { getConfig } from './utils/EnvironmentConfig';
 import './App.css';
 
 const ConfirmationPage: React.FC = () => (
@@ -18,6 +19,9 @@ const ConfirmationPage: React.FC = () => (
 );
 
 const App: React.FC = () => {
+  // Get environment configuration
+  const config = getConfig();
+  
   // Get URL parameters
   const urlSearch = window.location.search;
   const urlParams = new URLSearchParams(urlSearch);
@@ -28,6 +32,11 @@ const App: React.FC = () => {
   console.log('App - Raw window.location.href:', window.location.href);
   console.log('App - Raw window.location.search:', urlSearch);
   console.log('App - URL parameters:', { key: keyParam, token: tokenParam });
+  console.log('App - Environment configuration:', {
+    defaultCollectionKey: config.defaultCollectionKey,
+    devMode: config.devMode,
+    logLevel: config.logLevel
+  });
   
   // Mock submission handler
   const handleSubmit = async (formData: FormState & { referenceToken?: string }) => {

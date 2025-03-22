@@ -1,5 +1,6 @@
 import type { Requirements } from './collectionKeyParser';
 import { parseCollectionKey } from './collectionKeyParser';
+import { getConfig } from './EnvironmentConfig';
 
 // Input/Output Types
 export type FormStepId = 
@@ -289,11 +290,14 @@ export function generateFormConfig(requirements: Requirements, isDefaultKey: boo
     employment_history: requirements.verification_steps.employment_history.enabled
   });
   
-  // Use the original collection key for parsing
+  // Get the default collection key from environment configuration
+  const config = getConfig();
+  const defaultCollectionKey = config.defaultCollectionKey;
+  
+  // Use the default collection key from environment configuration
   // The collection key format is: en + 12 bits
-  // We don't need to construct a new one, just use the default one
-  const { bits } = parseCollectionKey('en000111100100');
-  console.log('FormConfigGenerator: Using default collection key bits for parsing');
+  const { bits } = parseCollectionKey(defaultCollectionKey);
+  console.log('FormConfigGenerator: Using default collection key from environment:', defaultCollectionKey);
   
   // Map bits to steps
   const stepMap: FormStepId[] = [

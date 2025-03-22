@@ -6,20 +6,42 @@ This document explains how to configure the Trua Collect application using envir
 
 The Trua Collect application uses environment variables to configure various aspects of its behavior. This approach allows for different configurations in different environments (development, staging, production) without changing the code.
 
+## Browser vs. Node.js Environments
+
+The application runs in two different environments:
+
+1. **Browser Environment**: The client-side code that runs in the user's browser.
+2. **Node.js Environment**: The server-side code and tests that run in Node.js.
+
+Each environment has different ways of accessing environment variables:
+
+- **Browser Environment**: Uses Vite's `import.meta.env` mechanism, which requires variables to be prefixed with `VITE_`.
+- **Node.js Environment**: Uses Node.js's `process.env` object.
+
 ## Setup
 
-1. Copy the `.env.example` file to `.env` in the project root:
+1. Copy the `.env.example` file to `.env.local` in the project root:
    ```bash
-   cp .env.example .env
+   cp .env.example .env.local
    ```
 
-2. Edit the `.env` file to set the desired configuration values.
+2. Edit the `.env.local` file to set the desired configuration values.
 
 3. The application will automatically load these values at startup.
 
+## Configuration Files
+
+The application uses several environment configuration files:
+
+- `.env`: Base environment variables for all environments.
+- `.env.local`: Local overrides (not committed to version control).
+- `.env.development`: Development-specific variables.
+- `.env.production`: Production-specific variables.
+- `.env.test`: Test-specific variables.
+
 ## Configuration Variables
 
-### DEFAULT_COLLECTION_KEY
+### DEFAULT_COLLECTION_KEY / VITE_DEFAULT_COLLECTION_KEY
 
 **Purpose**: Defines the default collection key to use when no key is provided in the URL.
 
@@ -32,13 +54,13 @@ The Trua Collect application uses environment variables to configure various asp
 - The default key determines which steps are enabled and the initial step.
 - Typically, the default key enables all steps and starts at the personal-info step.
 
-### PORT
+### PORT / VITE_PORT
 
 **Purpose**: Defines the port on which the application server will listen.
 
 **Default**: `3000`
 
-### DEV_MODE
+### DEV_MODE / VITE_DEV_MODE
 
 **Purpose**: Enables or disables development mode features.
 
@@ -51,7 +73,7 @@ The Trua Collect application uses environment variables to configure various asp
 - Error messages include more details.
 - Hot reloading is enabled.
 
-### LOG_LEVEL
+### LOG_LEVEL / VITE_LOG_LEVEL
 
 **Purpose**: Sets the verbosity of application logging.
 
@@ -59,13 +81,13 @@ The Trua Collect application uses environment variables to configure various asp
 
 **Default**: `info`
 
-### API_BASE_URL
+### API_BASE_URL / VITE_API_BASE_URL
 
 **Purpose**: Defines the base URL for API requests.
 
 **Default**: `http://localhost:3001/api`
 
-### DOCUMENT_STORAGE_PATH
+### DOCUMENT_STORAGE_PATH / VITE_DOCUMENT_STORAGE_PATH
 
 **Purpose**: Defines the path where generated documents will be stored.
 
@@ -73,24 +95,53 @@ The Trua Collect application uses environment variables to configure various asp
 
 ## Using Environment Variables in the Code
 
-Environment variables are accessed in the code using the `process.env` object:
+### In Browser Environment
+
+In the browser environment, environment variables are accessed using Vite's `import.meta.env` object:
 
 ```typescript
-// Example: Accessing the default collection key
+// Example: Accessing the default collection key in browser code
+const defaultCollectionKey = import.meta.env.VITE_DEFAULT_COLLECTION_KEY || 'en000111100100';
+
+// Example: Checking if in development mode
+const isDevelopmentMode = import.meta.env.VITE_DEV_MODE === 'true';
+```
+
+### In Node.js Environment
+
+In the Node.js environment, environment variables are accessed using the `process.env` object:
+
+```typescript
+// Example: Accessing the default collection key in Node.js code
 const defaultCollectionKey = process.env.DEFAULT_COLLECTION_KEY || 'en000111100100';
 
 // Example: Checking if in development mode
 const isDevelopmentMode = process.env.DEV_MODE === 'true';
 ```
 
+### Using the EnvironmentConfig Utility
+
+The application provides an `EnvironmentConfig` utility that abstracts away the differences between browser and Node.js environments:
+
+```typescript
+import { getConfig } from './utils/EnvironmentConfig';
+
+// Get the environment configuration
+const config = getConfig();
+
+// Access configuration values
+const defaultCollectionKey = config.defaultCollectionKey;
+const isDevelopmentMode = config.devMode;
+```
+
 ## Environment-Specific Configuration
 
 Different environments can have different configurations:
 
-1. **Development**: Use `.env` file with development-specific values.
+1. **Development**: Use `.env.development` and `.env.local` files with development-specific values.
 2. **Testing**: Use `.env.test` file or set environment variables in CI/CD pipeline.
-3. **Staging**: Set environment variables on the staging server.
-4. **Production**: Set environment variables on the production server.
+3. **Staging**: Use `.env.staging` file or set environment variables on the staging server.
+4. **Production**: Use `.env.production` file or set environment variables on the production server.
 
 ## Collection Key Configuration
 
@@ -98,6 +149,7 @@ The default collection key is particularly important as it determines the form's
 
 ```
 DEFAULT_COLLECTION_KEY=en000111100100
+VITE_DEFAULT_COLLECTION_KEY=en000111100100
 ```
 
 Breaking down this example:
@@ -115,10 +167,21 @@ You can customize this key to enable or disable specific steps and set requireme
 
 ## Security Considerations
 
-The `.env` file should never be committed to version control, as it may contain sensitive information. The `.env.example` file, which contains no sensitive values, should be committed instead.
+The `.env.local` file should never be committed to version control, as it may contain sensitive information. The `.env.example` file, which contains no sensitive values, should be committed instead.
 
-Add `.env` to your `.gitignore` file to prevent accidental commits:
+Add `.env.local` to your `.gitignore` file to prevent accidental commits:
 
 ```
 # .gitignore
-.env
+.env.local
+```
+
+## Vite-Specific Considerations
+
+Vite has specific rules for environment variables:
+
+1. Only variables prefixed with `VITE_` are exposed to the client-side code.
+2. Environment variables are replaced at build time, not runtime.
+3. Changes to environment variables require a server restart.
+
+For more information, see the [Vite documentation on environment variables](https://vitejs.dev/guide/env-and-mode.html).

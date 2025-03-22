@@ -165,6 +165,7 @@ For more detailed information, see the documentation in the `docs/` directory:
 - [Timeline Implementation](docs/timeline-implementation.md)
 - [Form Management Implementation](docs/form-management-implementation.md)
 - [Environment Configuration](docs/environment-configuration.md)
+- [Collection Key Scenarios](docs/collection-key-scenarios.md)
 - [User Guide](docs/user-guide.md)
 - [Developer Guide](docs/developer-guide.md)
 - [Recommendations](docs/recommendations.md)
