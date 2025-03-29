@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useTranslation } from '../context/TranslationContext';
+import './EmploymentEntry.css';
 
 export interface EmploymentEntryData {
   type: string;
@@ -17,18 +19,31 @@ export interface EmploymentEntryData {
 
 interface EmploymentEntryProps {
   entry: EmploymentEntryData;
-  index: number;
   onUpdate: (entry: EmploymentEntryData) => void;
   onRemove: () => void;
+  employmentTypes: { value: string; label: string; }[];
+  isCompanyRequired: boolean;
+  isPositionRequired: boolean;
+  isContactRequired: boolean;
+  onCancel?: () => void;
+  isNew?: boolean;
+  index?: number;
 }
 
 export const EmploymentEntry: React.FC<EmploymentEntryProps> = ({
   entry,
-  index,
   onUpdate,
-  onRemove
+  onRemove,
+  employmentTypes,
+  isCompanyRequired,
+  isPositionRequired,
+  isContactRequired,
+  onCancel,
+  isNew = false,
+  index = 0
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
+  const { t } = useTranslation();
+  const [isEditing, setIsEditing] = useState(isNew);
   const [editedEntry, setEditedEntry] = useState<EmploymentEntryData>(entry);
 
   const handleEdit = () => {
@@ -37,8 +52,12 @@ export const EmploymentEntry: React.FC<EmploymentEntryProps> = ({
   };
 
   const handleCancel = () => {
-    setIsEditing(false);
-    setEditedEntry({...entry});
+    if (onCancel) {
+      onCancel();
+    } else {
+      setIsEditing(false);
+      setEditedEntry({...entry});
+    }
   };
 
   const handleSave = () => {
@@ -63,32 +82,19 @@ export const EmploymentEntry: React.FC<EmploymentEntryProps> = ({
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
   };
 
-  // Employment type options
-  const employmentTypes = [
-    { value: 'Job', label: 'Job' },
-    { value: 'Education', label: 'Education' },
-    { value: 'Unemployed', label: 'Unemployed' },
-    { value: 'Other', label: 'Other' }
-  ];
-
-  // Determine if company and position fields are required based on type
-  const isCompanyRequired = editedEntry.type === 'Job';
-  const isPositionRequired = editedEntry.type === 'Job';
-  const isContactRequired = editedEntry.type === 'Job';
-
-  return (
-    <div className="employment-entry">
-      {isEditing ? (
+  if (isEditing) {
+    return (
+      <div className="employment-entry">
         <div className="edit-form">
           <div className="form-group">
-            <label htmlFor={`edit-type-${index}`}>Entry Type</label>
+            <label htmlFor={`edit-type-${index}`}>{t('employment.type')}</label>
             <select
               id={`edit-type-${index}`}
               value={editedEntry.type}
               onChange={(e) => setEditedEntry({...editedEntry, type: e.target.value})}
               required
             >
-              <option value="">Select Type</option>
+              <option value="">{t('employment.select_type')}</option>
               {employmentTypes.map(type => (
                 <option key={type.value} value={type.value}>{type.label}</option>
               ))}
@@ -97,7 +103,7 @@ export const EmploymentEntry: React.FC<EmploymentEntryProps> = ({
           
           <div className="form-group">
             <label htmlFor={`edit-company-${index}`}>
-              Company/Organization
+              {t('employment.company')}
               {isCompanyRequired && <span aria-hidden="true"> *</span>}
             </label>
             <input
@@ -111,7 +117,7 @@ export const EmploymentEntry: React.FC<EmploymentEntryProps> = ({
           
           <div className="form-group">
             <label htmlFor={`edit-position-${index}`}>
-              Position/Title
+              {t('employment.position')}
               {isPositionRequired && <span aria-hidden="true"> *</span>}
             </label>
             <input
@@ -124,7 +130,7 @@ export const EmploymentEntry: React.FC<EmploymentEntryProps> = ({
           </div>
           
           <div className="form-group">
-            <label htmlFor={`edit-city-${index}`}>City</label>
+            <label htmlFor={`edit-city-${index}`}>{t('employment.city')}</label>
             <input
               type="text"
               id={`edit-city-${index}`}
@@ -134,7 +140,7 @@ export const EmploymentEntry: React.FC<EmploymentEntryProps> = ({
           </div>
           
           <div className="form-group">
-            <label htmlFor={`edit-state-${index}`}>State/Province</label>
+            <label htmlFor={`edit-state-${index}`}>{t('employment.state')}</label>
             <input
               type="text"
               id={`edit-state-${index}`}
@@ -144,7 +150,7 @@ export const EmploymentEntry: React.FC<EmploymentEntryProps> = ({
           </div>
           
           <div className="form-group">
-            <label htmlFor={`edit-description-${index}`}>Description</label>
+            <label htmlFor={`edit-description-${index}`}>{t('employment.description')}</label>
             <textarea
               id={`edit-description-${index}`}
               value={editedEntry.description}
@@ -155,7 +161,7 @@ export const EmploymentEntry: React.FC<EmploymentEntryProps> = ({
           
           <div className="form-group">
             <label htmlFor={`edit-contact-name-${index}`}>
-              Contact Name
+              {t('employment.contact_name')}
               {isContactRequired && <span aria-hidden="true"> *</span>}
             </label>
             <input
@@ -164,13 +170,13 @@ export const EmploymentEntry: React.FC<EmploymentEntryProps> = ({
               value={editedEntry.contact_name}
               onChange={(e) => setEditedEntry({...editedEntry, contact_name: e.target.value})}
               required={isContactRequired}
-              placeholder={isContactRequired ? "Name and title of reference" : ""}
+              placeholder={isContactRequired ? t('employment.contact_name_placeholder') : ""}
             />
           </div>
           
           <div className="form-group">
             <label htmlFor={`edit-contact-info-${index}`}>
-              Contact Information
+              {t('employment.contact_info')}
               {isContactRequired && <span aria-hidden="true"> *</span>}
             </label>
             <input
@@ -179,12 +185,12 @@ export const EmploymentEntry: React.FC<EmploymentEntryProps> = ({
               value={editedEntry.contact_info}
               onChange={(e) => setEditedEntry({...editedEntry, contact_info: e.target.value})}
               required={isContactRequired}
-              placeholder={isContactRequired ? "Email or phone number" : ""}
+              placeholder={isContactRequired ? t('employment.contact_info_placeholder') : ""}
             />
           </div>
           
           <div className="form-group">
-            <label htmlFor={`edit-start-date-${index}`}>Start Date</label>
+            <label htmlFor={`edit-start-date-${index}`}>{t('employment.start_date')}</label>
             <input
               type="date"
               id={`edit-start-date-${index}`}
@@ -195,112 +201,77 @@ export const EmploymentEntry: React.FC<EmploymentEntryProps> = ({
           </div>
           
           <div className="form-group">
-            <input
-              type="checkbox"
-              id={`edit-is-current-${index}`}
-              checked={editedEntry.is_current}
-              onChange={(e) => setEditedEntry({
-                ...editedEntry, 
-                is_current: e.target.checked,
-                end_date: e.target.checked ? null : editedEntry.end_date
-              })}
-            />
-            <label htmlFor={`edit-is-current-${index}`}>I currently work here</label>
+            <label>
+              <input
+                type="checkbox"
+                checked={editedEntry.is_current}
+                onChange={(e) => setEditedEntry({
+                  ...editedEntry,
+                  is_current: e.target.checked,
+                  end_date: e.target.checked ? null : editedEntry.end_date
+                })}
+              />
+              {t('employment.is_current')}
+            </label>
           </div>
           
           {!editedEntry.is_current && (
             <div className="form-group">
-              <label htmlFor={`edit-end-date-${index}`}>End Date</label>
+              <label htmlFor={`edit-end-date-${index}`}>{t('employment.end_date')}</label>
               <input
                 type="date"
                 id={`edit-end-date-${index}`}
                 value={editedEntry.end_date || ''}
                 onChange={(e) => setEditedEntry({...editedEntry, end_date: e.target.value})}
-                required
+                required={!editedEntry.is_current}
               />
             </div>
           )}
-          
+
           <div className="form-actions">
-            <button 
-              type="button" 
-              className="button secondary" 
-              onClick={handleCancel}
-            >
-              Cancel
+            <button className="cancel" onClick={handleCancel}>
+              {t('common.cancel')}
             </button>
-            <button 
-              type="button" 
-              className="button primary" 
-              onClick={handleSave}
-              disabled={
-                !editedEntry.type || 
-                !editedEntry.start_date || 
-                (!editedEntry.is_current && !editedEntry.end_date) ||
-                (editedEntry.type === 'Job' && (!editedEntry.company || !editedEntry.position || !editedEntry.contact_name || !editedEntry.contact_info))
-              }
-            >
-              Save Changes
+            <button className="save" onClick={handleSave}>
+              {t('common.save')}
             </button>
           </div>
         </div>
-      ) : (
-        <div className="entry-display" role="region" aria-label={entry.type === 'Job' ? `Employment at ${entry.company}` : entry.type}>
-          <div className="entry-header">
-            <h4 id={`employment-title-${index}`}>{entry.type === 'Job' ? `${entry.position} at ${entry.company}` : entry.type}</h4>
-            <div className="entry-actions">
-              <button
-                type="button"
-                className="button icon"
-                onClick={handleEdit}
-                aria-label="Edit employment"
-                title="Edit this employment entry"
-              >
-                <span aria-hidden="true">✏️</span>
-              </button>
-              <button
-                type="button"
-                className="button icon"
-                onClick={onRemove}
-                aria-label="Remove employment"
-                title="Remove this employment entry"
-              >
-                <span aria-hidden="true">🗑️</span>
-              </button>
-            </div>
-          </div>
-          
-          <div className="entry-details">
-            {entry.type === 'Job' && (
-              <>
-                <p>{entry.company}</p>
-                {(entry.city || entry.state_province) && (
-                  <p>{[entry.city, entry.state_province].filter(Boolean).join(', ')}</p>
-                )}
-                {entry.description && <p className="description">{entry.description}</p>}
-                {entry.contact_name && (
-                  <p className="contact">
-                    Contact: {entry.contact_name} ({entry.contact_info})
-                  </p>
-                )}
-              </>
-            )}
-            {entry.type === 'Education' && (
-              <p>{entry.description || 'Education period'}</p>
-            )}
-            {entry.type === 'Unemployed' && (
-              <p>{entry.description || 'Unemployment period'}</p>
-            )}
-            {entry.type === 'Other' && (
-              <p>{entry.description || 'Other activity'}</p>
-            )}
-            <p className="date-range">
-              {formatDate(entry.start_date)} - {entry.is_current ? 'Present' : formatDate(entry.end_date)}
-              <span className="duration">({entry.duration_years?.toFixed(1)} years)</span>
-            </p>
-          </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="employment-entry">
+      <div className="entry-header">
+        <div>
+          <h3 className="entry-title">
+            {entry.position} {entry.company && `at ${entry.company}`}
+          </h3>
+          <p className="entry-subtitle">
+            {entry.city}{entry.state_province && `, ${entry.state_province}`}
+          </p>
+          <p className="entry-dates">
+            {formatDate(entry.start_date)} - {entry.is_current ? t('common.present') : formatDate(entry.end_date)}
+          </p>
         </div>
-      )}
+        <div className="entry-actions">
+          <button
+            className="button icon edit"
+            onClick={handleEdit}
+            aria-label={t('employment.edit')}
+          >
+            {t('common.edit')}
+          </button>
+          <button
+            className="button icon remove"
+            onClick={onRemove}
+            aria-label={t('employment.remove')}
+          >
+            {t('common.remove')}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

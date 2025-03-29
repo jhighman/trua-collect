@@ -5,7 +5,16 @@ interface TimelineEntry {
   startDate: string; // ISO date string
   endDate: string | null; // ISO date string or null for current
   id?: string | number; // Optional identifier for the entry
-  [key: string]: any; // Additional entry properties
+  type?: string;
+  company?: string;
+  position?: string;
+  city?: string;
+  state_province?: string;
+  description?: string;
+  contact_name?: string;
+  contact_info?: string;
+  is_current?: boolean;
+  duration_years?: number;
 }
 
 interface TimelineProps {
@@ -23,13 +32,18 @@ export const Timeline: React.FC<TimelineProps> = ({
 }) => {
   const { t, language } = useTranslation();
 
-  // Don't render if no entries
-  if (entries.length === 0) {
-    return null;
-  }
-
   // Calculate timeline span and positioning
   const timelineData = useMemo(() => {
+    if (entries.length === 0) {
+      return {
+        segments: [],
+        yearMarkers: [],
+        yearsAccounted: 0,
+        earliestDate: new Date(),
+        latestDate: new Date()
+      };
+    }
+
     // Sort entries by start date
     const sortedEntries = [...entries].sort((a, b) => 
       new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
@@ -142,7 +156,9 @@ export const Timeline: React.FC<TimelineProps> = ({
 
   // Find gaps in the timeline
   const gaps = useMemo(() => {
-    if (timelineData.segments.length <= 1) return [];
+    if (timelineData.segments.length <= 1) {
+      return [];
+    }
     
     const sortedSegments = [...timelineData.segments].sort((a, b) => a.startOffset - b.startOffset);
     const gapSegments = [];
@@ -168,13 +184,18 @@ export const Timeline: React.FC<TimelineProps> = ({
     return gapSegments;
   }, [timelineData.segments]);
 
+  // Don't render if no entries
+  if (entries.length === 0) {
+    return null;
+  }
+
   return (
     <div className="timeline-visualization">
       {/* Time accounted indicator */}
       <div className="time-accounted" role="region" aria-label={t('timeline.progress_label', { required: requiredYears.toString() })}>
         <div className="progress">
           <div 
-            className="progress-bar"
+            className={`progress-bar ${timelineData.yearsAccounted >= requiredYears ? 'complete' : ''}`}
             style={{ width: `${Math.min(100, (timelineData.yearsAccounted / requiredYears) * 100)}%` }}
             role="progressbar"
             aria-valuenow={timelineData.yearsAccounted}
@@ -187,6 +208,13 @@ export const Timeline: React.FC<TimelineProps> = ({
             current: timelineData.yearsAccounted.toString(),
             required: requiredYears.toString()
           })}
+          {timelineData.yearsAccounted < requiredYears && (
+            <div className="validation-message">
+              {t('timeline.validation_message', {
+                remaining: (requiredYears - timelineData.yearsAccounted).toFixed(1)
+              })}
+            </div>
+          )}
         </div>
       </div>
 

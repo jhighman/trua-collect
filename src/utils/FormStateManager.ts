@@ -66,126 +66,75 @@ export class FormStateManager {
   public updateConfig(config: FormConfig): void {
     console.log('FormStateManager: Updating config with new initialStep:', config.initialStep);
     
-    // Save the current step before updating
-    const currentStep = this.state.currentStep;
-    console.log('FormStateManager: Current step before update:', currentStep);
+    // Save the current state before updating
+    const currentState = this.state;
+    console.log('FormStateManager: Current state before update:', currentState);
     
     // Update the config
     this.config = config;
     
-    // Preserve the current state if possible
-    const currentState = this.state;
+    // Initialize new state but preserve existing values
+    const newState = this.initializeState();
     
-    // Reinitialize with the new config
-    this.state = this.initializeState();
-    
-    // If we had a previous state, try to preserve completed steps
+    // If we had a previous state, preserve all values and validation state
     if (currentState && currentState.steps) {
-      console.log('FormStateManager: Preserving completed steps from previous state');
+      console.log('FormStateManager: Preserving state from previous state');
       
-      // Copy completed steps from the previous state
       Object.keys(currentState.steps).forEach(stepId => {
         const step = stepId as FormStepId;
-        if (currentState.steps[step] && currentState.steps[step].isComplete) {
-          console.log(`FormStateManager: Preserving completed step: ${step}`);
-          this.state.steps[step] = { ...currentState.steps[step] };
+        if (currentState.steps[step]) {
+          console.log(`FormStateManager: Preserving step: ${step}`);
+          newState.steps[step] = {
+            ...currentState.steps[step],
+            // Preserve validation state
+            isValid: currentState.steps[step]!.isValid,
+            isComplete: currentState.steps[step]!.isComplete,
+            errors: { ...currentState.steps[step]!.errors },
+            // Preserve values and touched state
+            values: { ...currentState.steps[step]!.values },
+            touched: new Set(currentState.steps[step]!.touched)
+          };
         }
       });
     }
     
-    // IMPORTANT: Keep the current step instead of resetting to the initialStep
-    // Only use the initialStep if we don't have a current step
-    if (currentStep) {
-      this.state.currentStep = currentStep;
-      console.log('FormStateManager: Preserved current step:', currentStep);
-    } else {
-      this.state.currentStep = config.initialStep;
-      console.log('FormStateManager: Set to initial step:', config.initialStep);
-    }
+    // Keep the current step
+    newState.currentStep = currentState?.currentStep || config.initialStep;
+    console.log('FormStateManager: Setting current step to:', newState.currentStep);
+    
+    // Update the state
+    this.state = newState;
   }
 
   private initializeState(): FormState {
-    console.log('VERBOSE: FormStateManager: Initializing state');
+    console.log('FormStateManager: Initializing state');
     
     // If already initialized, return the current state to prevent resetting
     if (this.isInitialized && this.state) {
-      console.log('VERBOSE: FormStateManager: Already initialized, preserving current state');
-      console.log('VERBOSE: FormStateManager: Current step:', this.state.currentStep);
-      
-      // Mark as initialized to prevent future re-initializations
-      this.isInitialized = true;
-      
+      console.log('FormStateManager: Already initialized, preserving current state');
       return this.state;
     }
     
-    // Mark as initialized to prevent future re-initializations
-    this.isInitialized = true;
-    
-    console.log('VERBOSE: FormStateManager: Config steps:', this.config.steps);
-    
-    // Check if we already have state to preserve
-    const existingState = this.state;
-    const hasExistingState = existingState && existingState.steps && Object.keys(existingState.steps).length > 0;
-    
-    if (hasExistingState) {
-      console.log('VERBOSE: FormStateManager: Existing state found, preserving completed steps');
-      console.log('VERBOSE: FormStateManager: Current step in existing state:', existingState.currentStep);
-      console.log('VERBOSE: FormStateManager: Completed steps in existing state:',
-        Object.entries(existingState.steps)
-          .filter(([_, step]) => step && step.isComplete)
-          .map(([id]) => id)
-      );
-    }
-    
-    // Only initialize steps that are enabled
-    const enabledSteps = this.config.steps.filter(step => step.enabled);
-    console.log('VERBOSE: FormStateManager: Enabled steps:', enabledSteps);
-    
-    const steps = enabledSteps.reduce((acc, step) => {
-      // If we have existing state for this step and it's complete, preserve it
-      const existingStepData = hasExistingState && existingState.steps ? existingState.steps[step.id] : undefined;
-      if (existingStepData && existingStepData.isComplete) {
-        console.log(`VERBOSE: FormStateManager: Preserving completed step ${step.id}`);
-        return {
-          ...acc,
-          [step.id]: existingState.steps[step.id]
-        };
-      }
-      
-      // Otherwise initialize a new step
-      console.log(`VERBOSE: FormStateManager: Initializing step ${step.id}`);
-      
-      // Safely get existing step values if they exist
-      const existingStep = hasExistingState && existingState.steps ? existingState.steps[step.id] : null;
-      
+    // Initialize all steps, not just enabled ones
+    const steps: { [key in FormStepId]?: FormStepState } = this.config.steps.reduce((acc, step) => {
       return {
         ...acc,
         [step.id]: {
           id: step.id,
-          values: existingStep ? existingStep.values : {},
-          touched: existingStep ? existingStep.touched : new Set<string>(),
-          errors: existingStep ? existingStep.errors : {},
-          isComplete: existingStep ? existingStep.isComplete : false,
-          isValid: existingStep ? existingStep.isValid : false
+          values: {},
+          touched: new Set<string>(),
+          errors: {},
+          isComplete: false,
+          isValid: false
         }
       };
-    }, {});
+    }, {} as { [key in FormStepId]?: FormStepState });
     
-    console.log('VERBOSE: FormStateManager: Initialized steps:', Object.keys(steps));
-    
-    // Check if professional-licenses is in the initialized steps
-    const isProfessionalLicensesInitialized = 'professional-licenses' in steps;
-    console.log('VERBOSE: FormStateManager: Is professional-licenses initialized?', isProfessionalLicensesInitialized);
-
-    // Preserve the current step if we have existing state
-    const currentStep = hasExistingState ? existingState.currentStep : this.config.initialStep;
-    console.log('VERBOSE: FormStateManager: Using current step:', currentStep);
-
     return {
-      currentStep,
+      currentStep: this.config.initialStep,
       steps,
-      isSubmitting: hasExistingState ? existingState.isSubmitting : false,
-      isComplete: hasExistingState ? existingState.isComplete : false
+      isSubmitting: false,
+      isComplete: false
     };
   }
 
@@ -198,25 +147,18 @@ export class FormStateManager {
     return { ...this.state.steps[this.state.currentStep]! };
   }
 
-  public setValue(stepId: FormStepId, fieldId: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    value: any
+  public setValue(
+    stepId: FormStepId,
+    fieldId: string,
+    value: string | number | boolean | TimelineEntry[] | Record<string, unknown> | undefined
   ): FormState {
     console.log(`Setting value for ${stepId}.${fieldId}:`, value);
     
     // Check if the step exists in the state
     if (!this.state.steps[stepId]) {
-      console.log(`VERBOSE: FormStateManager: Step ${stepId} not found in state, checking if it's enabled`);
-      
-      // Check if the step is enabled in the config
-      const stepConfig = this.config.steps.find(s => s.id === stepId);
-      if (!stepConfig || !stepConfig.enabled) {
-        console.log(`VERBOSE: FormStateManager: Step ${stepId} is not enabled, skipping setValue`);
-        return this.getState();
-      }
+      console.log(`Step ${stepId} not found in state, initializing it`);
       
       // Initialize the step if it's enabled but not in the state
-      console.log(`VERBOSE: FormStateManager: Initializing step ${stepId}`);
       this.state.steps[stepId] = {
         id: stepId,
         values: {},
@@ -227,22 +169,62 @@ export class FormStateManager {
       };
     }
     
-    console.log(`Current step values before update:`, this.state.steps[stepId]?.values);
-    console.log(`Current step touched before update:`, this.state.steps[stepId]?.touched);
-    
     const step = this.state.steps[stepId]!;
-    const newValues = { ...step.values, [fieldId]: value };
+    
+    // Create new values object with the updated field
+    const newValues = {
+      ...step.values,
+      [fieldId]: value
+    };
+    
+    // Add field to touched set
     const newTouched = new Set(step.touched).add(fieldId);
     
-    console.log(`New values after update:`, newValues);
-    console.log(`New touched after update:`, Array.from(newTouched));
+    // Special case for initialization fields
+    if (fieldId === '_initialized' || fieldId === '_complete' || fieldId === 'isValid' || fieldId === 'isComplete') {
+      const newStep: FormStepState = {
+        ...step,
+        values: newValues,
+        touched: newTouched,
+        errors: {},
+        isValid: value === true,
+        isComplete: value === true
+      };
+
+      this.state = {
+        ...this.state,
+        steps: {
+          ...this.state.steps,
+          [stepId]: newStep
+        }
+      };
+
+      return this.getState();
+    }
     
+    // Validate the step with new values
     const validationResult = this.validateStep(stepId, newValues);
     console.log(`Validation result for ${stepId}:`, validationResult);
 
+    // For consents step, check if all required consents are provided
+    if (stepId === 'consents') {
+      const config = newValues._config as { consentsRequired: { driverLicense: boolean; drugTest: boolean; biometric: boolean } } | undefined;
+      if (config) {
+        const hasAllRequiredConsents = Object.entries(config.consentsRequired).every(([key, required]) => {
+          if (!required) return true;
+          const consentField = `${key}Consent`;
+          return newValues[consentField] === true;
+        });
+        console.log('Has all required consents:', hasAllRequiredConsents);
+        validationResult.isValid = hasAllRequiredConsents;
+      }
+    }
+
+    // Check step completion
     const isComplete = this.checkStepCompletion(stepId, newValues, validationResult.isValid);
     console.log(`Step ${stepId} is complete:`, isComplete);
 
+    // Create a new step state
     const newStep: FormStepState = {
       ...step,
       values: newValues,
@@ -252,6 +234,7 @@ export class FormStateManager {
       isComplete: isComplete
     };
 
+    // Update the state immutably
     this.state = {
       ...this.state,
       steps: {
@@ -285,121 +268,154 @@ export class FormStateManager {
   // Force set the current step without validation
   // This is useful for fixing state inconsistencies
   public forceSetCurrentStep(stepId: FormStepId): FormState {
-    console.log(`ForceSetCurrentStep: Changing current step from ${this.state.currentStep} to ${stepId}`);
-    
-    // Update the current step directly
-    this.state = {
-      ...this.state,
-      currentStep: stepId
-    };
-    
-    return this.getState();
+    console.log('FormStateManager: Force setting current step to:', stepId);
+    return this.moveToStep(stepId); // Use internal moveToStep instead of context
   }
 
   public moveToStep(stepId: FormStepId): FormState {
-    // Check if the step is in the available steps
-    const availableSteps = this.getAvailableSteps();
-    if (!availableSteps.includes(stepId)) {
-      console.error(`Step ${stepId} is not in available steps:`, availableSteps);
-      throw new Error(`Cannot navigate to step ${stepId}: Step is not in available steps`);
-    }
+    console.log('FormStateManager: Moving to step:', stepId);
 
-    // Check if we can navigate to this step
-    if (!this.canNavigateToStep(stepId)) {
-      console.error(`Cannot navigate to step ${stepId} due to navigation rules - required steps not completed`);
-      throw new Error(`Cannot navigate to step ${stepId}: Required previous steps are not complete`);
-    }
-
-    // Update the current step
-    console.log(`Moving from step ${this.state.currentStep} to ${stepId}`);
-    
-    // Initialize the step if it doesn't exist in the state
-    if (!this.state.steps[stepId]) {
-      console.log(`Initializing step ${stepId} during navigation`);
-      // Create a new steps object with the new step
-      const updatedSteps = {
-        ...this.state.steps,
-        [stepId]: {
-          id: stepId,
+    // Initialize all steps if they don't exist
+    this.config.steps.forEach(step => {
+      if (!this.state.steps[step.id]) {
+        this.state.steps[step.id] = {
+          id: step.id,
           values: {},
           touched: new Set<string>(),
           errors: {},
           isComplete: false,
           isValid: false
-        }
-      };
-      
-      // Update the entire state at once to ensure proper propagation
-      this.state = {
-        ...this.state,
-        currentStep: stepId,
-        steps: updatedSteps
-      };
-    } else {
-      // Just update the current step if the step already exists
-      this.state = {
-        ...this.state,
-        currentStep: stepId
-      };
-    }
-    
-    console.log(`Successfully moved to step ${stepId}`);
+        };
+      }
+    });
+
+    // Update the current step without validation
+    this.state = {
+      ...this.state,
+      currentStep: stepId
+    };
 
     return this.getState();
   }
 
+  public canNavigateToStep(stepId: FormStepId): boolean {
+    return true;
+  }
+
   // Validation Methods
   private validateStep(stepId: FormStepId, values: FormValue): ValidationResult {
-    const step = this.config.steps.find(s => s.id === stepId)!;
-    const errors: { [key: string]: string } = {};
-
-    step.fields.forEach(field => {
-      const fieldError = this.validateField(field, values[field.id]);
-      if (fieldError) {
-        errors[field.id] = fieldError;
-      }
-    });
-
-    // Additional step-specific validation
-    if (step.validationRules) {
-      const { requiredYears } = step.validationRules;
-      if (requiredYears && ['residence-history', 'employment-history'].includes(stepId)) {
-        const timelineCoverage = this.calculateTimelineCoverage(values.entries || []);
-        if (timelineCoverage < requiredYears) {
-          errors._timeline = `Must account for ${requiredYears} years`;
-        }
-      }
+    console.log(`Validating step ${stepId}`);
+    console.log('Values:', values);
+    
+    const stepConfig = this.config.steps.find(s => s.id === stepId);
+    if (!stepConfig) {
+      console.log(`No config found for step ${stepId}`);
+      return { isValid: true, errors: {} };
     }
     
-    // Special case for education step
-    if (stepId === 'education') {
-      console.log('Validating education step with values:', values);
+    console.log('Step config:', stepConfig);
+    
+    // Special validation for employment history step
+    if (stepId === 'employment-history') {
+      const entries = values.entries as TimelineEntry[] | undefined;
+      const requiredYears = stepConfig.validationRules?.requiredYears || 5;
       
-      // Check if highest education level is set
-      if (!values.highestLevel) {
-        errors._education_level = 'Please select your highest level of education';
-        console.log('Education validation failed: No highest level set');
-      } else {
-        console.log('Education level is set:', values.highestLevel);
-        
-        // Check if it's college or higher and requires entries
-        const collegeOrHigher = isCollegeOrHigher(values.highestLevel as EducationLevel);
-        console.log('Is college or higher:', collegeOrHigher);
-        console.log('Entries:', values.entries);
-        
-        if (collegeOrHigher && (!values.entries || values.entries.length === 0)) {
-          errors._education_entries = 'Please add at least one degree';
-          console.log('Education validation failed: College education requires entries');
-        } else {
-          console.log('Education validation passed');
-        }
+      if (!entries?.length) {
+        return { 
+          isValid: false, 
+          errors: { entries: `At least one employment entry is required for the past ${requiredYears} years` }
+        };
       }
+      
+      const { totalYears, hasContinuousCoverage } = this.calculateTimelineCoverage(entries);
+      const isValid = hasContinuousCoverage;
+      
+      let errorMessage = '';
+      if (!hasContinuousCoverage) {
+        errorMessage = `Your employment history must be continuous from today back ${requiredYears} years. Please ensure there are no gaps between entries and that your most recent entry includes today's date.`;
+      }
+      
+      return {
+        isValid,
+        errors: isValid ? {} : { entries: errorMessage }
+      };
     }
-
-    return {
-      isValid: Object.keys(errors).length === 0,
-      errors
-    };
+    
+    // Special validation for residence history step
+    if (stepId === 'residence-history') {
+      const entries = values.entries as TimelineEntry[] | undefined;
+      const requiredYears = stepConfig.validationRules?.requiredYears || 5;
+      
+      if (!entries?.length) {
+        return { 
+          isValid: false, 
+          errors: { entries: `At least one residence entry is required for the past ${requiredYears} years` }
+        };
+      }
+      
+      const { totalYears, hasContinuousCoverage } = this.calculateTimelineCoverage(entries);
+      const isValid = hasContinuousCoverage;
+      
+      let errorMessage = '';
+      if (!hasContinuousCoverage) {
+        errorMessage = `Your residence history must be continuous from today back ${requiredYears} years. Please ensure there are no gaps between entries and that your most recent entry includes today's date.`;
+      }
+      
+      return {
+        isValid,
+        errors: isValid ? {} : { entries: errorMessage }
+      };
+    }
+    
+    // Special validation for consents step
+    if (stepId === 'consents') {
+      const config = values._config as { consentsRequired: { driverLicense: boolean; drugTest: boolean; biometric: boolean } } | undefined;
+      if (!config) {
+        return { isValid: true, errors: {} };
+      }
+      
+      const errors: { [key: string]: string } = {};
+      let isValid = true;
+      
+      // Check each required consent
+      if (config.consentsRequired.driverLicense && values.driverLicenseConsent !== true) {
+        errors.driverLicenseConsent = 'Driver license consent is required';
+        isValid = false;
+      }
+      
+      if (config.consentsRequired.drugTest && values.drugTestConsent !== true) {
+        errors.drugTestConsent = 'Drug test consent is required';
+        isValid = false;
+      }
+      
+      if (config.consentsRequired.biometric && values.biometricConsent !== true) {
+        errors.biometricConsent = 'Biometric consent is required';
+        isValid = false;
+      }
+      
+      console.log('Consent validation result:', { isValid, errors });
+      return { isValid, errors };
+    }
+    
+    // Default validation for other steps
+    const requiredFields = stepConfig.fields
+      .filter(field => field.required)
+      .map(field => field.id);
+    
+    console.log('Required fields:', requiredFields);
+    
+    // Check if all required fields have values
+    const hasAllRequiredFields = requiredFields.every(fieldId => {
+      const value = values[fieldId];
+      if (typeof value === 'boolean') {
+        return value === true;
+      }
+      return value !== undefined && value !== null && value !== '';
+    });
+    
+    console.log('Has all required fields:', hasAllRequiredFields);
+    
+    return { isValid: hasAllRequiredFields, errors: {} };
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -433,34 +449,51 @@ export class FormStateManager {
   }
 
   // Timeline Methods
-  private calculateTimelineCoverage(entries: TimelineEntry[]): number {
-    if (!entries.length) return 0;
+  private calculateTimelineCoverage(entries: TimelineEntry[]): { totalYears: number; hasContinuousCoverage: boolean } {
+    if (!entries.length) return { totalYears: 0, hasContinuousCoverage: false };
+
+    const today = new Date();
+    const requiredStartDate = new Date();
+    requiredStartDate.setFullYear(today.getFullYear() - 5); // 5 years ago
 
     const sortedEntries = [...entries].sort((a, b) => 
-      new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+      new Date(b.startDate).getTime() - new Date(a.startDate).getTime() // Sort in reverse chronological order
     );
 
+    // First check if we have an entry that includes today
+    const mostRecentEntry = sortedEntries[0];
+    const mostRecentEnd = mostRecentEntry.isCurrent ? today : new Date(mostRecentEntry.endDate!);
+    if (mostRecentEnd < today) {
+      return { totalYears: 0, hasContinuousCoverage: false }; // No current coverage
+    }
+
+    let currentDate = today;
     let totalYears = 0;
-    let latestEnd: Date | null = null;
 
-    sortedEntries.forEach(entry => {
+    for (const entry of sortedEntries) {
       const start = new Date(entry.startDate);
-      const end = entry.isCurrent ? new Date() : new Date(entry.endDate!);
+      const end = entry.isCurrent ? today : new Date(entry.endDate!);
 
-      if (!latestEnd || start > latestEnd) {
-        // No overlap, add full duration
-        totalYears += (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-      } else if (end > latestEnd) {
-        // Partial overlap, add only the non-overlapping part
-        totalYears += (end.getTime() - latestEnd.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+      // Check for gap with previous date
+      if (start > currentDate) {
+        return { totalYears, hasContinuousCoverage: false }; // Found a gap
       }
 
-      if (!latestEnd || end > latestEnd) {
-        latestEnd = end;
-      }
-    });
+      // Calculate coverage for this entry
+      const entryYears = (Math.min(end.getTime(), currentDate.getTime()) - start.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+      totalYears += entryYears;
 
-    return totalYears;
+      // Update the current date for next iteration
+      currentDate = start;
+
+      // If we've gone back far enough, we can stop
+      if (start <= requiredStartDate) {
+        return { totalYears, hasContinuousCoverage: true };
+      }
+    }
+
+    // If we get here, we haven't gone back far enough
+    return { totalYears, hasContinuousCoverage: false };
   }
 
   // Helper Methods
@@ -538,38 +571,6 @@ export class FormStateManager {
     return result;
   }
 
-  private canNavigateToStep(stepId: FormStepId): boolean {
-    // Find the indices of current and target steps
-    const currentStepIndex = this.config.steps.findIndex(s => s.id === this.state.currentStep);
-    const targetStepIndex = this.config.steps.findIndex(s => s.id === stepId);
-
-    console.log(`Checking if can navigate from ${this.state.currentStep} (index ${currentStepIndex}) to ${stepId} (index ${targetStepIndex})`);
-
-    // Can always move backwards
-    if (targetStepIndex < currentStepIndex) {
-      console.log('Moving backwards, navigation allowed');
-      return true;
-    }
-
-    // For forward navigation, only check if the current step is complete
-    // This is a key change - we're no longer checking all previous steps
-    const currentStepState = this.state.steps[this.state.currentStep];
-    
-    if (!currentStepState) {
-      console.log(`Current step ${this.state.currentStep} not found in state, cannot navigate`);
-      return false;
-    }
-    
-    if (!currentStepState.isComplete) {
-      console.log(`Current step ${this.state.currentStep} is not complete, cannot navigate to ${stepId}`);
-      return false;
-    }
-    
-    // If the current step is complete, allow navigation to the next step
-    console.log(`Current step ${this.state.currentStep} is complete, navigation to ${stepId} is allowed`);
-    return true;
-  }
-
   private getAvailableSteps(): FormStepId[] {
     console.log('VERBOSE: FormStateManager: Getting available steps');
     console.log('VERBOSE: FormStateManager: Config steps:', this.config.steps);
@@ -593,101 +594,50 @@ export class FormStateManager {
       .map(([id]) => id as FormStepId);
   }
 
-  private checkStepCompletion(
-    stepId: FormStepId,
-    values: FormValue,
-    isValid: boolean
-  ): boolean {
+  private checkStepCompletion(stepId: FormStepId, values: FormValue, isValid: boolean): boolean {
     console.log('Checking step completion for:', stepId);
     console.log('Values:', values);
     console.log('Is valid:', isValid);
     
-    if (!isValid) {
-      console.log('Step is not valid, returning false');
-      return false;
+    // For consents step, completion is based on having all required consents
+    if (stepId === 'consents') {
+      const config = values._config as { consentsRequired: { driverLicense: boolean; drugTest: boolean; biometric: boolean } } | undefined;
+      if (config) {
+        const hasAllRequiredConsents = Object.entries(config.consentsRequired).every(([key, required]) => {
+          if (!required) return true;
+          const consentField = `${key}Consent`;
+          return values[consentField] === true;
+        });
+        console.log('Has all required consents:', hasAllRequiredConsents);
+        return hasAllRequiredConsents && isValid;
+      }
     }
-
-    const step = this.config.steps.find(s => s.id === stepId)!;
-    console.log('Step config:', step);
     
-    // Check if all required fields have values
-    const requiredFields = step.fields.filter(field => field.required);
+    const stepConfig = this.config.steps.find(s => s.id === stepId);
+    console.log('Step config:', stepConfig);
+    
+    // Get required fields from step config
+    const requiredFields = stepConfig?.fields
+      .filter(field => field.required)
+      .map(field => field.id) || [];
+    
     console.log('Required fields:', requiredFields);
     
-    const hasAllRequiredFields = requiredFields.every(field => {
-      const hasValue = !!values[field.id];
-      console.log(`Field ${field.id} has value: ${hasValue}`);
-      return hasValue;
+    // Check if all required fields have values
+    const hasAllRequiredFields = requiredFields.every(fieldId => {
+      const value = values[fieldId];
+      if (typeof value === 'boolean') {
+        return value === true;
+      }
+      return value !== undefined && value !== null && value !== '';
     });
     
     console.log('Has all required fields:', hasAllRequiredFields);
-
-    // Check timeline coverage if applicable
-    if (step.validationRules?.requiredYears) {
-      const coverage = this.calculateTimelineCoverage(values.entries || []);
-      const result = hasAllRequiredFields && coverage >= step.validationRules.requiredYears;
-      console.log('Timeline coverage:', coverage, 'Required years:', step.validationRules.requiredYears);
-      console.log('Step completion result:', result);
-      return result;
-    }
     
-    // Special case for education step
-    if (stepId === 'education') {
-      console.log('Checking education step completion');
-      console.log('Full values object:', values);
-      
-      // Must have highest education level
-      if (!values.highestLevel) {
-        console.log('No highest education level set, step not complete');
-        return false;
-      }
-      
-      console.log('Education level:', values.highestLevel);
-      
-      // If college or higher, must have at least one entry
-      const collegeOrHigher = isCollegeOrHigher(values.highestLevel as EducationLevel);
-      console.log('Is college or higher:', collegeOrHigher);
-      
-      if (collegeOrHigher) {
-        const hasEntries = values.entries && values.entries.length > 0;
-        console.log('Has entries:', hasEntries);
-        if (values.entries) {
-          console.log('Entries array:', values.entries);
-          console.log('Entries length:', values.entries.length);
-        } else {
-          console.log('Entries is undefined or null');
-        }
-        
-        // Force the step to be complete if we have a highest level and it's not college or higher
-        // or if it is college or higher and we have entries
-        const isComplete = hasAllRequiredFields && hasEntries;
-        console.log('Education step complete:', isComplete);
-        
-        // If not complete, log the reasons
-        if (!isComplete) {
-          console.log('Education step not complete because:');
-          if (!hasAllRequiredFields) console.log('- Not all required fields are filled');
-          if (!hasEntries) console.log('- No entries for college education');
-        }
-        
-        return isComplete;
-      }
-      
-      // For non-college, just need the education level
-      console.log('Non-college education, step complete');
-      const result = hasAllRequiredFields;
-      console.log('Step completion result:', result);
-      
-      // If not complete, log the reasons
-      if (!result) {
-        console.log('Education step not complete because:');
-        if (!hasAllRequiredFields) console.log('- Not all required fields are filled');
-      }
-      
-      return result;
-    }
-
-    console.log('Default step completion result:', hasAllRequiredFields);
-    return hasAllRequiredFields;
+    // Default step completion result
+    const defaultResult = hasAllRequiredFields && isValid;
+    console.log('Default step completion result:', defaultResult);
+    
+    return defaultResult;
   }
 } 

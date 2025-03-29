@@ -1,17 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from '../context/FormContext';
 import { useTranslation } from '../context/TranslationContext';
+import type { FormValue } from '../utils/FormStateManager';
 import './ConsentsStep.css';
 
 export const ConsentsStep: React.FC = () => {
   const { t } = useTranslation();
-  const { setValue, getValue, getStepErrors, isStepValid } = useForm();
+  const { 
+    setValue, 
+    getValue, 
+    getStepErrors, 
+    isStepValid,
+    moveToNextStep,
+    moveToPreviousStep,
+    canMoveNext,
+    canMovePrevious
+  } = useForm();
   const [errors, setErrors] = useState<Record<string, string>>({});
   
-  // Get form values
-  const driverLicenseConsent = getValue('consents', 'driverLicense') as boolean | undefined;
-  const drugTestConsent = getValue('consents', 'drugTest') as boolean | undefined;
-  const biometricConsent = getValue('consents', 'biometric') as boolean | undefined;
+  // Get form values and ensure they are booleans
+  const driverLicenseConsent = Boolean(getValue('consents', 'driverLicenseConsent'));
+  const drugTestConsent = Boolean(getValue('consents', 'drugTestConsent'));
+  const biometricConsent = Boolean(getValue('consents', 'biometricConsent'));
   
   // Get errors from form context
   useEffect(() => {
@@ -21,15 +31,24 @@ export const ConsentsStep: React.FC = () => {
   
   // Handle checkbox changes
   const handleConsentChange = (field: string, checked: boolean) => {
-    setValue('consents', field, checked);
+    console.log('Setting consent value:', field, checked);
+    setValue('consents', field, checked as unknown as FormValue);
   };
   
-  // Determine which consents are required based on form state
-  const requiredConsents = {
-    driverLicense: Object.prototype.hasOwnProperty.call(errors, 'driverLicenseConsent'),
-    drugTest: Object.prototype.hasOwnProperty.call(errors, 'drugTestConsent'),
-    biometric: Object.prototype.hasOwnProperty.call(errors, 'biometricConsent')
+  // Get required consents from form state
+  const consentsConfig = getValue('consents', '_config') as { consentsRequired: { driverLicense: boolean; drugTest: boolean; biometric: boolean } } | undefined;
+  const requiredConsents = consentsConfig?.consentsRequired || {
+    driverLicense: false,
+    drugTest: false,
+    biometric: false
   };
+  
+  console.log('Required consents:', requiredConsents);
+  console.log('Current consent values:', {
+    driverLicenseConsent,
+    drugTestConsent,
+    biometricConsent
+  });
   
   return (
     <div className="consents-step">
@@ -53,8 +72,8 @@ export const ConsentsStep: React.FC = () => {
               <input
                 type="checkbox"
                 id="driverLicenseConsent"
-                checked={driverLicenseConsent || false}
-                onChange={(e) => handleConsentChange('driverLicense', e.target.checked)}
+                checked={driverLicenseConsent}
+                onChange={(e) => handleConsentChange('driverLicenseConsent', e.target.checked)}
                 aria-invalid={!!errors.driverLicenseConsent}
                 aria-describedby={errors.driverLicenseConsent ? 'driverLicenseConsent-error' : undefined}
               />
@@ -83,8 +102,8 @@ export const ConsentsStep: React.FC = () => {
               <input
                 type="checkbox"
                 id="drugTestConsent"
-                checked={drugTestConsent || false}
-                onChange={(e) => handleConsentChange('drugTest', e.target.checked)}
+                checked={drugTestConsent}
+                onChange={(e) => handleConsentChange('drugTestConsent', e.target.checked)}
                 aria-invalid={!!errors.drugTestConsent}
                 aria-describedby={errors.drugTestConsent ? 'drugTestConsent-error' : undefined}
               />
@@ -113,8 +132,8 @@ export const ConsentsStep: React.FC = () => {
               <input
                 type="checkbox"
                 id="biometricConsent"
-                checked={biometricConsent || false}
-                onChange={(e) => handleConsentChange('biometric', e.target.checked)}
+                checked={biometricConsent}
+                onChange={(e) => handleConsentChange('biometricConsent', e.target.checked)}
                 aria-invalid={!!errors.biometricConsent}
                 aria-describedby={errors.biometricConsent ? 'biometricConsent-error' : undefined}
               />
@@ -146,6 +165,29 @@ export const ConsentsStep: React.FC = () => {
             <div className="invalid-status">
               {t('consents.invalid') || 'Please provide all required consents to proceed'}
             </div>
+          )}
+        </div>
+
+        <div className="navigation-buttons">
+          {canMovePrevious && (
+            <button
+              type="button"
+              onClick={moveToPreviousStep}
+              className="btn btn-secondary"
+            >
+              {t('common.previous') || 'Previous'}
+            </button>
+          )}
+          
+          {canMoveNext && (
+            <button
+              type="button"
+              onClick={moveToNextStep}
+              className="btn btn-primary"
+              disabled={!isStepValid('consents')}
+            >
+              {t('common.next') || 'Next'}
+            </button>
           )}
         </div>
       </div>

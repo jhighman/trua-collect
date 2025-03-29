@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { parseCollectionKey, getRequirements } from '../utils/collectionKeyParser';
 import { v4 as uuidv4 } from 'uuid';
@@ -56,14 +56,13 @@ const VerificationEntry: React.FC<VerificationEntryProps> = ({ onSubmit, urlKey,
   const [collectionKey, setCollectionKey] = useState<string | null>(null);
   const [isDefaultKey, setIsDefaultKey] = useState<boolean>(true);
   const [currentStep, setCurrentStep] = useState<FormStepId>('personal-info');
-  const [initialStepSet, setInitialStepSet] = useState<boolean>(false);
   
   const navigate = useNavigate();
 
-  // Get the URL directly from the window object
-  const directUrlSearch = window.location.search;
-  const directUrlParams = new URLSearchParams(directUrlSearch);
-  const directKeyParam = directUrlParams.get('key');
+  // Memoize URL parameters
+  const directUrlSearch = useMemo(() => window.location.search, []);
+  const directUrlParams = useMemo(() => new URLSearchParams(directUrlSearch), [directUrlSearch]);
+  const directKeyParam = useMemo(() => directUrlParams.get('key'), [directUrlParams]);
   
   // Log the raw URL at the component level
   console.log('VerificationEntry - Direct window.location.href:', window.location.href);
@@ -96,22 +95,28 @@ const VerificationEntry: React.FC<VerificationEntryProps> = ({ onSubmit, urlKey,
       setError('Invalid collection key format.');
       setLoading(false);
     }
-  }, [urlKey, urlToken, directKeyParam, directUrlParams]); // Add missing dependencies
+  }, [urlKey, urlToken, directKeyParam]); // Removed directUrlParams from dependencies
+
+  // Memoize requirements to prevent unnecessary recalculations
+  const requirements = useMemo(() => {
+    if (!collectionKey) return null;
+    return getRequirements(collectionKey);
+  }, [collectionKey]);
 
   // Handle form submission with reference token
-  const handleSubmit = async (formData: FormState) => {
+  const handleSubmit = useCallback(async (formData: FormState) => {
     try {
       // Add reference token to form data
       const formDataWithToken = {
         ...formData,
-        referenceToken: referenceToken || undefined
+        referenceToken: referenceToken || undefined,
       };
       
       // Log the final form state
       FormLogger.logFormState(
         formData,
         collectionKey || 'unknown',
-        { event: 'form_submission' }
+        { event: 'form_submission' },
       );
       
       await onSubmit(formDataWithToken);
@@ -122,7 +127,23 @@ const VerificationEntry: React.FC<VerificationEntryProps> = ({ onSubmit, urlKey,
       console.error('Form submission error:', error);
       setError('An error occurred while submitting the form. Please try again.');
     }
-  };
+  }, [onSubmit, referenceToken, collectionKey, navigate]);
+
+  // Memoize step change handler
+  const handleStepChange = useCallback((step: FormStepId, formState: FormState) => {
+    console.log('VerificationEntry: onStepChange called with step:', step, 'Previous step:', currentStep);
+    console.log('VerificationEntry: Form state to log:', formState);
+    
+    setCurrentStep(step);
+    
+    FormLogger.logFormState(
+      formState,
+      collectionKey || 'unknown',
+      { event: 'step_change', previousStep: currentStep, newStep: step },
+    );
+    
+    console.log('VerificationEntry: After handleStepChange, current step is now:', step);
+  }, [currentStep, collectionKey]);
 
   if (loading) {
     return <div className="text-center p-8">Loading verification form...</div>;
@@ -137,79 +158,88 @@ const VerificationEntry: React.FC<VerificationEntryProps> = ({ onSubmit, urlKey,
     );
   }
 
-  if (!collectionKey) {
-    return null; // This should never happen due to the error handling above
+  if (!collectionKey || !requirements) {
+    return null;
   }
-
-  // Get requirements from collection key
-  const requirements = getRequirements(collectionKey);
 
   // Check if we're using default values (development mode)
   const isDevelopmentMode = !directUrlParams.get('token') || !directKeyParam;
 
   // Fix the consentsRequired access using camelCase
-  const anyConsentsRequired = 
+  const anyConsentsRequired =
     requirements.consentsRequired.driverLicense ||
     requirements.consentsRequired.drugTest ||
     requirements.consentsRequired.biometric;
 
   // Render the form with the appropriate requirements
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Trua Verify</h1>
-        <a
-          href="/logs"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
-          View Logs
-        </a>
-      </div>
-      
-      {isDevelopmentMode && (
-        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative mb-4" role="alert">
-          <strong className="font-bold">Development Mode: </strong>
-          <span className="block sm:inline">
-            Using {!directUrlParams.get('token') ? 'generated reference token' : 'provided token'} and
-            {!directKeyParam ? ' default collection key with maximum scope' : ' provided collection key'}.
-          </span>
+    <FormProvider
+      requirements={requirements || {
+        language: 'en',
+        consentsRequired: {
+          driverLicense: false,
+          drugTest: false,
+          biometric: false
+        },
+        verificationSteps: {
+          personalInfo: { enabled: true },
+          residenceHistory: { enabled: false },
+          employmentHistory: { enabled: false },
+          education: { enabled: false },
+          professionalLicense: { enabled: false }
+        },
+        signature: { required: false }
+      }}
+      onSubmit={handleSubmit}
+      initialStep="personal-info"
+      isDefaultKey={isDefaultKey}
+      collectionKey={collectionKey || undefined}
+      onStepChange={handleStepChange}
+    >
+      <div className="max-w-4xl mx-auto p-4">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Trua Verify</h1>
+          <a
+            href="/logs"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          >
+            View Logs
+          </a>
         </div>
-      )}
-      
-      <FormProvider
-        requirements={requirements}
-        onSubmit={handleSubmit}
-        initialStep={!initialStepSet ? 'personal-info' : undefined}
-        isDefaultKey={isDefaultKey}
-        collectionKey={collectionKey}
-        onStepChange={(step, formState) => {
-          if (!initialStepSet) {
-            setInitialStepSet(true);
-            console.log('VerificationEntry: Initial step set, will not reset on future renders');
-          }
-          
-          console.log('VerificationEntry: onStepChange called with step:', step, 'Previous step:', currentStep);
-          console.log('VerificationEntry: Form state to log:', formState);
-          
-          setCurrentStep(formState.currentStep);
-          
-          FormLogger.logFormState(
-            formState,
-            collectionKey || 'unknown',
-            { event: 'step_change', previousStep: currentStep, newStep: formState.currentStep }
-          );
-          
-          console.log('VerificationEntry: After handleStepChange, current step is now:', formState.currentStep);
-        }}
-      >
-        <FormStepRenderer
-          currentStep={currentStep}
-          consentsRequired={anyConsentsRequired}
-        />
-      </FormProvider>
-    </div>
+        
+        {loading && (
+          <div className="text-center p-8">Loading verification form...</div>
+        )}
+
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <strong className="font-bold">Error: </strong>
+            <span className="block sm:inline">{error}</span>
+          </div>
+        )}
+        
+        {!loading && !error && requirements && (
+          <>
+            {isDevelopmentMode && (
+              <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <strong className="font-bold">Development Mode: </strong>
+                <span className="block sm:inline">
+                  Using {!directUrlParams.get('token') ? 'generated reference token' : 'provided token'} and
+                  {!directKeyParam ? ' default collection key with maximum scope' : ' provided collection key'}.
+                </span>
+              </div>
+            )}
+            
+            <FormStepRenderer
+              currentStep={currentStep}
+              consentsRequired={anyConsentsRequired}
+            />
+          </>
+        )}
+      </div>
+    </FormProvider>
   );
 };
 

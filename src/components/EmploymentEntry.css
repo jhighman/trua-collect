@@ -1,0 +1,160 @@
+.employment-entry {
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background-color: white;
+}
+
+.employment-entry:last-child {
+  margin-bottom: 0;
+}
+
+.employment-entry .entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.employment-entry .entry-title {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #333;
+  margin: 0;
+}
+
+.employment-entry .entry-subtitle {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 4px 0;
+}
+
+.employment-entry .entry-dates {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 4px 0;
+}
+
+.employment-entry .entry-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.employment-entry .button {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.employment-entry .button.icon {
+  padding: 6px;
+  border-radius: 50%;
+}
+
+.employment-entry .button.edit {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.employment-entry .button.remove {
+  background-color: #ffebee;
+  color: #d32f2f;
+}
+
+.employment-entry .edit-form {
+  margin-top: 16px;
+}
+
+.employment-entry .form-group {
+  margin-bottom: 16px;
+}
+
+.employment-entry .form-group label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+  color: #555;
+}
+
+.employment-entry .form-group input[type="text"],
+.employment-entry .form-group input[type="date"],
+.employment-entry .form-group select,
+.employment-entry .form-group textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.employment-entry .form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.employment-entry .form-group input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+.employment-entry .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.employment-entry .form-actions button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.employment-entry .form-actions .save {
+  background-color: #1976d2;
+  color: white;
+  border: none;
+}
+
+.employment-entry .form-actions .cancel {
+  background-color: #f5f5f5;
+  color: #333;
+  border: 1px solid #ccc;
+}
+
+.employment-entry .error-message {
+  color: #d32f2f;
+  background-color: #ffebee;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-top: 8px;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .employment-entry {
+    padding: 12px;
+  }
+
+  .employment-entry .entry-header {
+    flex-direction: column;
+  }
+
+  .employment-entry .entry-actions {
+    margin-top: 12px;
+  }
+
+  .employment-entry .form-actions {
+    flex-direction: column;
+  }
+
+  .employment-entry .form-actions button {
+    width: 100%;
+  }
+} 

@@ -25,10 +25,8 @@ interface FormStepProps {
 export const FormStep: React.FC<FormStepProps> = ({ stepId }) => {
   const {
     currentStep,
-    moveToNextStep,
-    moveToPreviousStep,
-    canMoveNext,
-    canMovePrevious,
+    forceSetCurrentStep,
+    navigationState,
     formState
   } = useForm();
 
@@ -38,6 +36,23 @@ export const FormStep: React.FC<FormStepProps> = ({ stepId }) => {
   // Type guard to check if a step exists in formState
   const stepExists = (stepId: FormStepId): boolean => {
     return Boolean(formState.steps[stepId]);
+  };
+
+  // Handle navigation
+  const handlePreviousStep = () => {
+    const currentStepIndex = navigationState.availableSteps.indexOf(currentStep);
+    if (currentStepIndex > 0) {
+      const previousStep = navigationState.availableSteps[currentStepIndex - 1];
+      forceSetCurrentStep(previousStep);
+    }
+  };
+
+  const handleNextStep = () => {
+    const currentStepIndex = navigationState.availableSteps.indexOf(currentStep);
+    if (currentStepIndex < navigationState.availableSteps.length - 1) {
+      const nextStep = navigationState.availableSteps[currentStepIndex + 1];
+      forceSetCurrentStep(nextStep);
+    }
   };
 
   // Render specialized step components based on step ID
@@ -78,15 +93,15 @@ export const FormStep: React.FC<FormStepProps> = ({ stepId }) => {
       <div>
         <button
           type="button"
-          onClick={moveToPreviousStep}
-          disabled={!canMovePrevious}
+          onClick={handlePreviousStep}
+          disabled={navigationState.availableSteps.indexOf(currentStep) <= 0}
         >
           Previous
         </button>
         <button
           type="button"
-          onClick={moveToNextStep}
-          disabled={!canMoveNext}
+          onClick={handleNextStep}
+          disabled={navigationState.availableSteps.indexOf(currentStep) >= navigationState.availableSteps.length - 1}
         >
           Next
         </button>

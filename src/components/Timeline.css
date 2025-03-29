@@ -20,9 +20,13 @@
 
 .progress-bar {
   height: 100%;
-  background-color: var(--primary-color, #1a2b5a);
+  background-color: var(--warning-color, #ffc107);
   border-radius: 4px;
-  transition: width 0.3s ease;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.progress-bar.complete {
+  background-color: var(--success-color, #28a745);
 }
 
 .time-text {
@@ -30,6 +34,12 @@
   color: var(--text-color, #333);
   text-align: right;
   font-weight: 500; /* Slightly bolder for better readability */
+}
+
+.validation-message {
+  color: var(--warning-color, #ffc107);
+  font-size: 14px;
+  margin-top: 4px;
 }
 
 /* Timeline container */

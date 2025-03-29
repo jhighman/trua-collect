@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useForm } from '../context/FormContext';
 import { FormStepId } from '../utils/FormConfigGenerator';
+import { FormState } from '../utils/FormStateManager';
 import './FormSubmissionHandler.css';
 
 interface FormSubmissionHandlerProps {
-  onSuccess: (formData: any) => void;
+  onSuccess: (formData: FormState) => void;
 }
 
 /**
@@ -21,7 +22,7 @@ const FormSubmissionHandler: React.FC<FormSubmissionHandlerProps> = ({ onSuccess
     formState,
     availableSteps,
     isStepValid,
-    moveToStep
+    forceSetCurrentStep
   } = useForm();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,7 +57,7 @@ const FormSubmissionHandler: React.FC<FormSubmissionHandlerProps> = ({ onSuccess
         // If not valid, find the first step with errors and navigate to it
         const firstInvalidStep = availableSteps.find(stepId => !isStepValid(stepId));
         if (firstInvalidStep) {
-          moveToStep(firstInvalidStep);
+          forceSetCurrentStep(firstInvalidStep);
         }
         return;
       }
@@ -86,7 +87,7 @@ const FormSubmissionHandler: React.FC<FormSubmissionHandlerProps> = ({ onSuccess
           {Object.entries(validationErrors).map(([stepId, error]) => (
             <li key={stepId}>
               <button
-                onClick={() => moveToStep(stepId as FormStepId)}
+                onClick={() => forceSetCurrentStep(stepId as FormStepId)}
                 className="error-navigation-button"
               >
                 {stepId}: {error}

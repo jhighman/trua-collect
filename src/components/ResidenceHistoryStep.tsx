@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useForm, FormStepId, TimelineEntry } from '../context/FormContext';
+import type { FormValue } from '../utils/FormStateManager';
 import { ResidenceEntry } from './ResidenceEntry';
 import Timeline from './Timeline';
 import './Timeline.css';
@@ -66,7 +67,22 @@ export const ResidenceHistoryStep: React.FC = () => {
   // If we have a key, use it to get the requirements, otherwise use the default key
   const collectionKey = key || 'en-EPMA-DTB-R5-E5-E-P-W'; // Default key with proper format
   const requirements = getRequirements(collectionKey);
-  const requiredYears = requirements.verificationSteps.residenceHistory.years;
+  const yearsRequired = requirements.verificationSteps.residenceHistory.years;
+  
+  // Create translation parameters
+  const translationParams = {
+    years: yearsRequired.toString()
+  };
+  
+  // Store the required years in form state
+  useEffect(() => {
+    const config = {
+      consentsRequired: {
+        yearsRequired: yearsRequired.toString()
+      }
+    };
+    setValue('residence-history', '_config', config as unknown as FormValue);
+  }, [yearsRequired, setValue]);
   
   // Load existing entries from form state
   useEffect(() => {
@@ -85,7 +101,7 @@ export const ResidenceHistoryStep: React.FC = () => {
     // Calculate total years
     const total = entries.reduce((sum, entry) => sum + (entry.duration_years || 0), 0);
     setTotalYears(total);
-    setValue('residence-history', 'total_years', total);
+    setValue('residence-history', 'total_years', total.toString() as unknown as FormValue);
   }, [entries, setValue]);
 
   const handleAddEntry = () => {
@@ -175,7 +191,7 @@ export const ResidenceHistoryStep: React.FC = () => {
       <div className="step-header">
         <h2>{t('residence.title') || 'Residence History'}</h2>
         <p className="step-description">
-          {t('residence.intro') || `Please provide your complete residence history for the past ${requiredYears} years, beginning with your current or most recent address.`}
+          {t('residence.intro', translationParams) || `Please provide your complete residence history for the past ${yearsRequired} years, beginning with your current or most recent address.`}
         </p>
       </div>
       
@@ -187,7 +203,7 @@ export const ResidenceHistoryStep: React.FC = () => {
           endDate: entry.end_date
         }))}
         type="residence"
-        requiredYears={requiredYears}
+        requiredYears={Number(yearsRequired)}
         onEntryClick={(entry) => {
           // Find the index of the entry in the entries array
           const index = entries.findIndex(e =>
@@ -376,7 +392,7 @@ export const ResidenceHistoryStep: React.FC = () => {
           </div>
         ) : (
           <div className="invalid-status">
-            {t('residence.invalid') || `Please provide a complete residence history for the past ${requiredYears} years`}
+            {t('residence.invalid') || `Please provide a complete residence history for the past ${yearsRequired} years`}
           </div>
         )}
       </div>

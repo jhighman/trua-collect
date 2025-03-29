@@ -1,33 +1,80 @@
 import React, { useState, useEffect } from 'react';
-import { useForm } from '../context/FormContext';
 import { useTranslation } from '../context/TranslationContext';
+import { useForm } from '../context/FormContext';
 import './PersonalInfoStep.css';
 
 export const PersonalInfoStep: React.FC = () => {
   const { t } = useTranslation();
-  const {
-    setValue,
-    getValue,
-    getStepErrors,
-    isStepValid,
-    moveToNextStep,
-    canMoveNext  } = useForm();
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const { setValue, getValue, getStepErrors, isStepValid, moveToNextStep } = useForm();
   
-  // Get form values with proper type assertions
-  const fullName = (getValue('personal-info', 'fullName') as string) || '';
-  const email = (getValue('personal-info', 'email') as string) || '';
+  // Initialize form data from form context
+  const [formData, setFormData] = useState({
+    fullName: getValue('personal-info', 'fullName') as string || '',
+    email: getValue('personal-info', 'email') as string || ''
+  });
   
   // Get errors from form context
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  
   useEffect(() => {
     const formErrors = getStepErrors('personal-info');
     setErrors(formErrors);
   }, [getStepErrors]);
   
+  // Validate email format
+  const validateEmail = (email: string): string | null => {
+    if (!email) {
+      return 'Email is required';
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return 'Invalid email format';
+    }
+    return null;
+  };
+  
+  // Validate full name
+  const validateFullName = (name: string): string | null => {
+    if (!name) {
+      return 'Full name is required';
+    }
+    if (name.length < 2) {
+      return 'Name must be at least 2 characters';
+    }
+    return null;
+  };
+  
   // Handle input changes
   const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    
+    // Validate and update form context
+    const newErrors = { ...errors };
+    
+    if (field === 'fullName') {
+      const nameError = validateFullName(value);
+      if (nameError) {
+        newErrors.fullName = nameError;
+      } else {
+        delete newErrors.fullName;
+      }
+    } else if (field === 'email') {
+      const emailError = validateEmail(value);
+      if (emailError) {
+        newErrors.email = emailError;
+      } else {
+        delete newErrors.email;
+      }
+    }
+    
+    setErrors(newErrors);
     setValue('personal-info', field, value);
   };
+  
+  const isValid = !errors.fullName && !errors.email && formData.fullName && formData.email;
   
   return (
     <div className="personal-info-step">
@@ -47,7 +94,7 @@ export const PersonalInfoStep: React.FC = () => {
           <input
             type="text"
             id="fullName"
-            value={fullName}
+            value={formData.fullName}
             onChange={(e) => handleInputChange('fullName', e.target.value)}
             className={errors.fullName ? 'has-error' : ''}
             aria-invalid={!!errors.fullName}
@@ -68,7 +115,7 @@ export const PersonalInfoStep: React.FC = () => {
           <input
             type="email"
             id="email"
-            value={email}
+            value={formData.email}
             onChange={(e) => handleInputChange('email', e.target.value)}
             className={errors.email ? 'has-error' : ''}
             aria-invalid={!!errors.email}
@@ -81,10 +128,8 @@ export const PersonalInfoStep: React.FC = () => {
           )}
         </div>
         
-        {/* Additional fields can be added here based on requirements */}
-        
         <div className="form-status">
-          {isStepValid('personal-info') ? (
+          {isValid ? (
             <div className="valid-status">
               {t('personal_info.valid') || 'All information is valid'}
             </div>
@@ -99,10 +144,14 @@ export const PersonalInfoStep: React.FC = () => {
         <div className="navigation-buttons mt-6 flex justify-end">
           <button
             type="button"
-            onClick={moveToNextStep}
-            disabled={!canMoveNext || !isStepValid('personal-info')}
+            onClick={() => {
+              if (isValid) {
+                moveToNextStep();
+              }
+            }}
+            disabled={!isValid}
             className={`px-4 py-2 rounded ${
-              canMoveNext && isStepValid('personal-info')
+              isValid
                 ? 'bg-blue-500 text-white hover:bg-blue-600'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}

@@ -315,26 +315,141 @@ export function generateFormConfig(collectionKey: string, isDefaultKey: boolean 
 
 // Update the class implementation
 export class FormConfigGenerator {
-  static DEFAULT_COLLECTION_KEY = 'en-EPMA-DTB-R5-E5-E-P-W';
-
-  static generateFormConfig(collectionKey?: string): FormConfig {
-    try {
-      const effectiveKey = collectionKey || this.DEFAULT_COLLECTION_KEY;
-      console.log('FormConfigGenerator: Using collection key:', effectiveKey);
-      
-      const config = generateFormConfig(effectiveKey, false);
-      
-      // Validate the generated config
-      if (!config.initialStep || !config.steps.length) {
-        console.warn('Invalid config generated, using default');
-        return DEFAULT_CONFIG;
+  public static generateFormConfig(collectionKey: string): FormConfig {
+    console.log('FormConfigGenerator: Generating config for key:', collectionKey);
+    
+    // Generate all steps with minimal configuration
+    const steps: FormStep[] = [
+      {
+        id: 'personal-info',
+        title: 'Personal Information',
+        enabled: true,
+        required: false,
+        order: 1,
+        fields: [
+          {
+            id: 'fullName',
+            type: 'text',
+            label: 'Full Name',
+            required: false,
+            validation: []
+          },
+          {
+            id: 'email',
+            type: 'email',
+            label: 'Email',
+            required: false,
+            validation: []
+          }
+        ]
+      },
+      {
+        id: 'consents',
+        title: 'Required Consents',
+        enabled: true,
+        required: false,
+        order: 2,
+        fields: [
+          {
+            id: 'agreed',
+            type: 'checkbox',
+            label: 'I agree',
+            required: false,
+            validation: []
+          }
+        ]
+      },
+      {
+        id: 'residence-history',
+        title: 'Residence History',
+        enabled: true,
+        required: false,
+        order: 3,
+        fields: [
+          {
+            id: 'entries',
+            type: 'array',
+            label: 'Entries',
+            required: false,
+            validation: []
+          }
+        ]
+      },
+      {
+        id: 'employment-history',
+        title: 'Employment History',
+        enabled: true,
+        required: false,
+        order: 4,
+        fields: [
+          {
+            id: 'entries',
+            type: 'array',
+            label: 'Entries',
+            required: false,
+            validation: []
+          }
+        ]
+      },
+      {
+        id: 'education',
+        title: 'Education',
+        enabled: true,
+        required: false,
+        order: 5,
+        fields: [
+          {
+            id: 'entries',
+            type: 'array',
+            label: 'Entries',
+            required: false,
+            validation: []
+          }
+        ]
+      },
+      {
+        id: 'professional-licenses',
+        title: 'Professional Licenses',
+        enabled: true,
+        required: false,
+        order: 6,
+        fields: [
+          {
+            id: 'entries',
+            type: 'array',
+            label: 'Entries',
+            required: false,
+            validation: []
+          }
+        ]
+      },
+      {
+        id: 'signature',
+        title: 'Review & Sign',
+        enabled: true,
+        required: false,
+        order: 7,
+        fields: [
+          {
+            id: 'signature',
+            type: 'text',
+            label: 'Signature',
+            required: false,
+            validation: []
+          }
+        ]
       }
+    ];
 
-      return config;
-    } catch (error) {
-      console.error('Error in FormConfigGenerator:', error);
-      return DEFAULT_CONFIG;
-    }
+    return {
+      steps,
+      initialStep: 'personal-info',
+      navigation: {
+        allowSkip: true,
+        allowPrevious: true,
+        requiredSteps: []
+      }
+    };
   }
 }
 
