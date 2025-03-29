@@ -5,24 +5,24 @@ import { FormConfigGenerator } from './src/utils/FormConfigGenerator.ts';
 // Test different collection keys
 const testKeys = [
   {
-    key: 'en000111100100',
+    key: 'en-EP-N-R3-E3-E-P-C',
     description: 'Default Collection Key (All Steps Enabled)'
   },
   {
-    key: 'en000101100100',
-    description: 'Professional Licenses Disabled (bit 4 set to 0)'
+    key: 'en-EP-N-R3-E3-E-N-C',
+    description: 'Professional Licenses Disabled'
   },
   {
-    key: 'en000110100100',
-    description: 'Residence History Disabled (bit 5 set to 0)'
+    key: 'en-EP-N-N-E3-E-P-C',
+    description: 'Residence History Disabled'
   },
   {
-    key: 'en000011100100',
-    description: 'Education Disabled (bit 3 set to 0)'
+    key: 'en-EP-N-R3-E3-N-P-C',
+    description: 'Education Disabled'
   },
   {
-    key: 'en000001100100',
-    description: 'Education & Professional Licenses Disabled (bits 3 and 4 set to 0)'
+    key: 'en-EP-N-R3-E3-N-N-C',
+    description: 'Education & Professional Licenses Disabled'
   }
 ];
 
@@ -41,8 +41,8 @@ testKeys.forEach(test => {
     const requirements = getRequirements(test.key);
     console.log('Requirements:', JSON.stringify(requirements, null, 2));
     
-    // Generate form configuration from requirements
-    const formConfig = FormConfigGenerator.generateFormConfig(requirements);
+    // Generate form configuration from collection key
+    const formConfig = FormConfigGenerator.generateFormConfig(test.key);
     
     // Log the enabled steps
     console.log('Enabled Steps:');

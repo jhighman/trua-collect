@@ -2,6 +2,8 @@ import React, { useRef, useState, useEffect } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import { useTranslation } from '../context/TranslationContext';
 import { useForm } from '../context/FormContext';
+import { useNavigate } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 import './Signature.css';
 
 interface SignatureProps {
@@ -10,9 +12,11 @@ interface SignatureProps {
 
 export const Signature: React.FC<SignatureProps> = ({ onSignatureChange }) => {
   const { t } = useTranslation();
-  const { setValue, getValue, getStepErrors } = useForm();
+  const { setValue, getValue, getStepErrors, submitForm } = useForm();
   const sigCanvas = useRef<SignatureCanvas>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const navigate = useNavigate();
   
   // Get errors from form context
   const errors = getStepErrors('signature');
@@ -24,14 +28,25 @@ export const Signature: React.FC<SignatureProps> = ({ onSignatureChange }) => {
     }
   }, [errors]);
   
-  // Load existing signature if available
+  
   useEffect(() => {
-    const existingSignature = getValue('signature', 'signature');
-    if (existingSignature && sigCanvas.current) {
-      sigCanvas.current.fromDataURL(existingSignature);
+    // Store ref in a variable inside the effect
+    const canvas = sigCanvas.current;
+    
+    // Use the stored ref value
+    if (canvas) {
+      const existingSignature = getValue('signature', 'signature') as string || '';
+      canvas.fromDataURL(existingSignature);
     }
-  }, [getValue]);
 
+    // Use the stored ref in cleanup
+    return () => {
+      if (canvas) {
+        // cleanup code using canvas instead of sigCanvas.current
+      }
+    };
+  }, [getValue]); // Add other dependencies as needed
+  
   // Set up event handlers when the component mounts
   useEffect(() => {
     if (sigCanvas.current) {
@@ -51,9 +66,8 @@ export const Signature: React.FC<SignatureProps> = ({ onSignatureChange }) => {
     if (sigCanvas.current) {
       sigCanvas.current.clear();
       setError(null);
-      
       // Update form state
-      setValue('signature', 'signature', null);
+      setValue('signature', 'signature', '');
       
       // Notify parent component
       if (onSignatureChange) {
@@ -84,6 +98,38 @@ export const Signature: React.FC<SignatureProps> = ({ onSignatureChange }) => {
     }
   };
   
+  const handleSubmit = async () => {
+    // Validate signature
+    if (sigCanvas.current && sigCanvas.current.isEmpty()) {
+      setError(t('signature.error_empty') || 'Please provide your signature');
+      return;
+    }
+    
+    // Validate confirmation checkbox
+    if (!getValue('signature', 'confirmation')) {
+      setError(t('signature.error_confirmation') || 'Please confirm your signature');
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      // Generate a tracking ID
+      const trackingId = uuidv4();
+      setValue('signature', 'trackingId', trackingId);
+      
+      // Submit the form
+      await submitForm();
+      
+      // Navigate to confirmation page with tracking ID
+      navigate(`/confirmation?trackingId=${trackingId}`);
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      setError(t('signature.error_submit') || 'An error occurred while submitting the form. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+  
   return (
     <div className="signature-component">
       <div className="signature-title">
@@ -103,14 +149,15 @@ export const Signature: React.FC<SignatureProps> = ({ onSignatureChange }) => {
             'aria-label': t('signature.canvas_label') || 'Signature Canvas',
             role: 'application'
           }}
+          onEnd={handleEnd}
         />
       </div>
       
       {error && <div className="signature-error">{error}</div>}
       
       <div className="signature-actions">
-        <button 
-          type="button" 
+        <button
+          type="button"
           className="clear-button"
           onClick={handleClear}
           aria-label={t('signature.clear_button_label') || 'Clear signature'}
@@ -121,20 +168,38 @@ export const Signature: React.FC<SignatureProps> = ({ onSignatureChange }) => {
       
       <div className="signature-attestation">
         <p>
-          {t('signature.attestation') || 
+          {t('signature.attestation') ||
             'By signing above, I certify that all information provided is true and accurate to the best of my knowledge.'}
         </p>
         <div className="checkbox-container">
-          <input 
-            type="checkbox" 
-            id="signature-confirm" 
+          <input
+            type="checkbox"
+            id="signature-confirm"
             onChange={(e) => setValue('signature', 'confirmation', e.target.checked)}
-            checked={getValue('signature', 'confirmation') || false}
+            checked={(getValue('signature', 'confirmation') as boolean) || false}
           />
           <label htmlFor="signature-confirm">
             {t('signature.confirm') || 'I confirm that this is my legal signature'}
           </label>
         </div>
+      </div>
+      
+      <div className="submit-section">
+        <button
+          type="button"
+          className="submit-button"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          aria-label={t('signature.submit_button_label') || 'Submit verification'}
+        >
+          {isSubmitting
+            ? (t('signature.submitting') || 'Submitting...')
+            : (t('signature.submit') || 'Submit Verification')}
+        </button>
+        <p className="submit-note">
+          {t('signature.submit_note') ||
+            'After submitting, you will be able to download a PDF copy of your verification.'}
+        </p>
       </div>
     </div>
   );

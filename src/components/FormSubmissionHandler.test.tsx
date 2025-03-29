@@ -1,7 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import FormSubmissionHandler from './FormSubmissionHandler';
-import { FormProvider } from '../context/FormContext';
 import '@testing-library/jest-dom';
 
 // Mock the FormContext
@@ -47,7 +46,6 @@ describe('FormSubmissionHandler', () => {
       availableSteps: ['personal-info', 'employment-history', 'signature'],
       isStepValid: mockIsStepValid,
       moveToStep: mockMoveToStep,
-      // Add other required properties from FormContextType
       currentStep: 'personal-info',
       navigationState: {
         canMoveNext: true,
@@ -66,7 +64,10 @@ describe('FormSubmissionHandler', () => {
       addTimelineEntry: jest.fn(),
       updateTimelineEntry: jest.fn(),
       removeTimelineEntry: jest.fn(),
-      getTimelineEntries: jest.fn()
+      getTimelineEntries: jest.fn(),
+      currentContextStep: null,
+      forceNextStep: jest.fn(),
+      isSubmitting: false // Add missing required property
     });
   });
 

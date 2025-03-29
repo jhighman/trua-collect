@@ -84,6 +84,9 @@ export class JsonDocumentGenerator {
     const now = new Date();
     const submissionDate = now.toISOString();
     
+    // Check for signature first to ensure it exists
+    const signature = this.extractSignature(formState);
+    
     // Get reference token if available
     const referenceToken = (formState as FormState & { referenceToken?: string }).referenceToken;
     
@@ -96,7 +99,7 @@ export class JsonDocumentGenerator {
       },
       personalInfo: this.extractPersonalInfo(formState),
       timeline: this.extractTimeline(formState),
-      signature: this.extractSignature(formState)
+      signature: signature
     };
     
     // Add reference token if available

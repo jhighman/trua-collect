@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useForm, FormStepId } from '../context/FormContext';
+import { useForm, FormStepId, TimelineEntry } from '../context/FormContext';
 import { ResidenceEntry } from './ResidenceEntry';
 import Timeline from './Timeline';
 import './Timeline.css';
@@ -42,8 +42,8 @@ export const ResidenceHistoryStep: React.FC = () => {
     isStepValid
   } = useForm();
 
-  const [entries, setEntries] = useState<ResidenceEntryState[]>(() => 
-    getValue('residence-history', 'entries') || []
+  const [entries, setEntries] = useState<ResidenceEntryState[]>(() =>
+    getValue('residence-history', 'entries') as unknown as ResidenceEntryState[] || []
   );
   const [totalYears, setTotalYears] = useState<number>(0);
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
@@ -64,9 +64,9 @@ export const ResidenceHistoryStep: React.FC = () => {
   const key = urlParams.get('key');
   
   // If we have a key, use it to get the requirements, otherwise use the default key
-  const collectionKey = key || 'en000111100100'; // Default key with 7 years for residence history
+  const collectionKey = key || 'en-EPMA-DTB-R5-E5-E-P-W'; // Default key with proper format
   const requirements = getRequirements(collectionKey);
-  const requiredYears = requirements.verification_steps.residence_history.years;
+  const requiredYears = requirements.verificationSteps.residenceHistory.years;
   
   // Load existing entries from form state
   useEffect(() => {
@@ -80,7 +80,7 @@ export const ResidenceHistoryStep: React.FC = () => {
 
   // Update form state when entries change
   useEffect(() => {
-    setValue('residence-history', 'entries', entries);
+    setValue('residence-history', 'entries', entries as unknown as TimelineEntry[]);
     
     // Calculate total years
     const total = entries.reduce((sum, entry) => sum + (entry.duration_years || 0), 0);

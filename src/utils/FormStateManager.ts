@@ -65,6 +65,12 @@ export class FormStateManager {
   // Update the config and reinitialize the state
   public updateConfig(config: FormConfig): void {
     console.log('FormStateManager: Updating config with new initialStep:', config.initialStep);
+    
+    // Save the current step before updating
+    const currentStep = this.state.currentStep;
+    console.log('FormStateManager: Current step before update:', currentStep);
+    
+    // Update the config
     this.config = config;
     
     // Preserve the current state if possible
@@ -87,9 +93,15 @@ export class FormStateManager {
       });
     }
     
-    // Set the current step to the config's initialStep
-    this.state.currentStep = config.initialStep;
-    console.log('FormStateManager: Updated currentStep to:', this.state.currentStep);
+    // IMPORTANT: Keep the current step instead of resetting to the initialStep
+    // Only use the initialStep if we don't have a current step
+    if (currentStep) {
+      this.state.currentStep = currentStep;
+      console.log('FormStateManager: Preserved current step:', currentStep);
+    } else {
+      this.state.currentStep = config.initialStep;
+      console.log('FormStateManager: Set to initial step:', config.initialStep);
+    }
   }
 
   private initializeState(): FormState {

@@ -112,56 +112,57 @@
     
     <h2>Test Cases</h2>
     <div class="test-links">
-        <a href="http://localhost:3000/?key=en000111100100" class="test-link" target="_blank">
+        <a href="http://localhost:3000/?key=en-EP-N-R3-E3-E-P-C" class="test-link" target="_blank">
             <strong>Default Collection Key (All Steps Enabled)</strong>
             <div class="description">All verification steps enabled (education, professional licenses, residence history, employment history)</div>
-            <div class="key-bits">en000111100100</div>
+            <div class="key-bits">en-EP-N-R3-E3-E-P-C</div>
         </a>
         
-        <a href="http://localhost:3000/?key=en000101100100" class="test-link" target="_blank">
+        <a href="http://localhost:3000/?key=en-EP-N-R3-E3-E-N-C" class="test-link" target="_blank">
             <strong>Professional Licenses Disabled</strong>
-            <div class="description">Professional licenses disabled (bit 4 set to 0)</div>
-            <div class="key-bits">en000101100100</div>
+            <div class="description">Professional licenses disabled</div>
+            <div class="key-bits">en-EP-N-R3-E3-E-N-C</div>
         </a>
         
-        <a href="http://localhost:3000/?key=en000110100100" class="test-link" target="_blank">
+        <a href="http://localhost:3000/?key=en-EP-N-N-E3-E-P-C" class="test-link" target="_blank">
             <strong>Residence History Disabled</strong>
-            <div class="description">Residence history disabled (bit 5 set to 0)</div>
-            <div class="key-bits">en000110100100</div>
+            <div class="description">Residence history disabled</div>
+            <div class="key-bits">en-EP-N-N-E3-E-P-C</div>
         </a>
         
-        <a href="http://localhost:3000/?key=en000011100100" class="test-link" target="_blank">
+        <a href="http://localhost:3000/?key=en-EP-N-R3-E3-N-P-C" class="test-link" target="_blank">
             <strong>Education Disabled</strong>
-            <div class="description">Education disabled (bit 3 set to 0)</div>
-            <div class="key-bits">en000011100100</div>
+            <div class="description">Education disabled</div>
+            <div class="key-bits">en-EP-N-R3-E3-N-P-C</div>
         </a>
         
-        <a href="http://localhost:3000/?key=en000001100100" class="test-link" target="_blank">
+        <a href="http://localhost:3000/?key=en-EP-N-R3-E3-N-N-C" class="test-link" target="_blank">
             <strong>Education & Professional Licenses Disabled</strong>
             <div class="description">Both education and professional licenses disabled</div>
-            <div class="key-bits">en000001100100</div>
+            <div class="key-bits">en-EP-N-R3-E3-N-N-C</div>
         </a>
     </div>
     
     <h2>Debug Tools</h2>
     <div>
         <button id="parseKey" class="debug-button">Parse Collection Key</button>
-        <input type="text" id="collectionKey" value="en000101100100" placeholder="Enter collection key" style="padding: 8px; width: 200px;">
+        <input type="text" id="collectionKey" value="en-EP-N-R3-E3-E-P-C" placeholder="Enter collection key" style="padding: 8px; width: 300px;">
     </div>
     <div id="debugOutput" class="debug-panel">Debug output will appear here...</div>
     
-    <h2>Bit Positions Explanation</h2>
+    <h2>Collection Key Format Explanation</h2>
     <pre>
-Format: en000111100100
-Language: en
-Bits 0-2: Consents (000) - No consents enabled
-Bits 3-5: Verification steps
-  Bit 3: Education enabled (1/0)
-  Bit 4: Professional licenses enabled (1/0)
-  Bit 5: Residence history enabled (1/0)
-Bits 6-8: Residence history years (100 = 10 years)
-Bit 9: Employment history enabled (1/0)
-Bits 10-12: Employment history years (100 = 10 years)
+Format: [language]-[personal]-[consents]-[residence]-[employment]-[education]-[proLicense]-[signature]
+Example: en-EP-N-R3-E3-E-P-C
+
+Language: 2-character code (en, es, fr, it)
+Personal: E=Email, P=Phone, M=Full name, A=Name alias, N=Disabled
+Consents: D=Driver license, T=Drug test, B=Biometric, N=None
+Residence: R1/R3/R5 for years or N for disabled
+Employment: E1/E3/E5 for years, EN1/EN2/EN3 for employers, or N for disabled
+Education: E for enabled, N for disabled
+ProLicense: P for enabled, N for disabled
+Signature: W for wet signature, C for checkbox, N for none
     </pre>
     
     <script>
@@ -172,7 +173,7 @@ Bits 10-12: Employment history years (100 = 10 years)
             
             try {
                 // Parse the collection key
-                const { language, bits } = parseCollectionKey(key);
+                const { language, facets } = parseCollectionKey(key);
                 
                 // Get the requirements
                 const requirements = getRequirements(key);
@@ -180,13 +181,40 @@ Bits 10-12: Employment history years (100 = 10 years)
                 // Display the results
                 let output = `Collection Key: ${key}\n`;
                 output += `Language: ${language}\n`;
-                output += `Bits: ${bits}\n\n`;
+                output += `Facets: ${JSON.stringify(facets, null, 2)}\n\n`;
+                
+                output += `Personal Info Modes:\n`;
+                output += `- Email: ${requirements.verificationSteps.personalInfo.modes.email ? 'Enabled' : 'Disabled'}\n`;
+                output += `- Phone: ${requirements.verificationSteps.personalInfo.modes.phone ? 'Enabled' : 'Disabled'}\n`;
+                output += `- Full Name: ${requirements.verificationSteps.personalInfo.modes.fullName ? 'Enabled' : 'Disabled'}\n`;
+                output += `- Name Alias: ${requirements.verificationSteps.personalInfo.modes.nameAlias ? 'Enabled' : 'Disabled'}\n\n`;
+                
+                output += `Consents Required:\n`;
+                output += `- Driver License: ${requirements.consentsRequired.driverLicense ? 'Required' : 'Not Required'}\n`;
+                output += `- Drug Test: ${requirements.consentsRequired.drugTest ? 'Required' : 'Not Required'}\n`;
+                output += `- Biometric: ${requirements.consentsRequired.biometric ? 'Required' : 'Not Required'}\n\n`;
                 
                 output += `Verification Steps:\n`;
-                output += `- Education: ${requirements.verification_steps.education.enabled ? 'Enabled' : 'Disabled'}\n`;
-                output += `- Professional Licenses: ${requirements.verification_steps.professional_license.enabled ? 'Enabled' : 'Disabled'}\n`;
-                output += `- Residence History: ${requirements.verification_steps.residence_history.enabled ? 'Enabled' : 'Disabled'}\n`;
-                output += `- Employment History: ${requirements.verification_steps.employment_history.enabled ? 'Enabled' : 'Disabled'}\n`;
+                output += `- Education: ${requirements.verificationSteps.education.enabled ? 'Enabled' : 'Disabled'}\n`;
+                output += `- Professional Licenses: ${requirements.verificationSteps.professionalLicense.enabled ? 'Enabled' : 'Disabled'}\n`;
+                output += `- Residence History: ${requirements.verificationSteps.residenceHistory.enabled ? 'Enabled' : 'Disabled'}\n`;
+                if (requirements.verificationSteps.residenceHistory.enabled) {
+                    output += `  Years: ${requirements.verificationSteps.residenceHistory.years}\n`;
+                }
+                output += `- Employment History: ${requirements.verificationSteps.employmentHistory.enabled ? 'Enabled' : 'Disabled'}\n`;
+                if (requirements.verificationSteps.employmentHistory.enabled) {
+                    if (requirements.verificationSteps.employmentHistory.mode === 'years') {
+                        output += `  Years: ${requirements.verificationSteps.employmentHistory.modes.years}\n`;
+                    } else {
+                        output += `  Employers: ${requirements.verificationSteps.employmentHistory.modes.employers}\n`;
+                    }
+                }
+                
+                output += `\nSignature:\n`;
+                output += `- Required: ${requirements.signature.required ? 'Yes' : 'No'}\n`;
+                if (requirements.signature.required) {
+                    output += `- Mode: ${requirements.signature.mode}\n`;
+                }
                 
                 debugOutput.textContent = output;
             } catch (error) {
@@ -196,69 +224,154 @@ Bits 10-12: Employment history years (100 = 10 years)
         
         // Collection key parser implementation
         function parseCollectionKey(key) {
-            if (!key || key.length !== 14) {
-                throw new Error('Invalid collection key: must be 14 characters');
-            }
-            return {
-                language: key.slice(0, 2),
-                bits: key.slice(2)
-            };
-        }
-        
-        function isBitEnabled(bits, position) {
-            if (position < 0 || position >= bits.length) {
-                throw new Error('Invalid bit position');
-            }
-            return bits.charAt(position) === '1';
-        }
-        
-        function getTimelineYears(bits, startPosition) {
-            if (startPosition < 0 || startPosition >= bits.length) {
-                throw new Error('Invalid start position for timeline years');
+            if (!key) {
+                throw new Error('Invalid collection key: key is required');
             }
             
-            const availableBits = bits.slice(startPosition, startPosition + 3);
-            const timelineBits = availableBits.length < 3 ? availableBits.padEnd(3, '0') : availableBits;
-            
-            switch (timelineBits) {
-                case '000': return 1;
-                case '001': return 3;
-                case '010': return 5;
-                case '011': return 7;
-                case '100': return 10;
-                default: return 1;
+            const parts = key.split('-');
+            if (parts.length !== 8) {
+                throw new Error('Invalid collection key: must have 8 facets separated by -');
             }
-        }
-        
-        function getRequirements(collectionKey) {
-            const { language, bits } = parseCollectionKey(collectionKey);
+            
+            const [language, personal, consents, residence, employment, education, proLicense, signature] = parts;
+            
+            if (language.length !== 2) {
+                throw new Error('Invalid language code: must be 2 characters');
+            }
             
             return {
                 language,
-                consents_required: {
-                    driver_license: isBitEnabled(bits, 0),
-                    drug_test: isBitEnabled(bits, 1),
-                    biometric: isBitEnabled(bits, 2)
-                },
-                verification_steps: {
+                facets: {
+                    personal,
+                    consents,
+                    residence,
+                    employment,
+                    education,
+                    proLicense,
+                    signature
+                }
+            };
+        }
+        
+        function getRequirements(collectionKey) {
+            const { language, facets } = parseCollectionKey(collectionKey);
+            const { personal, consents, residence, employment, education, proLicense, signature } = facets;
+            
+            // Parse personal info modes
+            const personalModes = {
+                email: personal.includes('E'),
+                phone: personal.includes('P'),
+                fullName: personal.includes('M'),
+                nameAlias: personal.includes('A')
+            };
+            
+            // If personal is 'N', disable all modes
+            const personalEnabled = personal !== 'N';
+            if (!personalEnabled) {
+                personalModes.email = false;
+                personalModes.phone = false;
+                personalModes.fullName = false;
+                personalModes.nameAlias = false;
+            }
+            
+            // If no modes are enabled, default to phone
+            if (!personalModes.email && !personalModes.phone && !personalModes.fullName && !personalModes.nameAlias) {
+                personalModes.phone = true;
+            }
+            
+            // Parse consents
+            const consentsRequired = {
+                driverLicense: consents.includes('D'),
+                drugTest: consents.includes('T'),
+                biometric: consents.includes('B')
+            };
+            
+            // Parse residence history
+            let residenceYears = 1;
+            const residenceEnabled = residence !== 'N';
+            if (residenceEnabled && residence.startsWith('R')) {
+                const yearsPart = residence.substring(1);
+                if (yearsPart === '1') residenceYears = 1;
+                else if (yearsPart === '3') residenceYears = 3;
+                else if (yearsPart === '5') residenceYears = 5;
+                else residenceYears = 1; // Default
+            }
+            
+            // Parse employment history
+            let employmentMode = 'years';
+            let employmentYears = 1;
+            let employmentEmployers = 1;
+            const employmentEnabled = employment !== 'N';
+            
+            if (employmentEnabled) {
+                if (employment.startsWith('E') && employment.length > 1) {
+                    const yearsPart = employment.substring(1);
+                    if (yearsPart === '1') employmentYears = 1;
+                    else if (yearsPart === '3') employmentYears = 3;
+                    else if (yearsPart === '5') employmentYears = 5;
+                    else employmentYears = 1; // Default
+                } else if (employment.startsWith('EN') && employment.length > 2) {
+                    employmentMode = 'employers';
+                    const employersPart = employment.substring(2);
+                    if (employersPart === '1') employmentEmployers = 1;
+                    else if (employersPart === '2') employmentEmployers = 2;
+                    else if (employersPart === '3') employmentEmployers = 3;
+                    else employmentEmployers = 1; // Default
+                }
+            }
+            
+            // Parse education
+            const educationEnabled = education === 'E';
+            
+            // Parse professional license
+            const proLicenseEnabled = proLicense === 'P';
+            
+            // Parse signature
+            let signatureRequired = false;
+            let signatureMode = 'none';
+            
+            if (signature === 'W') {
+                signatureRequired = true;
+                signatureMode = 'wet';
+            } else if (signature === 'C') {
+                signatureRequired = true;
+                signatureMode = 'checkbox';
+            }
+            
+            return {
+                language,
+                consentsRequired,
+                verificationSteps: {
+                    personalInfo: {
+                        enabled: personalEnabled,
+                        modes: personalModes
+                    },
                     education: {
-                        enabled: isBitEnabled(bits, 3),
+                        enabled: educationEnabled,
                         required_verifications: ["degree", "institution", "graduation_date"]
                     },
-                    professional_license: {
-                        enabled: isBitEnabled(bits, 4),
+                    professionalLicense: {
+                        enabled: proLicenseEnabled,
                         required_verifications: ["status", "expiration_date"]
                     },
-                    residence_history: {
-                        enabled: isBitEnabled(bits, 5),
-                        years: getTimelineYears(bits, 6),
+                    residenceHistory: {
+                        enabled: residenceEnabled,
+                        years: residenceYears,
                         required_verifications: ["address", "duration"]
                     },
-                    employment_history: {
-                        enabled: isBitEnabled(bits, 9),
-                        years: getTimelineYears(bits, 10),
+                    employmentHistory: {
+                        enabled: employmentEnabled,
+                        mode: employmentMode,
+                        modes: {
+                            years: employmentYears,
+                            employers: employmentEmployers
+                        },
                         required_verifications: ["employment", "duration", "position"]
                     }
+                },
+                signature: {
+                    required: signatureRequired,
+                    mode: signatureMode
                 }
             };
         }

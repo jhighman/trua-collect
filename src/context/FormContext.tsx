@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import React, { createContext, useContext, useCallback, useMemo, useState, useEffect } from 'react';
 import { FormStateManager } from '../utils/FormStateManager';
 import { FormConfigGenerator, FormConfig, FormStepId } from '../utils/FormConfigGenerator';
@@ -5,29 +6,38 @@ import type {
   FormState,
   TimelineEntry,
   ValidationResult,
-  NavigationState
+  NavigationState,
 } from '../utils/FormStateManager';
 import type { Requirements } from '../utils/collectionKeyParser';
 import { isCollegeOrHigher } from '../types/EducationLevel';
+import { getConfig } from '../utils/EnvironmentConfig';
 
-// Define the StepId type
-export type StepId = 
+// Define StepId type explicitly for clarity
+export type StepId =
   | 'personal-info'
   | 'residence-history'
   | 'employment-history'
   | 'education'
   | 'professional-licenses'
-  | 'consents';
+  | 'consents'
+  | 'signature';
 
-// Context Interface
+// Define FormValue type to cover all possible form field values
+type FormValue = string | number | boolean | TimelineEntry[] | Record<string, unknown> | undefined;
+// Use the exact TimelineEntry type from FormStateManager instead of a generic substitute
+export interface TimelineEntryType extends TimelineEntry {
+  startDate: string;
+  endDate: string | null;
+  isCurrent: boolean; // Remove optional to match TimelineEntry interface
+  [key: string]: FormValue | null; // Allow additional dynamic properties
+}
+
+// Context Interface with all methods and properties
 export interface FormContextType {
-  // Current state
   currentStep: FormStepId;
-  currentContextStep: FormStepId | null; // Add currentContextStep to the interface
+  currentContextStep: FormStepId | null;
   formState: FormState;
   navigationState: NavigationState;
-  
-  // Form navigation
   canMoveNext: boolean;
   canMovePrevious: boolean;
   availableSteps: FormStepId[];
@@ -35,402 +45,198 @@ export interface FormContextType {
   moveToNextStep: () => void;
   moveToPreviousStep: () => void;
   moveToStep: (stepId: FormStepId) => void;
-  forceNextStep: () => void; // Force navigation to next step regardless of canMoveNext
-  
-  // Form values
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setValue: (stepId: FormStepId, fieldId: string, value: any) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getValue: (stepId: FormStepId, fieldId: string) => any;
+  forceNextStep: () => void;
+  setValue: (stepId: FormStepId, fieldId: string, value: FormValue) => void;
+  getValue: (stepId: FormStepId, fieldId: string) => FormValue;
   getStepErrors: (stepId: FormStepId) => Record<string, string>;
   isStepValid: (stepId: FormStepId) => boolean;
-  
-  // Timeline entries
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  addTimelineEntry: (stepId: FormStepId, entry: any) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  updateTimelineEntry: (stepId: FormStepId, index: number, entry: any) => void;
+  addTimelineEntry: (stepId: FormStepId, entry: TimelineEntryType) => void;
+  updateTimelineEntry: (stepId: FormStepId, index: number, entry: TimelineEntryType) => void;
   removeTimelineEntry: (stepId: FormStepId, index: number) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getTimelineEntries: (stepId: FormStepId) => any[];
-  
-  // Form submission
+  getTimelineEntries: (stepId: FormStepId) => TimelineEntryType[];
   formErrors: Record<string, string>;
   submitForm: () => Promise<void>;
+  isSubmitting: boolean;
 }
 
 // Create Context
 const FormContext = createContext<FormContextType | undefined>(undefined);
 
-// Create a singleton FormStateManager instance
-// We'll use let because we need to assign it once
-// eslint-disable-next-line prefer-const
+// Singleton FormStateManager instance
 let formManagerInstance: FormStateManager | null = null;
 
 // Provider Props Interface
 interface FormProviderProps {
   children: React.ReactNode;
   requirements: Requirements;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onSubmit: (formData: any) => Promise<void>;
+  onSubmit: (formData: FormState) => Promise<void>;
   initialStep?: FormStepId;
-  isDefaultKey?: boolean; // Add isDefaultKey property
+  isDefaultKey?: boolean;
   onStepChange?: (step: FormStepId, formState: FormState) => void;
+  collectionKey?: string;
 }
 
-// Provider Component
+// FormProvider Component
 export const FormProvider: React.FC<FormProviderProps> = ({
   children,
   requirements,
   onSubmit,
   initialStep,
-  isDefaultKey = true, // Default to true if not provided
-  onStepChange
+  isDefaultKey = true,
+  onStepChange,
+  collectionKey,
 }) => {
-  console.log('FormProvider: Rendering with initialStep:', initialStep, 'isDefaultKey:', isDefaultKey);
-  // Initialize form manager with configuration
+  console.log('FormProvider: Initializing with props:');
+  console.log('FormProvider: initialStep:', initialStep);
+  console.log('FormProvider: isDefaultKey:', isDefaultKey);
+  console.log('FormProvider: collectionKey:', collectionKey);
+  console.log('FormProvider: Requirements:', JSON.stringify(requirements, null, 2));
+
+  // State declarations
+  const [currentContextStep, setCurrentContextStep] = useState<FormStepId | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [, setStateVersion] = useState(0);
+
+  // FormManager initialization with detailed logging
   const formManager = useMemo(() => {
-    console.log('FormContext: Creating or updating FormStateManager with requirements:', requirements);
+    console.log('FormContext: Initializing or updating FormStateManager');
+    console.log('FormContext: Requirements:', JSON.stringify(requirements, null, 2));
     console.log('FormContext: isDefaultKey:', isDefaultKey);
+    console.log('FormContext: collectionKey:', collectionKey);
+
+    const effectiveCollectionKey = collectionKey || (isDefaultKey ? getConfig().defaultCollectionKey : 'default-key');
+    console.log('FormContext: Using effective collection key:', effectiveCollectionKey);
+
+    // Get config with validation
+    const config = FormConfigGenerator.generateFormConfig(effectiveCollectionKey);
     
-    // Create a new config with the current requirements and isDefaultKey
-    const config: FormConfig = FormConfigGenerator.generateFormConfig(requirements, isDefaultKey);
-    console.log('FormContext: Generated config with initialStep:', config.initialStep);
-    
-    // Only create a new instance if it doesn't exist
+    // Config is guaranteed to have initialStep due to DEFAULT_CONFIG fallback
+    console.log('FormContext: Generated config with initial step:', config.initialStep);
+
     if (!formManagerInstance) {
-      console.log('FormContext: Creating new FormStateManager (singleton)');
+      console.log('FormContext: Creating new FormStateManager instance');
       formManagerInstance = new FormStateManager(config);
     } else {
       console.log('FormContext: Updating existing FormStateManager with new config');
-      // Update the existing instance with the new config
       formManagerInstance.updateConfig(config);
     }
-    
-    // Set the current step based on the config's initialStep if no initialStep is provided
-    if (!initialStep) {
-      console.log('FormContext: Setting currentStep from config:', config.initialStep);
+
+    if (!currentContextStep) {
+      console.log('FormContext: Setting initial currentContextStep from config:', config.initialStep);
       setCurrentContextStep(config.initialStep);
     }
-    
+
+    console.log('FormContext: FormManager initialized');
     return formManagerInstance;
-  }, [requirements]); // Recreate when requirements change
+  }, [requirements, isDefaultKey, collectionKey, currentContextStep]);
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  
-  // Add state to track form state changes
-  const [stateVersion, setStateVersion] = useState(0);
-
-  // Track the current step separately from the form state
-  const [currentContextStep, setCurrentContextStep] = useState<FormStepId | null>(null);
-  
-  // Get current form state - now depends on stateVersion to trigger re-renders
-  // Note: stateVersion is needed here to trigger re-renders when state changes
+  // Form state computation
   const formState = useMemo(() => {
+    console.log('FormContext: Computing formState');
     const state = formManager.getState();
-    console.log('FormContext: Getting form state, currentStep:', state.currentStep);
-    
-    // If we have a current context step and it doesn't match the form state,
-    // force the form state to use our step
-    if (currentContextStep && currentContextStep !== state.currentStep) {
-      console.log('FormContext: Detected step mismatch! Context:', currentContextStep, 'State:', state.currentStep);
-      console.log('FormContext: Forcing state to use context step');
-      
-      // Force the state to use the correct step
-      try {
-        formManager.forceSetCurrentStep(currentContextStep);
-        // Get the updated state
-        const updatedState = formManager.getState();
-        console.log('FormContext: After force set, currentStep:', updatedState.currentStep);
-        return updatedState;
-      } catch (error) {
-        console.error('FormContext: Error forcing step:', error);
-      }
-    }
-    
-    // If we don't have a current context step yet, initialize it from the state
+    console.log('FormContext: Current step from state:', state.currentStep);
+    console.log('FormContext: Form state steps:', Object.keys(state.steps));
+
     if (!currentContextStep) {
-      console.log('FormContext: Initializing context step from state:', state.currentStep);
+      console.log('FormContext: Setting currentContextStep from state (initial):', state.currentStep);
       setCurrentContextStep(state.currentStep);
     }
-    
+
     return state;
-  }, [formManager, stateVersion, currentContextStep]);
-  
+  }, [formManager, currentContextStep]);
+
+  // Navigation state computation
   const navigationState = useMemo(() => {
+    console.log('FormContext: Computing navigationState');
     const navState = formManager.getNavigationState();
-    console.log('FormContext: Getting navigation state, availableSteps:', navState.availableSteps);
+    console.log('FormContext: Navigation state - canMoveNext:', navState.canMoveNext);
+    console.log('FormContext: Navigation state - canMovePrevious:', navState.canMovePrevious);
+    console.log('FormContext: Navigation state - availableSteps:', navState.availableSteps);
+    console.log('FormContext: Navigation state - completedSteps:', navState.completedSteps);
     return navState;
-  }, [formManager, stateVersion]);
+  }, [formManager]);
 
-  // Use initialStep if provided
+  // Handle initial step setup
   useEffect(() => {
-    if (initialStep) {
+    if (initialStep && initialStep !== formState.currentStep) {
+      console.log('FormContext: Applying initialStep:', initialStep);
+      console.log('FormContext: Current step before move:', formState.currentStep);
       try {
-        // Try to use moveToStep first
-        try {
-          formManager.moveToStep(initialStep);
-        } catch (error) {
-          // If moveToStep fails, force set the current step
-          console.log('FormContext: moveToStep failed, using forceSetCurrentStep instead');
-          formManager.forceSetCurrentStep(initialStep);
-        }
-        setStateVersion(v => v + 1);
+        formManager.moveToStep(initialStep);
+        console.log('FormContext: Successfully moved to initial step:', initialStep);
       } catch (error) {
-        console.error('Error setting initial step:', error);
+        console.log('FormContext: moveToStep failed, forcing step:', initialStep);
+        formManager.forceSetCurrentStep(initialStep);
       }
+      setCurrentContextStep(initialStep);
+      setStateVersion(v => v + 1);
+      console.log('FormContext: State version updated after initial step set');
     }
-  }, [formManager, initialStep]);
+  }, [initialStep, formManager, formState.currentStep]);
 
-  // Navigation methods
+  // Navigation: Move to Next Step
   const moveToNextStep = useCallback(() => {
-    try {
-      console.log('FormContext: moveToNextStep called');
-      console.log('FormContext: Current step:', formState.currentStep);
-      console.log('FormContext: Can move next:', navigationState.canMoveNext);
-      console.log('FormContext: Available steps:', navigationState.availableSteps);
-      
-      // Special case for education step
-      if (formState.currentStep === 'education') {
-        console.log('FormContext: Special handling for education step navigation');
-        
-        // Check if the education step is complete according to our own logic
-        const educationStep = formState.steps.education;
-        if (educationStep) {
-          console.log('FormContext: Education step values:', educationStep.values);
-          console.log('FormContext: Education step touched:', educationStep.touched);
-          console.log('FormContext: Education step isValid:', educationStep.isValid);
-          console.log('FormContext: Education step isComplete:', educationStep.isComplete);
-          
-          const highestLevel = educationStep.values.highestLevel;
-          const entries = educationStep.values.entries || [];
-          
-          console.log('FormContext: Highest education level:', highestLevel);
-          console.log('FormContext: Entries:', entries);
-          
-          if (highestLevel) {
-            const collegeOrHigher = isCollegeOrHigher(highestLevel as string);
-            console.log('FormContext: Is college or higher:', collegeOrHigher);
-            
-            const isEducationComplete = highestLevel &&
-              (!collegeOrHigher || (collegeOrHigher && entries.length > 0));
-            
-            console.log('FormContext: Is education complete by our logic:', isEducationComplete);
-            
-            if (isEducationComplete) {
-              // Force the step to be valid and complete
-              console.log('FormContext: Forcing education step to be valid and complete');
-              
-              // Find the next available step
-              const currentStepIndex = navigationState.availableSteps.indexOf(formState.currentStep);
-              
-              if (currentStepIndex !== -1 && currentStepIndex < navigationState.availableSteps.length - 1) {
-                // Get the next step from available steps
-                const nextStepId = navigationState.availableSteps[currentStepIndex + 1];
-                console.log('FormContext: Next available step:', nextStepId);
-                
-                if (nextStepId) {
-                  console.log('FormContext: Moving to next step:', nextStepId);
-                  try {
-                    // Update our context step first
-                    setCurrentContextStep(nextStepId);
-                    
-                    // Try to move to the step
-                    try {
-                      formManager.moveToStep(nextStepId);
-                    } catch (error) {
-                      console.log('FormContext: moveToStep failed, using forceSetCurrentStep instead');
-                      formManager.forceSetCurrentStep(nextStepId);
-                    }
-                    
-                    setStateVersion(v => v + 1);
-                    
-                    // Notify parent component of step change
-                    if (onStepChange) {
-                      onStepChange(nextStepId, formManager.getState());
-                    }
-                    
-                    return;
-                  } catch (error) {
-                    console.error('FormContext: Error moving to next step:', error);
-                  }
-                }
-              } else {
-                console.log('FormContext: Current step not in available steps or already at last step');
-              }
-            }
-          }
-        }
-      }
-      
-      // Standard navigation logic
-      if (!navigationState.canMoveNext) {
-        console.log('FormContext: Cannot move next, returning');
-        return;
-      }
-      
-      // Find the current step index in the available steps
-      const currentStepIndex = navigationState.availableSteps.indexOf(formState.currentStep);
-      console.log('FormContext: Current step index:', currentStepIndex);
-      
-      // If the current step is not in the available steps, we need to find the next available step
-      if (currentStepIndex === -1) {
-        console.log('FormContext: Current step not in available steps');
-        
-        // Define the step order
-        const stepOrder: FormStepId[] = [
-          'personal-info',
-          'consents',
-          'residence-history',
-          'employment-history',
-          'education',
-          'professional-licenses',
-          'signature'
-        ];
-        
-        // Find the current step's position in the step order
-        const currentStepOrderIndex = stepOrder.indexOf(formState.currentStep);
-        console.log('FormContext: Current step order index:', currentStepOrderIndex);
-        
-        // Find the first available step that comes after the current step in the order
-        const nextStepId = navigationState.availableSteps.find(step =>
-          stepOrder.indexOf(step) > currentStepOrderIndex
-        );
-        
-        console.log('FormContext: Next step ID:', nextStepId);
-        
-        if (nextStepId) {
-          console.log('FormContext: Moving to next step:', nextStepId);
-          try {
-            // Update our context step first
+    console.log('FormContext: moveToNextStep invoked');
+    console.log('FormContext: Current step:', formState.currentStep);
+    console.log('FormContext: Can move next:', navigationState.canMoveNext);
+    console.log('FormContext: Available steps:', navigationState.availableSteps);
+
+    if (!navigationState.canMoveNext) {
+      console.log('FormContext: Navigation blocked - cannot move next');
+      return;
+    }
+
+    const currentStep = formState.currentStep;
+    const currentIndex = navigationState.availableSteps.indexOf(currentStep);
+    console.log('FormContext: Current step index:', currentIndex);
+
+    if (currentStep === 'education') {
+      console.log('FormContext: Handling education step navigation');
+      const educationStep = formState.steps.education;
+      if (educationStep) {
+        console.log('FormContext: Education step values:', educationStep.values);
+        console.log('FormContext: Education step touched:', educationStep.touched);
+        console.log('FormContext: Education step isValid:', educationStep.isValid);
+        console.log('FormContext: Education step isComplete:', educationStep.isComplete);
+
+        const highestLevel = educationStep.values.highestLevel as string | undefined;
+        const entries = (educationStep.values.entries as TimelineEntryType[]) || [];
+        console.log('FormContext: Highest education level:', highestLevel);
+        console.log('FormContext: Education entries:', entries);
+
+        if (highestLevel) {
+          const collegeOrHigher = isCollegeOrHigher(highestLevel);
+          console.log('FormContext: College or higher education:', collegeOrHigher);
+
+          const isEducationComplete = collegeOrHigher ? entries.length > 0 : true;
+          console.log('FormContext: Is education complete:', isEducationComplete);
+
+          if (isEducationComplete && currentIndex !== -1 && currentIndex < navigationState.availableSteps.length - 1) {
+            const nextStepId = navigationState.availableSteps[currentIndex + 1];
+            console.log('FormContext: Next step for education:', nextStepId);
+
             setCurrentContextStep(nextStepId);
-            
-            // Try to move to the step
             try {
               formManager.moveToStep(nextStepId);
+              console.log('FormContext: Moved to next step:', nextStepId);
             } catch (error) {
-              console.log('FormContext: moveToStep failed, using forceSetCurrentStep instead');
+              console.log('FormContext: moveToStep failed, forcing:', nextStepId);
               formManager.forceSetCurrentStep(nextStepId);
             }
-            
             setStateVersion(v => v + 1);
-            
-            // Notify parent component of step change
             if (onStepChange) {
+              console.log('FormContext: Triggering onStepChange for:', nextStepId);
               onStepChange(nextStepId, formManager.getState());
             }
-          } catch (error) {
-            console.error('FormContext: Error moving to next step:', error);
+            return;
           }
-        } else {
-          console.error('FormContext: No next step found after', formState.currentStep);
-        }
-      } else {
-        // Normal case: current step is in available steps
-        let nextStepId = navigationState.availableSteps[currentStepIndex + 1];
-        console.log('FormContext: Next step ID (normal case):', nextStepId);
-        
-        // Only initialize professional-licenses if it's the next step and it's in the available steps
-        if (formState.currentStep === 'education' && nextStepId === 'professional-licenses') {
-          console.log('VERBOSE: FormContext: Navigating from education to professional-licenses');
-          console.log('VERBOSE: FormContext: Current step:', formState.currentStep);
-          console.log('VERBOSE: FormContext: Next step ID:', nextStepId);
-          console.log('VERBOSE: FormContext: Available steps:', navigationState.availableSteps);
-          
-          // Check if professional-licenses is in the available steps
-          const isProfessionalLicensesAvailable = navigationState.availableSteps.includes('professional-licenses');
-          console.log('VERBOSE: FormContext: Is professional-licenses in available steps?', isProfessionalLicensesAvailable);
-          
-          if (isProfessionalLicensesAvailable) {
-            // Initialize the professional-licenses step if needed
-            const hasProfessionalLicensesStep = !!formState.steps['professional-licenses'];
-            console.log('VERBOSE: FormContext: Does form state have professional-licenses step?', hasProfessionalLicensesStep);
-            
-            if (!hasProfessionalLicensesStep) {
-              console.log('VERBOSE: FormContext: Initializing professional-licenses step');
-              formManager.setValue('professional-licenses', 'entries', []);
-              formManager.setValue('professional-licenses', '_initialized', true);
-            }
-          } else {
-            console.log('VERBOSE: FormContext: professional-licenses step is not in available steps, skipping initialization');
-            
-            // Find the next available step after education that is not professional-licenses
-            const stepOrder: FormStepId[] = [
-              'personal-info',
-              'consents',
-              'residence-history',
-              'employment-history',
-              'education',
-              'professional-licenses',
-              'signature'
-            ];
-            
-            const educationIndex = stepOrder.indexOf('education');
-            console.log('VERBOSE: FormContext: Education index in step order:', educationIndex);
-            
-            // Find the first available step that comes after education in the order
-            const nextAvailableStep = navigationState.availableSteps.find(step => {
-              const stepIndex = stepOrder.indexOf(step);
-              const isAfterEducation = stepIndex > educationIndex;
-              const isNotProfessionalLicenses = step !== 'professional-licenses';
-              console.log(`VERBOSE: FormContext: Step ${step} - Index: ${stepIndex}, After Education: ${isAfterEducation}, Not Professional Licenses: ${isNotProfessionalLicenses}`);
-              return isAfterEducation && isNotProfessionalLicenses;
-            });
-            
-            console.log('VERBOSE: FormContext: Next available step after education:', nextAvailableStep);
-            
-            if (nextAvailableStep && nextAvailableStep !== nextStepId) {
-              console.log('VERBOSE: FormContext: Overriding next step ID from', nextStepId, 'to', nextAvailableStep);
-              nextStepId = nextAvailableStep;
-            }
-          }
-        }
-        
-        try {
-          console.log('FormContext: Attempting to move to step:', nextStepId);
-          
-          // Update our context step first
-          setCurrentContextStep(nextStepId);
-          
-          // Try to move to the step
-          try {
-            formManager.moveToStep(nextStepId);
-          } catch (error) {
-            console.log('FormContext: moveToStep failed, using forceSetCurrentStep instead');
-            formManager.forceSetCurrentStep(nextStepId);
-          }
-          
-          // Force a state update by incrementing the version
-          setStateVersion(v => v + 1);
-          
-          // Get the updated state after navigation
-          const updatedState = formManager.getState();
-          console.log('FormContext: State after navigation:', updatedState);
-          console.log('FormContext: Current step after navigation (from state):', updatedState.currentStep);
-          
-          // Notify parent component of step change
-          if (onStepChange) {
-            onStepChange(nextStepId, updatedState);
-          }
-        } catch (error) {
-          console.error('FormContext: Error moving to next step:', error);
         }
       }
-    } catch (error) {
-      console.error('FormContext: Unexpected error in moveToNextStep:', error);
     }
-  }, [formState, navigationState, onStepChange, formManager]);
-  
-  // Force next step - ignores canMoveNext check
-  const forceNextStep = useCallback(() => {
-    try {
-      console.log('Forcing navigation to next step');
-      
-      // Find the current step index in the available steps
-      const currentStepIndex = navigationState.availableSteps.indexOf(formState.currentStep);
-      
-      // Define the step order
+
+    if (currentIndex === -1) {
+      console.log('FormContext: Current step not found in available steps');
       const stepOrder: FormStepId[] = [
         'personal-info',
         'consents',
@@ -438,268 +244,374 @@ export const FormProvider: React.FC<FormProviderProps> = ({
         'employment-history',
         'education',
         'professional-licenses',
-        'signature'
+        'signature',
       ];
-      
-      // If the current step is not in the available steps, we need to find the next available step
-      if (currentStepIndex === -1) {
-        console.log('Current step not in available steps:', formState.currentStep);
-        console.log('Available steps:', navigationState.availableSteps);
-        
-        // Find the current step's position in the step order
-        const currentStepOrderIndex = stepOrder.indexOf(formState.currentStep);
-        
-        // Find the first available step that comes after the current step in the order
-        const nextStepId = navigationState.availableSteps.find(step =>
-          stepOrder.indexOf(step) > currentStepOrderIndex
-        );
-        
-        if (nextStepId) {
-          formManager.moveToStep(nextStepId);
-          setStateVersion(v => v + 1);
-          
-          // Notify parent component of step change
-          if (onStepChange) {
-            onStepChange(nextStepId, formManager.getState());
-          }
-        } else {
-          console.error('No next step found after', formState.currentStep);
-        }
-      } else {
-        // Normal case: current step is in available steps
-        const nextStepId = navigationState.availableSteps[currentStepIndex + 1];
-        
-        if (nextStepId) {
-          formManager.moveToStep(nextStepId);
-          setStateVersion(v => v + 1);
-          
-          // Notify parent component of step change
-          if (onStepChange) {
-            onStepChange(nextStepId, formManager.getState());
-          }
-        } else {
-          console.log('Already at the last step');
-        }
-      }
-    } catch (error) {
-      console.error('FormContext: Error in forceNextStep:', error);
-    }
-  }, [formState.currentStep, navigationState, onStepChange, formManager]);
+      const currentOrderIndex = stepOrder.indexOf(currentStep);
+      console.log('FormContext: Current step order index:', currentOrderIndex);
 
-  const moveToPreviousStep = useCallback(() => {
-    try {
-      if (!navigationState.canMovePrevious) return;
-      
-      // Find the current step index in the available steps
-      const currentStepIndex = navigationState.availableSteps.indexOf(formState.currentStep);
-      
-      // If the current step is not in the available steps, we need to find the previous available step
-      if (currentStepIndex === -1) {
-        console.log('Current step not in available steps:', formState.currentStep);
-        console.log('Available steps:', navigationState.availableSteps);
-        
-        // Define the step order
-        const stepOrder: FormStepId[] = [
-          'personal-info',
-          'consents',
-          'residence-history',
-          'employment-history',
-          'education',
-          'professional-licenses',
-          'signature'
-        ];
-        
-        // Find the current step's position in the step order
-        const currentStepOrderIndex = stepOrder.indexOf(formState.currentStep);
-        
-        // Find the first available step that comes before the current step in the order
-        const previousStepId = [...navigationState.availableSteps]
-          .reverse()
-          .find(step => stepOrder.indexOf(step) < currentStepOrderIndex);
-        
-        if (previousStepId) {
-          formManager.moveToStep(previousStepId);
-          setStateVersion(v => v + 1);
-          
-          // Notify parent component of step change
-          if (onStepChange) {
-            onStepChange(previousStepId, formManager.getState());
-          }
-        } else {
-          console.error('No previous step found before', formState.currentStep);
+      const nextStepId = navigationState.availableSteps.find(step => stepOrder.indexOf(step) > currentOrderIndex);
+      console.log('FormContext: Fallback next step:', nextStepId);
+
+      if (nextStepId) {
+        setCurrentContextStep(nextStepId);
+        try {
+          formManager.moveToStep(nextStepId);
+          console.log('FormContext: Moved to fallback step:', nextStepId);
+        } catch (error) {
+          console.log('FormContext: moveToStep failed, forcing:', nextStepId);
+          formManager.forceSetCurrentStep(nextStepId);
         }
-      } else {
-        // Normal case: current step is in available steps
-        const previousStepId = navigationState.availableSteps[currentStepIndex - 1];
-        formManager.moveToStep(previousStepId);
         setStateVersion(v => v + 1);
-        
-        // Notify parent component of step change
         if (onStepChange) {
-          onStepChange(previousStepId, formManager.getState());
+          console.log('FormContext: Triggering onStepChange for:', nextStepId);
+          onStepChange(nextStepId, formManager.getState());
         }
       }
-    } catch (error) {
-      console.error('FormContext: Error in moveToPreviousStep:', error);
-    }
-  }, [formState.currentStep, navigationState, onStepChange, formManager]);
+    } else {
+      const nextStepId = navigationState.availableSteps[currentIndex + 1];
+      console.log('FormContext: Standard next step:', nextStepId);
 
-  const moveToStep = useCallback((stepId: FormStepId) => {
-    try {
-      console.log('FormContext: moveToStep called with stepId:', stepId);
+      if (currentStep === 'education' && nextStepId === 'professional-licenses') {
+        console.log('VERBOSE: Transitioning from education to professional-licenses');
+        console.log('VERBOSE: Current step:', currentStep);
+        console.log('VERBOSE: Next step:', nextStepId);
+
+        const hasLicensesStep = !!formState.steps['professional-licenses'];
+        console.log('VERBOSE: Professional licenses step exists:', hasLicensesStep);
+
+        if (!hasLicensesStep) {
+          console.log('VERBOSE: Initializing professional-licenses step');
+          formManager.setValue('professional-licenses', 'entries', []);
+          formManager.setValue('professional-licenses', '_initialized', true);
+        }
+      }
+
+      setCurrentContextStep(nextStepId);
+      try {
+        formManager.moveToStep(nextStepId);
+        console.log('FormContext: Successfully moved to:', nextStepId);
+      } catch (error) {
+        console.log('FormContext: moveToStep failed, forcing:', nextStepId);
+        formManager.forceSetCurrentStep(nextStepId);
+      }
+      setStateVersion(v => v + 1);
+      if (onStepChange) {
+        console.log('FormContext: Triggering onStepChange for:', nextStepId);
+        onStepChange(nextStepId, formManager.getState());
+      }
+    }
+  }, [formState, navigationState, onStepChange, formManager]);
+
+  // Navigation: Move to Previous Step
+  const moveToPreviousStep = useCallback(() => {
+    console.log('FormContext: moveToPreviousStep invoked');
+    console.log('FormContext: Current step:', formState.currentStep);
+    console.log('FormContext: Can move previous:', navigationState.canMovePrevious);
+
+    if (!navigationState.canMovePrevious) {
+      console.log('FormContext: Navigation blocked - cannot move previous');
+      return;
+    }
+
+    const currentIndex = navigationState.availableSteps.indexOf(formState.currentStep);
+    console.log('FormContext: Current step index:', currentIndex);
+
+    if (currentIndex === -1) {
+      console.log('FormContext: Current step not in available steps');
+      const stepOrder: FormStepId[] = [
+        'personal-info',
+        'consents',
+        'residence-history',
+        'employment-history',
+        'education',
+        'professional-licenses',
+        'signature',
+      ];
+      const currentOrderIndex = stepOrder.indexOf(formState.currentStep);
+      console.log('FormContext: Current step order index:', currentOrderIndex);
+
+      const prevStepId = [...navigationState.availableSteps]
+        .reverse()
+        .find(step => stepOrder.indexOf(step) < currentOrderIndex);
+      console.log('FormContext: Previous step:', prevStepId);
+
+      if (prevStepId) {
+        setCurrentContextStep(prevStepId);
+        formManager.moveToStep(prevStepId);
+        setStateVersion(v => v + 1);
+        if (onStepChange) {
+          console.log('FormContext: Triggering onStepChange for:', prevStepId);
+          onStepChange(prevStepId, formManager.getState());
+        }
+      }
+    } else {
+      const prevStepId = navigationState.availableSteps[currentIndex - 1];
+      console.log('FormContext: Previous step:', prevStepId);
+
+      setCurrentContextStep(prevStepId);
+      formManager.moveToStep(prevStepId);
+      setStateVersion(v => v + 1);
+      if (onStepChange) {
+        console.log('FormContext: Triggering onStepChange for:', prevStepId);
+        onStepChange(prevStepId, formManager.getState());
+      }
+    }
+  }, [formState, navigationState, onStepChange, formManager]);
+
+  // Navigation: Move to Specific Step
+  const moveToStep = useCallback(
+    (stepId: FormStepId) => {
+      console.log('FormContext: moveToStep invoked with:', stepId);
       console.log('FormContext: Current step before move:', formState.currentStep);
-      
-      // Update our context step first
+
       setCurrentContextStep(stepId);
-      
-      // Try to move to the step
       try {
         formManager.moveToStep(stepId);
+        console.log('FormContext: Successfully moved to:', stepId);
       } catch (error) {
-        console.log('FormContext: moveToStep failed, using forceSetCurrentStep instead');
+        console.log('FormContext: moveToStep failed, forcing:', stepId);
         formManager.forceSetCurrentStep(stepId);
       }
-      
-      // Force a state update by incrementing the version
       setStateVersion(v => v + 1);
-      
-      // Get the updated state after navigation
-      const updatedState = formManager.getState();
-      console.log('FormContext: State after moveToStep:', updatedState);
-      console.log('FormContext: Current step after moveToStep (from state):', updatedState.currentStep);
-      
-      // Notify parent component of step change
       if (onStepChange) {
-        onStepChange(stepId, updatedState);
+        console.log('FormContext: Triggering onStepChange for:', stepId);
+        onStepChange(stepId, formManager.getState());
       }
-    } catch (error) {
-      console.error('Navigation error:', error);
-    }
-  }, [onStepChange, formManager, formState.currentStep]);
+    },
+    [formState, onStepChange, formManager]
+  );
 
-  // Form value methods
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const setValue = useCallback((stepId: FormStepId, fieldId: string, value: any) => {
-    console.log(`FormContext: Setting value for ${stepId}.${fieldId}:`, value);
-    
-    // Special case for education step
-    if (stepId === 'education') {
-      console.log('FormContext: Special handling for education step');
-      console.log('FormContext: Current form state:', formManager.getState());
-      
-      // Get the current step state
-      const currentState = formManager.getState();
-      const educationStep = currentState.steps.education;
-      
-      if (educationStep) {
-        console.log('FormContext: Current education step values:', educationStep.values);
-        console.log('FormContext: Current education step touched:', educationStep.touched);
-      } else {
-        console.log('FormContext: Education step not found in form state');
+  // Navigation: Force Next Step
+  const forceNextStep = useCallback(() => {
+    console.log('FormContext: forceNextStep invoked');
+    console.log('FormContext: Current step:', formState.currentStep);
+
+    const currentIndex = navigationState.availableSteps.indexOf(formState.currentStep);
+    console.log('FormContext: Current step index:', currentIndex);
+
+    if (currentIndex === -1) {
+      console.log('FormContext: Current step not in available steps');
+      const stepOrder: FormStepId[] = [
+        'personal-info',
+        'consents',
+        'residence-history',
+        'employment-history',
+        'education',
+        'professional-licenses',
+        'signature',
+      ];
+      const currentOrderIndex = stepOrder.indexOf(formState.currentStep);
+      console.log('FormContext: Current step order index:', currentOrderIndex);
+
+      const nextStepId = navigationState.availableSteps.find(step => stepOrder.indexOf(step) > currentOrderIndex);
+      console.log('FormContext: Forced next step:', nextStepId);
+
+      if (nextStepId) {
+        setCurrentContextStep(nextStepId);
+        formManager.moveToStep(nextStepId);
+        setStateVersion(v => v + 1);
+        if (onStepChange) {
+          console.log('FormContext: Triggering onStepChange for:', nextStepId);
+          onStepChange(nextStepId, formManager.getState());
+        }
+      }
+    } else {
+      const nextStepId = navigationState.availableSteps[currentIndex + 1];
+      console.log('FormContext: Forced next step:', nextStepId);
+
+      if (nextStepId) {
+        setCurrentContextStep(nextStepId);
+        formManager.moveToStep(nextStepId);
+        setStateVersion(v => v + 1);
+        if (onStepChange) {
+          console.log('FormContext: Triggering onStepChange for:', nextStepId);
+          onStepChange(nextStepId, formManager.getState());
+        }
       }
     }
-    
-    formManager.setValue(stepId, fieldId, value);
-    
-    // Special case for education step - verify the value was set
-    if (stepId === 'education') {
-      // Get the updated state
-      const updatedState = formManager.getState();
-      const educationStep = updatedState.steps.education;
-      
-      if (educationStep) {
-        console.log('FormContext: Updated education step values:', educationStep.values);
-        console.log('FormContext: Updated education step touched:', educationStep.touched);
-        console.log('FormContext: Field was set:', fieldId in educationStep.values);
-        console.log('FormContext: Field value:', educationStep.values[fieldId]);
-      } else {
-        console.log('FormContext: Education step not found in updated form state');
-      }
-    }
-    
-    // Increment state version to trigger re-renders
-    setStateVersion(v => v + 1);
-  }, [formManager]);
+  }, [formState, navigationState, onStepChange, formManager]);
 
-  const getValue = useCallback((stepId: FormStepId, fieldId: string) => {
-    const step = formManager.getState().steps[stepId];
-    return step?.values[fieldId];
-  }, [formManager]);
+  // Form Value Management
+  const setValue = useCallback(
+    (stepId: FormStepId, fieldId: string, value: FormValue) => {
+      console.log('FormContext: setValue invoked');
+      console.log('FormContext: Step:', stepId);
+      console.log('FormContext: Field:', fieldId);
+      console.log('FormContext: Value:', value);
 
-  const getStepErrors = useCallback((stepId: FormStepId) => {
-    const step = formManager.getState().steps[stepId];
-    return step?.errors || {};
-  }, [formManager]);
+      formManager.setValue(stepId, fieldId, value);
+      setStateVersion(v => v + 1);
+      console.log('FormContext: State updated after setValue');
+    },
+    [formManager]
+  );
 
-  const isStepValid = useCallback((stepId: FormStepId) => {
-    const step = formManager.getState().steps[stepId];
-    return step?.isValid || false;
-  }, [formManager]);
+  const getValue = useCallback(
+    (stepId: FormStepId, fieldId: string): FormValue => {
+      console.log('FormContext: getValue invoked');
+      console.log('FormContext: Step:', stepId);
+      console.log('FormContext: Field:', fieldId);
 
-  // Timeline entry methods
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const addTimelineEntry = useCallback((stepId: FormStepId, entry: any) => {
-    const currentEntries = formManager.getState().steps[stepId]?.values.entries || [];
-    setValue(stepId, 'entries', [...currentEntries, entry]);
-  }, [setValue, formManager]);
+      const value = formManager.getState().steps[stepId]?.values[fieldId];
+      console.log('FormContext: Retrieved value:', value);
+      return value;
+    },
+    [formManager]
+  );
 
-  const updateTimelineEntry = useCallback((
-    stepId: FormStepId,
-    index: number,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    entry: any
-  ) => {
-    const currentEntries = formManager.getState().steps[stepId]?.values.entries || [];
-    const newEntries = [...currentEntries];
-    newEntries[index] = entry;
-    setValue(stepId, 'entries', newEntries);
-  }, [setValue, formManager]);
+  const getStepErrors = useCallback(
+    (stepId: FormStepId) => {
+      console.log('FormContext: getStepErrors invoked for:', stepId);
+      const errors = formManager.getState().steps[stepId]?.errors || {};
+      console.log('FormContext: Step errors:', errors);
+      return errors;
+    },
+    [formManager]
+  );
 
-  const removeTimelineEntry = useCallback((stepId: FormStepId, index: number) => {
-    const currentEntries = formManager.getState().steps[stepId]?.values.entries || [];
-    const newEntries = currentEntries.filter((_: unknown, i: number) => i !== index);
-    setValue(stepId, 'entries', newEntries);
-  }, [setValue, formManager]);
+  const isStepValid = useCallback(
+    (stepId: FormStepId) => {
+      console.log('FormContext: isStepValid invoked for:', stepId);
+      const isValid = formManager.getState().steps[stepId]?.isValid || false;
+      console.log('FormContext: Step validity:', isValid);
+      return isValid;
+    },
+    [formManager]
+  );
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const getTimelineEntries = useCallback((stepId: FormStepId): any[] => {
-    return formManager.getState().steps[stepId]?.values.entries || [];
-  }, [formManager]);
+  // Timeline Entry Management
+  const addTimelineEntry = useCallback(
+    (stepId: FormStepId, entry: TimelineEntryType) => {
+      console.log('FormContext: addTimelineEntry invoked');
+      console.log('FormContext: Step:', stepId);
+      console.log('FormContext: Entry:', entry);
 
-  // Form submission
+      const currentEntries = (formManager.getState().steps[stepId]?.values.entries as TimelineEntryType[]) || [];
+      console.log('FormContext: Current entries:', currentEntries);
+
+      const newEntries = [...currentEntries, entry];
+      setValue(stepId, 'entries', newEntries);
+      console.log('FormContext: Added entry, new entries:', newEntries);
+    },
+    [setValue, formManager]
+  );
+
+  const updateTimelineEntry = useCallback(
+    (stepId: FormStepId, index: number, entry: TimelineEntryType) => {
+      console.log('FormContext: updateTimelineEntry invoked');
+      console.log('FormContext: Step:', stepId);
+      console.log('FormContext: Index:', index);
+      console.log('FormContext: Entry:', entry);
+
+      const currentEntries = (formManager.getState().steps[stepId]?.values.entries as TimelineEntryType[]) || [];
+      console.log('FormContext: Current entries:', currentEntries);
+
+      const newEntries = [...currentEntries];
+      newEntries[index] = entry;
+      setValue(stepId, 'entries', newEntries);
+      console.log('FormContext: Updated entry, new entries:', newEntries);
+    },
+    [setValue, formManager]
+  );
+
+  const removeTimelineEntry = useCallback(
+    (stepId: FormStepId, index: number) => {
+      console.log('FormContext: removeTimelineEntry invoked');
+      console.log('FormContext: Step:', stepId);
+      console.log('FormContext: Index:', index);
+
+      const currentEntries = (formManager.getState().steps[stepId]?.values.entries as TimelineEntryType[]) || [];
+      console.log('FormContext: Current entries:', currentEntries);
+
+      const newEntries = currentEntries.filter((_, i) => i !== index);
+      setValue(stepId, 'entries', newEntries);
+      console.log('FormContext: Removed entry, new entries:', newEntries);
+    },
+    [setValue, formManager]
+  );
+
+  const getTimelineEntries = useCallback(
+    (stepId: FormStepId): TimelineEntryType[] => {
+      console.log('FormContext: getTimelineEntries invoked for:', stepId);
+      const entries = (formManager.getState().steps[stepId]?.values.entries as TimelineEntryType[]) || [];
+      console.log('FormContext: Retrieved entries:', entries);
+      return entries;
+    },
+    [formManager]
+  );
+
+  // Form Submission
   const submitForm = useCallback(async () => {
+    console.log('FormContext: submitForm invoked');
+    setIsSubmitting(true);
+    setFormErrors({});
+    console.log('FormContext: Starting submission process');
+
     try {
-      setIsSubmitting(true);
-      setFormErrors({});
-      
-      // Validate all steps before submission
-      const allStepsValid = navigationState.availableSteps.every(
-        stepId => isStepValid(stepId)
-      );
+      console.log('FormContext: Validating all steps');
+      const allStepsValid = navigationState.availableSteps.every(stepId => {
+        const valid = isStepValid(stepId);
+        console.log(`FormContext: Step ${stepId} valid:`, valid);
+        return valid;
+      });
+      console.log('FormContext: All steps valid:', allStepsValid);
 
       if (!allStepsValid) {
+        console.log('FormContext: Validation failed');
         throw new Error('Please complete all required fields');
       }
 
+      console.log('FormContext: Submitting form data:', formManager.getState());
       await onSubmit(formManager.getState());
+      console.log('FormContext: Submission successful');
     } catch (error) {
+      console.log('FormContext: Submission error:', error);
       setFormErrors({
-        submit: error instanceof Error ? error.message : 'An error occurred'
+        submit: error instanceof Error ? error.message : 'An error occurred',
       });
     } finally {
       setIsSubmitting(false);
+      console.log('FormContext: Submission complete, isSubmitting:', false);
     }
   }, [navigationState.availableSteps, isStepValid, onSubmit, formManager]);
 
-  const contextValue = useMemo(() => ({
-    currentStep: formState.currentStep,
-    currentContextStep, // Add currentContextStep to the context
+  // Context Value
+  const contextValue = useMemo(() => {
+    console.log('FormContext: Building context value');
+    console.log('FormContext: Current step:', formState.currentStep);
+    console.log('FormContext: Current context step:', currentContextStep);
+    console.log('FormContext: Form state keys:', Object.keys(formState.steps));
+    console.log('FormContext: Navigation state:', navigationState);
+
+    return {
+      currentStep: formState.currentStep,
+      currentContextStep,
+      formState,
+      navigationState,
+      canMoveNext: navigationState.canMoveNext,
+      canMovePrevious: navigationState.canMovePrevious,
+      availableSteps: navigationState.availableSteps,
+      completedSteps: navigationState.completedSteps,
+      moveToNextStep,
+      moveToPreviousStep,
+      moveToStep,
+      forceNextStep,
+      setValue,
+      getValue,
+      getStepErrors,
+      isStepValid,
+      addTimelineEntry,
+      updateTimelineEntry,
+      removeTimelineEntry,
+      getTimelineEntries,
+      formErrors,
+      submitForm,
+      isSubmitting,
+    };
+  }, [
     formState,
+    currentContextStep,
     navigationState,
-    canMoveNext: navigationState.canMoveNext,
-    canMovePrevious: navigationState.canMovePrevious,
-    availableSteps: navigationState.availableSteps,
-    completedSteps: navigationState.completedSteps,
     moveToNextStep,
     moveToPreviousStep,
     moveToStep,
@@ -712,52 +624,26 @@ export const FormProvider: React.FC<FormProviderProps> = ({
     updateTimelineEntry,
     removeTimelineEntry,
     getTimelineEntries,
-    isSubmitting,
+    formErrors,
     submitForm,
-    formErrors
-  }), [
-    formState,
-    currentContextStep, // Add currentContextStep to the dependency array
-    navigationState,
-    moveToNextStep,
-    moveToPreviousStep,
-    moveToStep,
-    forceNextStep,
-    setValue,
-    getValue,
-    getStepErrors,
-    isStepValid,
-    addTimelineEntry,
-    updateTimelineEntry,
-    removeTimelineEntry,
-    getTimelineEntries,
     isSubmitting,
-    submitForm,
-    formErrors
   ]);
 
-  return (
-    <FormContext.Provider value={contextValue}>
-      {children}
-    </FormContext.Provider>
-  );
+  console.log('FormContext: Rendering provider with children');
+  return <FormContext.Provider value={contextValue}>{children}</FormContext.Provider>;
 };
 
-// Custom hook for using the form context
-export const useForm = () => {
+// Custom Hook
+export const useForm = (): FormContextType => {
+  console.log('FormContext: useForm hook invoked');
   const context = useContext(FormContext);
-  if (context === undefined) {
+  if (!context) {
+    console.log('FormContext: Error - useForm called outside FormProvider');
     throw new Error('useForm must be used within a FormProvider');
   }
+  console.log('FormContext: Returning context from useForm');
   return context;
 };
 
-// Export types
-export type { 
-  FormState,
-  TimelineEntry,
-  ValidationResult,
-  NavigationState
-};
-
-export type { FormStepId };
+// Export Types
+export type { FormState, TimelineEntry, ValidationResult, NavigationState, FormStepId };

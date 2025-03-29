@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { FormConfigGenerator } from './FormConfigGenerator';
 import { FormStateManager } from './FormStateManager';
 import { parseCollectionKey, getRequirements } from './collectionKeyParser';
@@ -20,8 +21,8 @@ export class FormTester {
     this.collectionKey = collectionKey;
     this.requirements = getRequirements(collectionKey);
     
-    // Generate form config based on requirements
-    const config = FormConfigGenerator.generateFormConfig(this.requirements);
+    // Generate form config based on collection key
+    const config = FormConfigGenerator.generateFormConfig(this.collectionKey);
     
     // Create form manager
     this.formManager = new FormStateManager(config);
@@ -134,13 +135,13 @@ export class FormTester {
       const currentStep = this.formManager.getState().currentStep;
       
       if (currentStep === 'consents') {
-        if (this.requirements.consents_required.driver_license) {
+        if (this.requirements.consentsRequired.driverLicense) {
           this.setValue('driverLicenseConsent', true);
         }
-        if (this.requirements.consents_required.drug_test) {
+        if (this.requirements.consentsRequired.drugTest) {
           this.setValue('drugTestConsent', true);
         }
-        if (this.requirements.consents_required.biometric) {
+        if (this.requirements.consentsRequired.biometric) {
           this.setValue('biometricConsent', true);
         }
       }
@@ -170,5 +171,5 @@ export class FormTester {
 }
 
 // Example usage:
-// const tester = new FormTester('en000111100100');
+// const tester = new FormTester('en-EP-N-R3-E3-E-P-C');
 // tester.runFormFlow();

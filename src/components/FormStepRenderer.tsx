@@ -25,8 +25,11 @@ export const FormStepRenderer: React.FC<FormStepRendererProps> = ({
   console.log('FormStepRenderer: currentStep prop:', currentStep);
   console.log('FormStepRenderer: currentContextStep from context:', currentContextStep || 'not set');
   
-  // Use the context step if available, otherwise use the prop
-  const stepToRender = currentContextStep || currentStep;
+  // Always prioritize currentContextStep over formState.currentStep
+  // This ensures we respect the navigation state managed by FormContext
+  const stepToRender = currentContextStep !== null ? currentContextStep : formState.currentStep;
+  
+  console.log('FormStepRenderer: Rendering step:', stepToRender);
 
   // Skip steps that are not required based on the collection key
   React.useEffect(() => {

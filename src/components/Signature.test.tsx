@@ -4,6 +4,7 @@ import '@testing-library/jest-dom';
 import { Signature } from './Signature';
 import { TranslationProvider } from '../context/TranslationContext';
 import { FormProvider } from '../context/FormContext';
+import { MemoryRouter } from 'react-router-dom';
 
 // Mock the react-signature-canvas component
 jest.mock('react-signature-canvas', () => {
@@ -59,6 +60,13 @@ const mockFormContext = {
   formErrors: {}
 };
 
+// Mock useNavigate
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: () => jest.fn(),
+  MemoryRouter: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
+}));
+
 // Mock the useForm hook
 jest.mock('../context/FormContext', () => ({
   ...jest.requireActual('../context/FormContext'),
@@ -69,9 +77,11 @@ jest.mock('../context/FormContext', () => ({
 describe('Signature Component', () => {
   const renderComponent = (props = {}) => {
     return render(
-      <TranslationProvider initialLanguage="en">
-        <Signature {...props} />
-      </TranslationProvider>
+      <MemoryRouter>
+        <TranslationProvider initialLanguage="en">
+          <Signature {...props} />
+        </TranslationProvider>
+      </MemoryRouter>
     );
   };
 

@@ -115,9 +115,9 @@ describe('ConsentsStep Component', () => {
     fireEvent.click(biometricCheckbox);
     
     // Check if setValue was called with the correct values
-    expect(mockFormContext.setValue).toHaveBeenCalledWith('consents', 'driverLicenseConsent', true);
-    expect(mockFormContext.setValue).toHaveBeenCalledWith('consents', 'drugTestConsent', true);
-    expect(mockFormContext.setValue).toHaveBeenCalledWith('consents', 'biometricConsent', true);
+    expect(mockFormContext.setValue).toHaveBeenCalledWith('consents', 'driverLicense', true);
+    expect(mockFormContext.setValue).toHaveBeenCalledWith('consents', 'drugTest', true);
+    expect(mockFormContext.setValue).toHaveBeenCalledWith('consents', 'biometric', true);
   });
 
   it('shows valid status when form is valid', () => {

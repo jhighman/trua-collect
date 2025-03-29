@@ -16,7 +16,7 @@ classDiagram
     
     class Requirements {
         consents_required: ConsentsRequired
-        verification_steps: VerificationSteps
+        verificationSteps: VerificationSteps
     }
     
     class ConsentsRequired {
@@ -200,7 +200,7 @@ The `Requirements` structure defines what verifications and consents are require
 
 **Attributes**:
 - `consents_required`: ConsentsRequired - Which consent types are required
-- `verification_steps`: VerificationSteps - Configuration for verification steps
+- `verificationSteps`: VerificationSteps - Configuration for verification steps
 
 ### ConsentsRequired
 
@@ -554,7 +554,7 @@ function getRequirements(collectionKey: string): Requirements {
       drug_test: isBitEnabled(bits, 2),
       biometric: isBitEnabled(bits, 3)
     },
-    verification_steps: {
+    verificationSteps: {
       education: {
         enabled: isBitEnabled(bits, 4),
         required_verifications: ["degree", "institution", "graduation_date"]
@@ -602,7 +602,7 @@ interface Requirements {
     drug_test: boolean;
     biometric: boolean;
   };
-  verification_steps: {
+  verificationSteps: {
     education: {
       enabled: boolean;
       required_verifications: string[];
@@ -738,7 +738,7 @@ interface Signature {
       "drug_test": false,
       "biometric": true
     },
-    "verification_steps": {
+    "verificationSteps": {
       "education": {
         "enabled": true,
         "required_verifications": ["degree", "institution", "graduation_date"]
@@ -950,7 +950,7 @@ interface Signature {
 
 ### ResidenceHistory Validation
 - `entries` must contain at least one entry
-- Total years covered must meet or exceed the required years (from `requirements.verification_steps.residence_history.years`)
+- Total years covered must meet or exceed the required years (from `requirements.verificationSteps.residence_history.years`)
 - Each entry must pass ResidenceEntry validation
 
 ### ResidenceEntry Validation
@@ -966,7 +966,7 @@ interface Signature {
 
 ### EmploymentHistory Validation
 - `entries` must contain at least one entry
-- Total years covered must meet or exceed the required years (from `requirements.verification_steps.employment_history.years`)
+- Total years covered must meet or exceed the required years (from `requirements.verificationSteps.employment_history.years`)
 - Each entry must pass EmploymentEntry validation
 
 ### EmploymentEntry Validation

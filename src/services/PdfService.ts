@@ -1,5 +1,11 @@
 import { FormState } from '../context/FormContext';
-import { PdfDocumentGenerator } from '../utils/PdfDocumentGenerator';
+import {
+  generatePdfDocument,
+  generatePdfFromJson,
+  generateFilename,
+  saveToBlob,
+  saveToDataUrl
+} from '../utils/PdfDocumentGenerator';
 import { JsonDocument } from '../utils/JsonDocumentGenerator';
 import { jsPDF } from 'jspdf';
 
@@ -17,8 +23,8 @@ export class PdfService {
    * @returns The generated PDF document
    */
   public static generatePdfDocument(formState: FormState, trackingId: string): jsPDF {
-    return PdfDocumentGenerator.generatePdfDocument(formState, trackingId);
-  }
+   return generatePdfDocument(formState, trackingId);
+ }
 
   /**
    * Generate a PDF document from a JSON document
@@ -27,7 +33,7 @@ export class PdfService {
    * @returns The generated PDF document
    */
   public static generatePdfFromJson(jsonDocument: JsonDocument): jsPDF {
-    return PdfDocumentGenerator.generatePdfFromJson(jsonDocument);
+    return generatePdfFromJson(jsonDocument);
   }
 
   /**
@@ -38,8 +44,8 @@ export class PdfService {
    * @returns The path to the saved file
    */
   public static async savePdfDocument(doc: jsPDF, trackingId: string): Promise<string> {
-    const filename = PdfDocumentGenerator.generateFilename(trackingId);
-    const blob = PdfDocumentGenerator.saveToBlob(doc);
+    const filename = generateFilename(trackingId);
+    const blob = saveToBlob(doc);
     
     // In a real implementation, this would save to a file or database
     // For now, we'll simulate saving by returning the path
@@ -90,7 +96,7 @@ export class PdfService {
    * @returns A data URL containing the PDF data
    */
   public static getPdfDataUrl(doc: jsPDF): string {
-    return PdfDocumentGenerator.saveToDataUrl(doc);
+    return saveToDataUrl(doc);
   }
 
   /**
@@ -113,6 +119,6 @@ export class PdfService {
    * @returns A filename in the format truaverify_<tracking_id>_<date>.pdf
    */
   public static generateFilename(trackingId: string): string {
-    return PdfDocumentGenerator.generateFilename(trackingId);
+    return generateFilename(trackingId);
   }
 }

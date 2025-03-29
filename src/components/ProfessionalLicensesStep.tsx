@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useForm } from '../context/FormContext';
+import { useForm, TimelineEntry } from '../context/FormContext';
 import { useTranslation } from '../context/TranslationContext';
 import { ProfessionalLicenseEntry, ProfessionalLicenseEntryData } from './ProfessionalLicenseEntry';
 import './ProfessionalLicensesStep.css';
@@ -22,11 +22,13 @@ export const ProfessionalLicensesStep: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [errors, setErrors] = useState<Record<string, Record<string, string>>>({});
   
-  // Get entries from form context
+  // Add proper type assertions for license entries
+  const licenseEntries = (getValue('professional-licenses', 'entries') || []) as unknown as ProfessionalLicenseEntryData[];
+
   useEffect(() => {
-    const licenseEntries = getValue('professional-licenses', 'entries') || [];
-    if (licenseEntries && licenseEntries.length > 0) {
-      setEntries(licenseEntries);
+    const entries = (getValue('professional-licenses', 'entries') || []) as unknown as ProfessionalLicenseEntryData[];
+    if (entries && entries.length > 0) {
+      setEntries(entries);
     }
   }, [getValue]);
   
@@ -68,25 +70,24 @@ export const ProfessionalLicensesStep: React.FC = () => {
     if (index !== -1) {
       const newEntries = entries.filter(entry => entry.id !== entryId);
       setEntries(newEntries);
-      setValue('professional-licenses', 'entries', newEntries);
+      setValue('professional-licenses', 'entries', newEntries as unknown as TimelineEntry[]);
     }
   };
   
   // Handle saving an entry
   const handleSaveEntry = (entry: ProfessionalLicenseEntryData) => {
+    let newEntries: ProfessionalLicenseEntryData[];
+    
     if (entries.some(e => e.id === entry.id)) {
       // Update existing entry
-      const index = entries.findIndex(e => e.id === entry.id);
-      const newEntries = [...entries];
-      newEntries[index] = entry;
-      setEntries(newEntries);
-      setValue('professional-licenses', 'entries', newEntries);
+      newEntries = entries.map(e => e.id === entry.id ? entry : e);
     } else {
       // Add new entry
-      const newEntries = [...entries, entry];
-      setEntries(newEntries);
-      setValue('professional-licenses', 'entries', newEntries);
+      newEntries = [...entries, entry];
     }
+    
+    setEntries(newEntries);
+    setValue('professional-licenses', 'entries', newEntries as unknown as TimelineEntry[]);
     
     setEditingEntry(null);
     setShowAddForm(false);

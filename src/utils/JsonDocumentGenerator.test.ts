@@ -219,8 +219,9 @@ describe('JsonDocumentGenerator', () => {
   });
 
   it('throws an error if signature is missing', () => {
-    const invalidFormState = { ...mockFormState };
-    delete invalidFormState.steps['signature'];
+    // Create a copy of the form state with signature values but no signature image
+    const invalidFormState = JSON.parse(JSON.stringify(mockFormState));
+    invalidFormState.steps['signature'].values.signature = null;
     
     expect(() => {
       JsonDocumentGenerator.generateJsonDocument(invalidFormState, trackingId);
@@ -228,17 +229,39 @@ describe('JsonDocumentGenerator', () => {
   });
 
   it('throws an error if required personal info fields are missing', () => {
-    const invalidFormState = JSON.parse(JSON.stringify(mockFormState)) as FormState;
-    const personalInfoStep = invalidFormState.steps['personal-info'];
+    // Create a new form state with personal-info step but missing fullName
+    const invalidFormState: FormState = {
+      currentStep: 'personal-info',
+      steps: {
+        'personal-info': {
+          id: 'personal-info',
+          values: {
+            // Empty fullName to trigger validation error
+            fullName: '',
+            email: 'test@example.com'
+          },
+          touched: new Set(['fullName', 'email']),
+          errors: {},
+          isComplete: true,
+          isValid: true
+        },
+        'signature': {
+          id: 'signature',
+          values: {
+            signature: 'data:image/png;base64,test123'
+          },
+          touched: new Set(['signature']),
+          errors: {},
+          isComplete: true,
+          isValid: true
+        }
+      },
+      isSubmitting: false,
+      isComplete: false
+    };
     
-    if (personalInfoStep) {
-      delete personalInfoStep.values.fullName;
-      
-      expect(() => {
-        JsonDocumentGenerator.generateJsonDocument(invalidFormState, trackingId);
-      }).toThrow('Full name is required in personal information');
-    } else {
-      fail('personal-info step should exist in the test form state');
-    }
+    expect(() => {
+      JsonDocumentGenerator.generateJsonDocument(invalidFormState, trackingId);
+    }).toThrow('Full name is required in personal information');
   });
 });

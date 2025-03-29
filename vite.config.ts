@@ -8,6 +8,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
+      'jspdf-autotable': 'jspdf-autotable/dist/index.js', // Updated for jspdf-autotable 5.0.2
     },
   },
   server: {

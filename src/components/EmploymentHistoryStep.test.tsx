@@ -33,32 +33,44 @@ jest.mock('../utils/translations', () => ({
   }
 }));
 
-const mockRequirements = {
+const mockRequirements: Requirements = {
   language: 'en',
-  consents_required: {
-    driver_license: false,
-    drug_test: false,
+  consentsRequired: {
+    driverLicense: false,
+    drugTest: false,
     biometric: false
   },
-  verification_steps: {
+  verificationSteps: {
     education: {
-      enabled: false,
-      required_verifications: []
+      enabled: false
     },
-    professional_license: {
-      enabled: false,
-      required_verifications: []
+    professionalLicense: {
+      enabled: false
     },
-    residence_history: {
+    residenceHistory: {
       enabled: true,
-      years: 7,
-      required_verifications: []
+      years: 7
     },
-    employment_history: {
+    employmentHistory: {
       enabled: true,
-      years: 7,
-      required_verifications: []
+      mode: 'years',
+      modes: {
+        years: 7
+      }
+    },
+    personalInfo: {
+      enabled: false,
+      modes: {
+        email: false,
+        phone: false,
+        fullName: false,
+        nameAlias: false
+      }
     }
+  },
+  signature: {
+    required: true,
+    mode: 'wet'
   }
 };
 
@@ -92,7 +104,8 @@ const mockFormContextValue = {
     },
     isSubmitting: false,
     isComplete: false
-  }
+  },
+  isStepValid: jest.fn().mockReturnValue(true)
 };
 
 // Mock the form context
@@ -129,13 +142,13 @@ describe('EmploymentHistoryStep Component', () => {
     renderWithProviders(<EmploymentHistoryStep />);
     
     // Look for the time-text element with the exact text that's rendered
-    const timeText = screen.getByText('2 / 7 years');
+    const timeText = screen.getByText('2 / 5 years');
     expect(timeText).toBeInTheDocument();
     
     // Check if the progress bar exists with correct values
     const progressBar = screen.getByRole('progressbar');
     expect(progressBar).toHaveAttribute('aria-valuenow', '2');
-    expect(progressBar).toHaveAttribute('aria-valuemax', '7');
+    expect(progressBar).toHaveAttribute('aria-valuemax', '5');
   });
 
   test('renders with Spanish language', () => {

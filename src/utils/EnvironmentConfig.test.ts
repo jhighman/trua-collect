@@ -33,19 +33,25 @@ describe('EnvironmentConfig', () => {
 
   it('should use environment variables in Node.js environment when they are set', () => {
     // Mock Node.js environment (window is undefined)
-    global.window = undefined as unknown as (Window & typeof globalThis);
+    delete (global as { window?: Window & typeof globalThis }).window;
     
     // Set environment variables
-    process.env.DEFAULT_COLLECTION_KEY = 'es000111100100';
+    process.env.DEFAULT_COLLECTION_KEY = 'en-EPMA-DTB-R5-E5-E-P-W';
     process.env.PORT = '4000';
     process.env.DEV_MODE = 'false';
     process.env.LOG_LEVEL = 'debug';
     process.env.API_BASE_URL = 'http://localhost:4001/api';
     process.env.DOCUMENT_STORAGE_PATH = './custom/storage';
 
-    const config = getConfig();
+    // Add console log to debug
+    console.log('Test - process.env.DEFAULT_COLLECTION_KEY:', process.env.DEFAULT_COLLECTION_KEY);
+    console.log('Test - typeof window:', typeof window);
 
-    expect(config.defaultCollectionKey).toBe('es000111100100');
+    const config = getConfig();
+    
+    console.log('Test - config.defaultCollectionKey:', config.defaultCollectionKey);
+
+    expect(config.defaultCollectionKey).toBe('en-EPMA-DTB-R5-E5-E-P-W');
     expect(config.port).toBe(4000);
     expect(config.devMode).toBe(false);
     expect(config.logLevel).toBe('debug');

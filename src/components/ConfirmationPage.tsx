@@ -1,7 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { useForm } from '../context/FormContext';
 import { PdfService } from '../services/PdfService';
+// Import jsPDF
 import { jsPDF } from 'jspdf';
+
+// Extend the jsPDF type to include methods we need
+declare module 'jspdf' {
+  interface jsPDF {
+    getY: () => number;
+    setY: (y: number) => jsPDF;
+    getNumberOfPages: () => number;
+    setPage: (pageNumber: number) => jsPDF;
+  }
+}
 import './ConfirmationPage.css';
 
 interface ConfirmationPageProps {
@@ -10,19 +20,16 @@ interface ConfirmationPageProps {
 
 /**
  * ConfirmationPage component
- * 
+ *
  * This component implements step M in the data flow diagram.
  * It displays a success message, shows the claimant name,
  * and provides a PDF download link.
  */
 const ConfirmationPage: React.FC<ConfirmationPageProps> = ({ trackingId }) => {
-  const { formState } = useForm();
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // Get claimant name from form state
-  const claimantName = formState.steps['personal-info']?.values.fullName || 'Applicant';
+  const [claimantName, setClaimantName] = useState<string>('Applicant');
   
   // Generate PDF on component mount
   useEffect(() => {
@@ -30,15 +37,132 @@ const ConfirmationPage: React.FC<ConfirmationPageProps> = ({ trackingId }) => {
       try {
         setIsLoading(true);
         
-        // Generate PDF document
-        const pdfDoc = PdfService.generatePdfDocument(formState, trackingId);
+        // Try to get form data from localStorage
+        const formDataStr = localStorage.getItem('formState');
+        let formData = null;
+        
+        if (formDataStr) {
+          try {
+            formData = JSON.parse(formDataStr);
+            // Get claimant name if available
+            if (formData && formData.steps && formData.steps['personal-info']) {
+              setClaimantName(formData.steps['personal-info'].values.fullName || 'Applicant');
+            }
+          } catch (e) {
+            console.error('Error parsing form data from localStorage:', e);
+          }
+        }
+        // Create a simplified PDF document
+        const doc = new jsPDF();
+        
+        // Add header
+        doc.setFontSize(24);
+        doc.setTextColor(49, 130, 206); // Primary blue color
+        doc.text('TRUA VERIFY', 20, 20);
+        
+        doc.setFontSize(16);
+        doc.setTextColor(74, 85, 104); // Secondary gray color
+        doc.text('Employment Verification Report', 20, 30);
+        
+        // Add tracking ID and date
+        doc.setFontSize(10);
+        doc.text(`Tracking ID: ${trackingId}`, 20, 40);
+        doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 45);
+        
+        // Create data for the main table
+        const tableData = [
+          ['Full Name', claimantName]
+        ];
+        
+        // Add personal info if available
+        if (formData && formData.steps && formData.steps['personal-info']) {
+          const personalInfo = formData.steps['personal-info'].values;
+          if (personalInfo.email) {
+            tableData.push(['Email', personalInfo.email]);
+          }
+          if (personalInfo.phone) {
+            tableData.push(['Phone', personalInfo.phone]);
+          }
+        }
+        
+        // Add signature info if available
+        if (formData && formData.steps && formData.steps.signature) {
+          tableData.push(['Signature Date', new Date().toLocaleDateString()]);
+        }
+        
+        // Add attestation
+        tableData.push(['Attestation', 'I hereby certify that the information provided is true and accurate.']);
+        
+        // Create a simple table manually
+        doc.setFontSize(12);
+        doc.text('Verification Information:', 20, 50);
+        
+        let yPos = 60;
+        
+        // Draw header
+        doc.setFillColor(49, 130, 206);
+        doc.setTextColor(255, 255, 255);
+        doc.rect(20, yPos, 80, 10, 'F');
+        doc.rect(100, yPos, 80, 10, 'F');
+        doc.text('Field', 25, yPos + 7);
+        doc.text('Value', 105, yPos + 7);
+        
+        yPos += 10;
+        doc.setTextColor(0, 0, 0);
+        
+        // Draw rows
+        tableData.forEach(([field, value], index) => {
+          // Set background color for alternating rows
+          if (index % 2 === 0) {
+            doc.setFillColor(240, 240, 240);
+            doc.rect(20, yPos, 80, 10, 'F');
+            doc.rect(100, yPos, 80, 10, 'F');
+          }
+          
+          doc.text(field, 25, yPos + 7);
+          // Handle long values by truncating or wrapping
+          const valueStr = String(value);
+          const truncatedValue = valueStr.length > 40 ? valueStr.substring(0, 37) + '...' : valueStr;
+          doc.text(truncatedValue, 105, yPos + 7);
+          
+          yPos += 10;
+        });
+        
+        // Add footer
+        const pageCount = doc.getNumberOfPages();
+        
+        for (let i = 1; i <= pageCount; i++) {
+          doc.setPage(i);
+          
+          // Add page number
+          doc.setFontSize(8);
+          doc.setTextColor(74, 85, 104);
+          doc.text(
+            `Page ${i} of ${pageCount}`,
+            105,
+            285,
+            { align: 'center' }
+          );
+          
+          // Add tracking ID
+          doc.text(
+            `Tracking ID: ${trackingId}`,
+            190,
+            285,
+            { align: 'right' }
+          );
+          
+          // Add copyright
+          doc.text(
+            `© ${new Date().getFullYear()} Trua Verify. All rights reserved.`,
+            20,
+            285
+          );
+        }
         
         // Get data URL for download
-        const dataUrl = PdfService.getPdfDataUrl(pdfDoc);
+        const dataUrl = doc.output('datauristring');
         setPdfUrl(dataUrl);
-        
-        // Simulate saving the PDF to the server
-        await PdfService.savePdfDocument(pdfDoc, trackingId);
         
         setIsLoading(false);
       } catch (error) {
@@ -49,7 +173,7 @@ const ConfirmationPage: React.FC<ConfirmationPageProps> = ({ trackingId }) => {
     };
     
     generatePdf();
-  }, [formState, trackingId]);
+  }, [trackingId, claimantName]);
   
   // Handle PDF download
   const handleDownload = () => {
@@ -114,7 +238,7 @@ const ConfirmationPage: React.FC<ConfirmationPageProps> = ({ trackingId }) => {
           <h2>Your Verification Document</h2>
           <p>
             Please download a copy of your verification document for your records.
-            This document contains all the information you've provided.
+            This document contains all the information you&apos;ve provided.
           </p>
           
           {pdfUrl ? (

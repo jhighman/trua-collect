@@ -1,260 +1,306 @@
 # Collection Key Scenarios
 
-This document provides a comprehensive list of collection key combinations, their corresponding scenarios, and direct URLs for testing.
+This document provides a comprehensive list of collection key combinations, their corresponding scenarios, and direct URLs for testing. It reflects the current implementation as of March 23, 2025, based on the collectionKeyParser.ts utility.
 
 ## Collection Key Format
 
-The collection key follows this format: `[language][12 bits for configuration]`
+The collection key follows this format: [language]-[personal]-[consents]-[residence]-[employment]-[education]-[proLicense]-[signature]
 
-For example: `en000111100100`
+For example: en-EPA-DTB-R3-EN2-E-P-W
 
-- First 2 characters: Language code (`en`, `es`, `fr`, `it`)
-- Next 12 characters: Configuration bits (0 or 1)
+- Language: 2-character code (e.g., en, es, fr, it)
+- Facets: 7 hyphen-separated components defining verification requirements:
+  - personal: Personal info modes
+  - consents: Consents required
+  - residence: Residence history years
+  - employment: Employment history (years or employers)
+  - education: Education step
+  - proLicense: Professional licenses step
+  - signature: Signature requirement
 
-## Configuration Bits Breakdown
+Total length: 8 parts, separated by 7 hyphens.
 
-1. **Bits 1-3 (positions 3-5)**: Consents required
-   - `000`: No consents required
-   - `001`: Driver license consent required
-   - `010`: Drug test consent required
-   - `100`: Biometric consent required
-   - `011`: Driver license and drug test consents required
-   - `101`: Driver license and biometric consents required
-   - `110`: Drug test and biometric consents required
-   - `111`: All consents required
+## Facet Breakdown
 
-2. **Bit 4 (position 6)**: Education step
-   - `0`: Education step disabled
-   - `1`: Education step enabled
+### Personal Info
 
-3. **Bit 5 (position 7)**: Professional licenses step
-   - `0`: Professional licenses step disabled
-   - `1`: Professional licenses step enabled
+- N: Disabled (skips to next enabled step)
+- E: Email only
+- P: Phone only
+- M: Full name only
+- A: Name alias only
+- Combinations: EP, EPA, EPM, EPMA, etc.
+- Invalid: Defaults to P (phone only)
 
-4. **Bit 6 (position 8)**: Residence history step
-   - `0`: Residence history step disabled
-   - `1`: Residence history step enabled
+### Consents Required
 
-5. **Bits 7-9 (positions 9-11)**: Residence history years
-   - `001`: 1 year
-   - `010`: 3 years
-   - `100`: 5 years
-   - `101`: 7 years
-   - `111`: 10 years
+- N: No consents
+- D: Driver license consent
+- T: Drug test consent
+- B: Biometric consent
+- Combinations: DT, DB, TB, DTB
+- Invalid: Defaults to N
 
-6. **Bit 10 (position 12)**: Employment history step
-   - `0`: Employment history step disabled
-   - `1`: Employment history step enabled
+### Residence History
 
-7. **Bits 11-13 (positions 13-15)**: Employment history years
-   - `001`: 1 year
-   - `010`: 3 years
-   - `100`: 5 years
-   - `101`: 7 years
-   - `111`: 10 years
+- N: Disabled
+- R1: 1 year
+- R3: 3 years
+- R5: 5 years
+- Invalid: Defaults to R1 if enabled
+
+### Employment History
+
+- N: Disabled
+- Years mode: E1 (1 year), E3 (3 years), E5 (5 years)
+- Employers mode: EN1 (1 employer), EN2 (2 employers), EN3 (3 employers)
+- Invalid: Defaults to E1 if enabled
+
+### Education
+
+- N: Disabled
+- E: Enabled
+- Invalid: Defaults to N
+
+### Professional Licenses
+
+- N: Disabled
+- P: Enabled
+- Invalid: Defaults to N
+
+### Signature
+
+- N: Not required
+- C: Checkbox
+- W: Wet signature
+- Invalid: Defaults to N
 
 ## Common Scenarios
 
-Below is a list of common scenarios with their corresponding collection keys and direct URLs:
+Below are common scenarios with their corresponding collection keys and direct URLs. All assume a local development environment at http://localhost:3000/.
 
 ### 1. Full Verification (All Steps, Maximum Years)
 
-**Scenario**: Complete verification with all steps enabled and maximum history requirements (10 years for both residence and employment).
+**Scenario**: Complete verification with all steps and 5-year history.
 
-**Collection Key**: `en000111111111`
+**Collection Key**: en-EPMA-DTB-R5-E5-E-P-W
 
-**URL**: [http://localhost:3000/?key=en000111111111](http://localhost:3000/?key=en000111111111)
+**URL**: [http://localhost:3000/?key=en-EPMA-DTB-R5-E5-E-P-W](http://localhost:3000/?key=en-EPMA-DTB-R5-E5-E-P-W)
 
-**Description**: This scenario enables all verification steps (education, professional licenses, residence history, employment history) with 10-year history requirements for both residence and employment. No consents are required. The form starts at the personal-info step.
+**Description**: Email/phone/full name/alias, all consents, 5-year residence/employment history, education, professional licenses, wet signature. Starts at personal-info step.
 
-### 2. Standard Verification (All Steps, 5 Years)
+**Expected Output**: A complete claim with all components:
 
-**Scenario**: Standard verification with all steps enabled and 5-year history requirements.
+```json
+{
+  "tracking_id": "generated-uuid",
+  "submission_date": "2025-03-23",
+  "collection_key": "en-EPMA-DTB-R5-E5-E-P-W",
+  "language": "en",
+  "requirements": {
+    "consents_required": {
+      "driverLicense": true,
+      "drugTest": true,
+      "biometric": true
+    },
+    "verification_steps": {
+      "personalInfo": {
+        "enabled": true,
+        "modes": { "email": true, "phone": true, "fullName": true, "nameAlias": true }
+      },
+      "education": { "enabled": true },
+      "professionalLicense": { "enabled": true },
+      "residenceHistory": { "enabled": true, "years": 5 },
+      "employmentHistory": { "enabled": true, "mode": "years", "modes": { "years": 5 } }
+    },
+    "signature": { "required": true, "mode": "wet" }
+  },
+  "claimant": {
+    "full_name": "John Michael Smith",
+    "email": "john.smith@example.com",
+    "phone": "555-987-6543",
+    "name_alias": "Johnny Smith",
+    "completed_at": "2025-03-23T10:15:00Z"
+  },
+  "residence_history": { "entries": [/* 5 years */], "total_years": 5, "completed_at": "2025-03-23T10:20:00Z" },
+  "employment_history": { "entries": [/* 5 years */], "total_years": 5, "completed_at": "2025-03-23T10:25:00Z" },
+  "education": { "degree": {/* details */}, "completed_at": "2025-03-23T10:18:00Z" },
+  "professional_licenses": { "entries": [/* licenses */], "completed_at": "2025-03-23T10:19:00Z" },
+  "signature": { "data": "data:image/png;base64,iVBORw...", "date": "2025-03-23T10:30:00Z" }
+}
+```
 
-**Collection Key**: `en000111100100`
+The PDF includes all sections with an embedded wet signature and attestation: "I certify the above is true, [date]."
 
-**URL**: [http://localhost:3000/?key=en000111100100](http://localhost:3000/?key=en000111100100)
+### 2. Standard Verification (All Steps, 3 Years)
 
-**Description**: This is the default collection key. It enables all verification steps with 5-year history requirements for both residence and employment. No consents are required. The form starts at the personal-info step.
+**Scenario**: Standard verification with 3-year history.
+
+**Collection Key**: en-EP-N-R3-E3-E-P-C
+
+**URL**: [http://localhost:3000/?key=en-EP-N-R3-E3-E-P-C](http://localhost:3000/?key=en-EP-N-R3-E3-E-P-C)
+
+**Description**: Email/phone, no consents, 3-year residence/employment history, education, professional licenses, checkbox signature.
+
+**Expected Output**: JSON with all steps, 3-year history; PDF with checkbox attestation.
 
 ### 3. Minimal Verification (Personal Info and Signature Only)
 
-**Scenario**: Minimal verification with only personal information and signature.
+**Scenario**: Minimal verification with phone and signature.
 
-**Collection Key**: `en000000000000`
+**Collection Key**: en-P-N-N-N-N-N-C
 
-**URL**: [http://localhost:3000/?key=en000000000000](http://localhost:3000/?key=en000000000000)
+**URL**: [http://localhost:3000/?key=en-P-N-N-N-N-N-C](http://localhost:3000/?key=en-P-N-N-N-N-N-C)
 
-**Description**: This scenario disables all optional steps, requiring only personal information and signature. The form starts at the personal-info step and then jumps directly to the signature step.
+**Description**: Phone only, no additional steps, checkbox signature.
+
+**Expected Output**: JSON with personal info and signature; PDF with minimal data.
 
 ### 4. Education Verification Only
 
-**Scenario**: Verification focused only on education credentials.
+**Scenario**: Education-focused verification.
 
-**Collection Key**: `en000100000000`
+**Collection Key**: en-P-N-N-N-E-N-W
 
-**URL**: [http://localhost:3000/?key=en000100000000](http://localhost:3000/?key=en000100000000)
+**URL**: [http://localhost:3000/?key=en-P-N-N-N-E-N-W](http://localhost:3000/?key=en-P-N-N-N-E-N-W)
 
-**Description**: This scenario enables only the education step, disabling professional licenses, residence history, and employment history. The form starts at the personal-info step, proceeds to education, and then to signature.
+**Description**: Phone only, education enabled, wet signature.
+
+**Expected Output**: JSON with personal info, education, signature; PDF with education details.
 
 ### 5. Professional Licenses Verification Only
 
-**Scenario**: Verification focused only on professional licenses.
+**Scenario**: Professional licenses-focused verification.
 
-**Collection Key**: `en000010000000`
+**Collection Key**: en-P-N-N-N-N-P-C
 
-**URL**: [http://localhost:3000/?key=en000010000000](http://localhost:3000/?key=en000010000000)
+**URL**: [http://localhost:3000/?key=en-P-N-N-N-N-P-C](http://localhost:3000/?key=en-P-N-N-N-N-P-C)
 
-**Description**: This scenario enables only the professional licenses step, disabling education, residence history, and employment history. The form starts at the personal-info step, proceeds to professional licenses, and then to signature.
+**Description**: Phone only, professional licenses enabled, checkbox signature.
 
-### 6. Residence History Verification Only (5 Years)
+**Expected Output**: JSON with personal info, licenses, signature; PDF with license details.
 
-**Scenario**: Verification focused only on residence history with 5-year requirement.
+### 6. Residence History Verification Only (3 Years)
 
-**Collection Key**: `en000001100000`
+**Scenario**: Residence history with 3 years.
 
-**URL**: [http://localhost:3000/?key=en000001100000](http://localhost:3000/?key=en000001100000)
+**Collection Key**: en-P-N-R3-N-N-N-W
 
-**Description**: This scenario enables only the residence history step with a 5-year history requirement. The form starts at the personal-info step, proceeds to residence history, and then to signature.
+**URL**: [http://localhost:3000/?key=en-P-N-R3-N-N-N-W](http://localhost:3000/?key=en-P-N-R3-N-N-N-W)
 
-### 7. Employment History Verification Only (5 Years)
+**Description**: Phone only, 3-year residence history, wet signature.
 
-**Scenario**: Verification focused only on employment history with 5-year requirement.
+**Expected Output**: JSON with personal info, residence history, signature.
 
-**Collection Key**: `en000000000100`
+### 7. Employment History Verification Only (3 Employers)
 
-**URL**: [http://localhost:3000/?key=en000000000100](http://localhost:3000/?key=en000000000100)
+**Scenario**: Employment history with 3 employers.
 
-**Description**: This scenario enables only the employment history step with a 5-year history requirement. The form starts at the personal-info step, proceeds to employment history, and then to signature.
+**Collection Key**: en-P-N-N-EN3-N-N-C
+
+**URL**: [http://localhost:3000/?key=en-P-N-N-EN3-N-N-C](http://localhost:3000/?key=en-P-N-N-EN3-N-N-C)
+
+**Description**: Phone only, 3 employers, checkbox signature.
+
+**Expected Output**: JSON with personal info, employment history (up to 3 employers), signature.
 
 ### 8. All Consents Required
 
-**Scenario**: All consents required with standard verification steps.
+**Scenario**: All consents with standard steps.
 
-**Collection Key**: `en111111100100`
+**Collection Key**: en-EP-DTB-R3-E3-E-P-W
 
-**URL**: [http://localhost:3000/?key=en111111100100](http://localhost:3000/?key=en111111100100)
+**URL**: [http://localhost:3000/?key=en-EP-DTB-R3-E3-E-P-W](http://localhost:3000/?key=en-EP-DTB-R3-E3-E-P-W)
 
-**Description**: This scenario requires all consents (driver license, drug test, biometric) and enables all verification steps with 5-year history requirements. The form starts at the personal-info step, proceeds to consents, and then continues with the verification steps.
+**Description**: Email/phone, all consents, 3-year history, education, professional licenses, wet signature.
 
 ### 9. Spanish Language, Standard Verification
 
 **Scenario**: Standard verification in Spanish.
 
-**Collection Key**: `es000111100100`
+**Collection Key**: es-EP-N-R3-E3-E-P-C
 
-**URL**: [http://localhost:3000/?key=es000111100100](http://localhost:3000/?key=es000111100100)
+**URL**: [http://localhost:3000/?key=es-EP-N-R3-E3-E-P-C](http://localhost:3000/?key=es-EP-N-R3-E3-E-P-C)
 
-**Description**: This scenario is identical to the standard verification but with the interface in Spanish. It enables all verification steps with 5-year history requirements.
+**Description**: Same as scenario 2, in Spanish.
 
-### 10. French Language, Standard Verification
+### 10. Start at Residence History Step
 
-**Scenario**: Standard verification in French.
+**Scenario**: Skip personal info, start at residence history.
 
-**Collection Key**: `fr000111100100`
+**Collection Key**: en-N-N-R3-N-N-N-W
 
-**URL**: [http://localhost:3000/?key=fr000111100100](http://localhost:3000/?key=fr000111100100)
+**URL**: [http://localhost:3000/?key=en-N-N-R3-N-N-N-W](http://localhost:3000/?key=en-N-N-R3-N-N-N-W)
 
-**Description**: This scenario is identical to the standard verification but with the interface in French. It enables all verification steps with 5-year history requirements.
+**Description**: No personal info, 3-year residence history, wet signature.
 
-### 11. Italian Language, Standard Verification
+### 11. Partial Consents (Driver License Only)
 
-**Scenario**: Standard verification in Italian.
+**Scenario**: Driver license consent only.
 
-**Collection Key**: `it000111100100`
+**Collection Key**: en-P-D-N-N-N-N-W
 
-**URL**: [http://localhost:3000/?key=it000111100100](http://localhost:3000/?key=it000111100100)
+**URL**: [http://localhost:3000/?key=en-P-D-N-N-N-N-W](http://localhost:3000/?key=en-P-D-N-N-N-N-W)
 
-**Description**: This scenario is identical to the standard verification but with the interface in Italian. It enables all verification steps with 5-year history requirements.
+**Description**: Phone, driver license consent, wet signature.
 
-### 12. Start at Residence History Step
+### 12. Mixed Residence and Employment (5 Years, 2 Employers)
 
-**Scenario**: Start the form at the residence history step.
+**Scenario**: Residence (5 years) and employment (2 employers).
 
-**Collection Key**: `en000001100000`
+**Collection Key**: en-EP-N-R5-EN2-N-N-W
 
-**URL**: [http://localhost:3000/?key=en000001100000](http://localhost:3000/?key=en000001100000)
+**URL**: [http://localhost:3000/?key=en-EP-N-R5-EN2-N-N-W](http://localhost:3000/?key=en-EP-N-R5-EN2-N-N-W)
 
-**Description**: This scenario enables only the residence history step and starts the form directly at that step, skipping personal information. This is useful for testing specific steps in isolation.
-
-### 13. Start at Professional Licenses Step
-
-**Scenario**: Start the form at the professional licenses step.
-
-**Collection Key**: `en000010000000`
-
-**URL**: [http://localhost:3000/?key=en000010000000](http://localhost:3000/?key=en000010000000)
-
-**Description**: This scenario enables only the professional licenses step and starts the form directly at that step, skipping personal information. This is useful for testing specific steps in isolation.
-
-### 14. Start at Education Step
-
-**Scenario**: Start the form at the education step.
-
-**Collection Key**: `en000100000000`
-
-**URL**: [http://localhost:3000/?key=en000100000000](http://localhost:3000/?key=en000100000000)
-
-**Description**: This scenario enables only the education step and starts the form directly at that step, skipping personal information. This is useful for testing specific steps in isolation.
-
-### 15. Short Residence History (1 Year)
-
-**Scenario**: Verification with 1-year residence history requirement.
-
-**Collection Key**: `en000001001000`
-
-**URL**: [http://localhost:3000/?key=en000001001000](http://localhost:3000/?key=en000001001000)
-
-**Description**: This scenario enables the residence history step with a 1-year history requirement. The form starts at the personal-info step, proceeds to residence history, and then to signature.
-
-### 16. Long Employment History (10 Years)
-
-**Scenario**: Verification with 10-year employment history requirement.
-
-**Collection Key**: `en000000000111`
-
-**URL**: [http://localhost:3000/?key=en000000000111](http://localhost:3000/?key=en000000000111)
-
-**Description**: This scenario enables the employment history step with a 10-year history requirement. The form starts at the personal-info step, proceeds to employment history, and then to signature.
+**Description**: Email/phone, 5-year residence, 2 employers, wet signature.
 
 ## Custom Scenarios
 
-You can create custom scenarios by combining different configuration bits according to your specific requirements. For example:
-
 ### Education and Employment History Only (3 Years)
 
-**Scenario**: Verification focused on education and employment history with 3-year requirement.
+**Scenario**: Education and employment history with 3 years.
 
-**Collection Key**: `en000100000010`
+**Collection Key**: en-P-N-N-E3-E-N-C
 
-**URL**: [http://localhost:3000/?key=en000100000010](http://localhost:3000/?key=en000100000010)
+**URL**: [http://localhost:3000/?key=en-P-N-N-E3-E-N-C](http://localhost:3000/?key=en-P-N-N-E3-E-N-C)
 
-**Description**: This scenario enables only the education and employment history steps with a 3-year employment history requirement. The form starts at the personal-info step, proceeds to education, then employment history, and finally signature.
+**Description**: Phone, education, 3-year employment history, checkbox signature.
 
-### Professional Licenses and Residence History Only (7 Years)
+### Professional Licenses and Residence History Only (1 Year)
 
-**Scenario**: Verification focused on professional licenses and residence history with 7-year requirement.
+**Scenario**: Professional licenses and residence history with 1 year.
 
-**Collection Key**: `en000011101000`
+**Collection Key**: en-P-N-R1-N-N-P-W
 
-**URL**: [http://localhost:3000/?key=en000011101000](http://localhost:3000/?key=en000011101000)
+**URL**: [http://localhost:3000/?key=en-P-N-R1-N-N-P-W](http://localhost:3000/?key=en-P-N-R1-N-N-P-W)
 
-**Description**: This scenario enables only the professional licenses and residence history steps with a 7-year residence history requirement. The form starts at the personal-info step, proceeds to professional licenses, then residence history, and finally signature.
+**Description**: Phone, professional licenses, 1-year residence history, wet signature.
 
 ## Testing with Reference Tokens
 
-You can add a reference token to any URL for testing purposes:
+Add a reference token:
 
-```
-http://localhost:3000/?key=en000111100100&token=test-token-123
-```
-
-This allows you to simulate a real verification request with a specific reference token.
+http://localhost:3000/?key=en-EP-N-R3-E3-E-P-C&token=test-token-123
 
 ## Development Mode
 
-When accessing the application without a collection key or token, it automatically enters development mode with the default collection key (`en000111100100`).
-
 **URL**: [http://localhost:3000/](http://localhost:3000/)
 
-**Description**: This mode enables all verification steps with 5-year history requirements and displays a development mode banner at the top of the page.
+**Description**: Uses en-EP-N-R3-E3-E-P-C (standard verification), displays a debug banner, allows step skipping.
+
+## Error Handling
+
+- Invalid Format: Throws "Invalid collection key: must have 8 facets separated by -" if not 8 parts.
+- Invalid Language: Throws "Invalid language code: must be 2 characters" if not 2 letters.
+- Invalid Facets:
+  - Residence: Throws "Invalid residence code: must be N or R followed by 1, 3, or 5" if invalid.
+  - Employment: Throws "Invalid employment code: must be N, E followed by 1, 3, 5, or EN followed by 1, 2, 3" if invalid.
+  - Education: Throws "Invalid education code: must be E or N" if invalid.
+  - Professional License: Throws "Invalid professional license code: must be P or N" if invalid.
+- Defaults: Falls back to minimal settings (e.g., P, N, R1, E1) for invalid values.
+
+## PDF Output
+
+- Structure: Header (tracking ID, date), sections per enabled step, signature (if required).
+- Signature: Embedded image (wet) or text (checkbox).
+- Attestation: "I certify the above information is true" with date, omitted if signature not required.

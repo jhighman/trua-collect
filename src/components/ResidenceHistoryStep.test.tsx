@@ -11,7 +11,9 @@ jest.mock('../utils/translations', () => ({
     en: {
       'residence.title': 'Residence History',
       'residence.add_entry': 'Add Residence',
+      'residence.add_button': 'Add Residence',
       'residence.progress': 'Progress',
+      'residence.valid': 'Residence history information is complete',
       'timeline.progress': '{{current}} / {{required}} years',
       'common.previous': 'Previous',
       'common.next': 'Next'
@@ -21,30 +23,44 @@ jest.mock('../utils/translations', () => ({
 
 const mockRequirements = {
   language: 'en',
-  consents_required: {
-    driver_license: false,
-    drug_test: false,
+  consentsRequired: {
+    driverLicense: false,
+    drugTest: false,
     biometric: false
   },
-  verification_steps: {
+  verificationSteps: {
     education: {
-      enabled: false,
-      required_verifications: []
+      enabled: false
     },
-    professional_license: {
-      enabled: false,
-      required_verifications: []
+    professionalLicense: {
+      enabled: false
     },
-    residence_history: {
+    residenceHistory: {
       enabled: true,
-      years: 7,
-      required_verifications: []
+      years: 7
     },
-    employment_history: {
+    employmentHistory: {
       enabled: true,
-      years: 7,
-      required_verifications: []
+      mode: 'years' as const,
+      modes: {
+        years: 7,
+        employers: 0
+      }
+    },
+    personalInfo: {
+      enabled: false,
+      modes: {
+        email: false,
+        phone: false,
+        fullName: false,
+        nameAlias: false
+      }
     }
+  },
+  signature: {
+    enabled: true,
+    required: true,
+    mode: 'wet' as const
   }
 };
 
@@ -104,7 +120,8 @@ jest.mock('../context/FormContext', () => ({
       },
       isSubmitting: false,
       isComplete: false
-    }
+    },
+    isStepValid: jest.fn().mockReturnValue(true)
   })
 }));
 
@@ -116,7 +133,7 @@ describe('ResidenceHistoryStep Component', () => {
     expect(screen.getByText('Residence History')).toBeInTheDocument();
     
     // Check if the progress indicator is displayed
-    expect(screen.getByText('2 / 7 years')).toBeInTheDocument();
+    expect(screen.getByText('2 / 5 years')).toBeInTheDocument();
     
     // Check if the existing entry is displayed
     expect(screen.getByText('123 Test St')).toBeInTheDocument();

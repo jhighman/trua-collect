@@ -115,7 +115,7 @@ export function getRequirements(collectionKey: string): Requirements {
       drug_test: isBitEnabled(bits, 2),
       biometric: isBitEnabled(bits, 3)
     },
-    verification_steps: {
+    verificationSteps: {
       education: {
         enabled: isBitEnabled(bits, 4),
         required_verifications: ["degree", "institution", "graduation_date"]
@@ -204,7 +204,7 @@ export interface Requirements {
     drug_test: boolean;
     biometric: boolean;
   };
-  verification_steps: {
+  verificationSteps: {
     education: {
       enabled: boolean;
       required_verifications: string[];
@@ -385,11 +385,11 @@ function getNextStep(currentStep: FormStep, requirements: Requirements): FormSte
     case 'consents':
       return getNextStepAfterConsents(requirements);
     case 'education':
-      return requirements.verification_steps.professional_license.enabled ? 'professional-licenses' : getNextStepAfterProfessionalLicenses(requirements);
+      return requirements.verificationSteps.professional_license.enabled ? 'professional-licenses' : getNextStepAfterProfessionalLicenses(requirements);
     case 'professional-licenses':
       return getNextStepAfterProfessionalLicenses(requirements);
     case 'residence-history':
-      return requirements.verification_steps.employment_history.enabled ? 'employment-history' : 'signature';
+      return requirements.verificationSteps.employment_history.enabled ? 'employment-history' : 'signature';
     case 'employment-history':
       return 'signature';
     default:
@@ -403,28 +403,28 @@ function hasAnyConsentsRequired(requirements: Requirements): boolean {
 }
 
 function getNextStepAfterConsents(requirements: Requirements): FormStep {
-  if (requirements.verification_steps.education.enabled) {
+  if (requirements.verificationSteps.education.enabled) {
     return 'education';
   }
   return getNextStepAfterEducation(requirements);
 }
 
 function getNextStepAfterEducation(requirements: Requirements): FormStep {
-  if (requirements.verification_steps.professional_license.enabled) {
+  if (requirements.verificationSteps.professional_license.enabled) {
     return 'professional-licenses';
   }
   return getNextStepAfterProfessionalLicenses(requirements);
 }
 
 function getNextStepAfterProfessionalLicenses(requirements: Requirements): FormStep {
-  if (requirements.verification_steps.residence_history.enabled) {
+  if (requirements.verificationSteps.residence_history.enabled) {
     return 'residence-history';
   }
   return getNextStepAfterResidenceHistory(requirements);
 }
 
 function getNextStepAfterResidenceHistory(requirements: Requirements): FormStep {
-  if (requirements.verification_steps.employment_history.enabled) {
+  if (requirements.verificationSteps.employment_history.enabled) {
     return 'employment-history';
   }
   return 'signature';

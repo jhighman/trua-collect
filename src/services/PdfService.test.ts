@@ -1,19 +1,25 @@
 import { PdfService } from './PdfService';
-import { PdfDocumentGenerator } from '../utils/PdfDocumentGenerator';
 import { FormState } from '../context/FormContext';
 import { JsonDocument } from '../utils/JsonDocumentGenerator';
 import { jsPDF } from 'jspdf';
 
-// Mock PdfDocumentGenerator
+// Mock the individual functions from PdfDocumentGenerator
 jest.mock('../utils/PdfDocumentGenerator', () => ({
-  PdfDocumentGenerator: {
-    generatePdfDocument: jest.fn(),
-    generatePdfFromJson: jest.fn(),
-    generateFilename: jest.fn(),
-    saveToBlob: jest.fn(),
-    saveToDataUrl: jest.fn()
-  }
+  generatePdfDocument: jest.fn(),
+  generatePdfFromJson: jest.fn(),
+  generateFilename: jest.fn(),
+  saveToBlob: jest.fn(),
+  saveToDataUrl: jest.fn()
 }));
+
+// Import the mocked functions
+import {
+  generatePdfDocument,
+  generatePdfFromJson,
+  generateFilename,
+  saveToBlob,
+  saveToDataUrl
+} from '../utils/PdfDocumentGenerator';
 
 describe('PdfService', () => {
   // Mock data
@@ -71,11 +77,11 @@ describe('PdfService', () => {
     jest.clearAllMocks();
     
     // Setup mocks
-    (PdfDocumentGenerator.generatePdfDocument as jest.Mock).mockReturnValue(mockPdfDocument);
-    (PdfDocumentGenerator.generatePdfFromJson as jest.Mock).mockReturnValue(mockPdfDocument);
-    (PdfDocumentGenerator.generateFilename as jest.Mock).mockReturnValue(mockFilename);
-    (PdfDocumentGenerator.saveToBlob as jest.Mock).mockReturnValue(mockBlob);
-    (PdfDocumentGenerator.saveToDataUrl as jest.Mock).mockReturnValue(mockDataUrl);
+    (generatePdfDocument as jest.Mock).mockReturnValue(mockPdfDocument);
+    (generatePdfFromJson as jest.Mock).mockReturnValue(mockPdfDocument);
+    (generateFilename as jest.Mock).mockReturnValue(mockFilename);
+    (saveToBlob as jest.Mock).mockReturnValue(mockBlob);
+    (saveToDataUrl as jest.Mock).mockReturnValue(mockDataUrl);
     
     // Setup console spy
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
@@ -85,20 +91,20 @@ describe('PdfService', () => {
     consoleLogSpy.mockRestore();
   });
 
-  it('generates a PDF document using PdfDocumentGenerator', () => {
+  it('generates a PDF document using generatePdfDocument', () => {
     const result = PdfService.generatePdfDocument(mockFormState, mockTrackingId);
     
-    expect(PdfDocumentGenerator.generatePdfDocument).toHaveBeenCalledWith(
-      mockFormState, 
+    expect(generatePdfDocument).toHaveBeenCalledWith(
+      mockFormState,
       mockTrackingId
     );
     expect(result).toBe(mockPdfDocument);
   });
 
-  it('generates a PDF document from JSON using PdfDocumentGenerator', () => {
+  it('generates a PDF document from JSON using generatePdfFromJson', () => {
     const result = PdfService.generatePdfFromJson(mockJsonDocument);
     
-    expect(PdfDocumentGenerator.generatePdfFromJson).toHaveBeenCalledWith(
+    expect(generatePdfFromJson).toHaveBeenCalledWith(
       mockJsonDocument
     );
     expect(result).toBe(mockPdfDocument);
@@ -107,8 +113,8 @@ describe('PdfService', () => {
   it('saves a PDF document and returns the file path', async () => {
     const result = await PdfService.savePdfDocument(mockPdfDocument, mockTrackingId);
     
-    expect(PdfDocumentGenerator.generateFilename).toHaveBeenCalledWith(mockTrackingId);
-    expect(PdfDocumentGenerator.saveToBlob).toHaveBeenCalledWith(mockPdfDocument);
+    expect(generateFilename).toHaveBeenCalledWith(mockTrackingId);
+    expect(saveToBlob).toHaveBeenCalledWith(mockPdfDocument);
     
     expect(result).toBe(`claims/${mockFilename}`);
     expect(consoleLogSpy).toHaveBeenCalledWith(
@@ -118,16 +124,16 @@ describe('PdfService', () => {
 
   it('generates and saves a PDF document in one step', async () => {
     const result = await PdfService.generateAndSavePdfDocument(
-      mockFormState, 
+      mockFormState,
       mockTrackingId
     );
     
-    expect(PdfDocumentGenerator.generatePdfDocument).toHaveBeenCalledWith(
-      mockFormState, 
+    expect(generatePdfDocument).toHaveBeenCalledWith(
+      mockFormState,
       mockTrackingId
     );
-    expect(PdfDocumentGenerator.generateFilename).toHaveBeenCalledWith(mockTrackingId);
-    expect(PdfDocumentGenerator.saveToBlob).toHaveBeenCalledWith(mockPdfDocument);
+    expect(generateFilename).toHaveBeenCalledWith(mockTrackingId);
+    expect(saveToBlob).toHaveBeenCalledWith(mockPdfDocument);
     
     expect(result).toBe(`claims/${mockFilename}`);
   });
@@ -135,11 +141,11 @@ describe('PdfService', () => {
   it('generates and saves a PDF document from JSON in one step', async () => {
     const result = await PdfService.generateAndSavePdfFromJson(mockJsonDocument);
     
-    expect(PdfDocumentGenerator.generatePdfFromJson).toHaveBeenCalledWith(
+    expect(generatePdfFromJson).toHaveBeenCalledWith(
       mockJsonDocument
     );
-    expect(PdfDocumentGenerator.generateFilename).toHaveBeenCalledWith(mockTrackingId);
-    expect(PdfDocumentGenerator.saveToBlob).toHaveBeenCalledWith(mockPdfDocument);
+    expect(generateFilename).toHaveBeenCalledWith(mockTrackingId);
+    expect(saveToBlob).toHaveBeenCalledWith(mockPdfDocument);
     
     expect(result).toBe(`claims/${mockFilename}`);
   });
@@ -147,7 +153,7 @@ describe('PdfService', () => {
   it('gets a data URL for the PDF document', () => {
     const result = PdfService.getPdfDataUrl(mockPdfDocument);
     
-    expect(PdfDocumentGenerator.saveToDataUrl).toHaveBeenCalledWith(mockPdfDocument);
+    expect(saveToDataUrl).toHaveBeenCalledWith(mockPdfDocument);
     expect(result).toBe(mockDataUrl);
   });
 

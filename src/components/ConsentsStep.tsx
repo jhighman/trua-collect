@@ -9,9 +9,9 @@ export const ConsentsStep: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   
   // Get form values
-  const driverLicenseConsent = getValue('consents', 'driverLicenseConsent') || false;
-  const drugTestConsent = getValue('consents', 'drugTestConsent') || false;
-  const biometricConsent = getValue('consents', 'biometricConsent') || false;
+  const driverLicenseConsent = getValue('consents', 'driverLicense') as boolean | undefined;
+  const drugTestConsent = getValue('consents', 'drugTest') as boolean | undefined;
+  const biometricConsent = getValue('consents', 'biometric') as boolean | undefined;
   
   // Get errors from form context
   useEffect(() => {
@@ -53,8 +53,8 @@ export const ConsentsStep: React.FC = () => {
               <input
                 type="checkbox"
                 id="driverLicenseConsent"
-                checked={driverLicenseConsent}
-                onChange={(e) => handleConsentChange('driverLicenseConsent', e.target.checked)}
+                checked={driverLicenseConsent || false}
+                onChange={(e) => handleConsentChange('driverLicense', e.target.checked)}
                 aria-invalid={!!errors.driverLicenseConsent}
                 aria-describedby={errors.driverLicenseConsent ? 'driverLicenseConsent-error' : undefined}
               />
@@ -83,8 +83,8 @@ export const ConsentsStep: React.FC = () => {
               <input
                 type="checkbox"
                 id="drugTestConsent"
-                checked={drugTestConsent}
-                onChange={(e) => handleConsentChange('drugTestConsent', e.target.checked)}
+                checked={drugTestConsent || false}
+                onChange={(e) => handleConsentChange('drugTest', e.target.checked)}
                 aria-invalid={!!errors.drugTestConsent}
                 aria-describedby={errors.drugTestConsent ? 'drugTestConsent-error' : undefined}
               />
@@ -113,8 +113,8 @@ export const ConsentsStep: React.FC = () => {
               <input
                 type="checkbox"
                 id="biometricConsent"
-                checked={biometricConsent}
-                onChange={(e) => handleConsentChange('biometricConsent', e.target.checked)}
+                checked={biometricConsent || false}
+                onChange={(e) => handleConsentChange('biometric', e.target.checked)}
                 aria-invalid={!!errors.biometricConsent}
                 aria-describedby={errors.biometricConsent ? 'biometricConsent-error' : undefined}
               />

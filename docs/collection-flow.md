@@ -15,11 +15,11 @@ flowchart TD
 
 
    %% Dynamic Steps Driven by Collection Key
-   D -->|Collects| E[Collection Key e.g. en101110101100]
-   E -->|Parses| F[Parse Key: Sets Language e.g. en and Bits e.g. 101110101100]
-   F -->|Uses Bits 1-3 for Consents, 4-13 for Steps and Timelines| F1{Determine Initial Step}
-   %% Callout: Collection Key is a 14-char hybrid string (e.g., "en101110101100")
-   %% Prefix (2 chars) sets UI language; Bits: 0=Personal (always 1), 1-3=Consents, 4-9=Steps, 10-13=Timelines
+   D -->|Collects| E[Collection Key e.g. en-EPA-DTB-R3-EN2-E-P-W]
+   E -->|Parses| F[Parse Key: Sets Language e.g. en and Facets e.g. EPA-DTB-R3-EN2-E-P-W]
+   F -->|Uses Facets for Personal, Consents, Residence, Employment, Education, etc.| F1{Determine Initial Step}
+   %% Callout: Collection Key is a hyphen-separated string (e.g., "en-EPA-DTB-R3-EN2-E-P-W")
+   %% Language (2 chars) sets UI language; 7 facets define verification requirements
    
    %% Dynamic Initial Step
    F1 -->|Default Key| G
@@ -146,40 +146,87 @@ flowchart TD
 
 ## Collection Key Concept
 
-The Collection Key is a 14-character hybrid string that drives the dynamic behavior of the form. For example: `en101110101100`
+The Collection Key is a hyphen-separated string that drives the dynamic behavior of the form. For example: `en-EPA-DTB-R3-EN2-E-P-W`
 
 ### Key Structure
 
-1. **Language Prefix** (2 characters)
+The collection key follows this format: `[language]-[personal]-[consents]-[residence]-[employment]-[education]-[proLicense]-[signature]`
+
+1. **Language** (2 characters)
    - Sets the UI language (e.g., "en" for English, "es" for Spanish)
    - Examples: "en", "es", "fr", "it"
 
-2. **Configuration Bits** (12 bits)
-   - Bit 0: Personal Information (always 1)
-   - Bits 1-3: Consents
-     - Bit 1: Driver's License Consent (0=not required, 1=required)
-     - Bit 2: Drug Test Consent (0=not required, 1=required)
-     - Bit 3: Biometric Consent (0=not required, 1=required)
-   - Bits 4-9: Steps
-     - Bit 4: Education (0=not required, 1=required)
-     - Bit 5: Professional Licenses (0=not required, 1=required)
-     - Bit 6: Residence History (0=not required, 1=required)
-     - Bits 7-9: Residence Timeline Years (000=1yr, 011=3yrs, 101=5yrs, 111=7yrs, 101=10yrs)
-   - Bits 10-13: Employment Timeline
-     - Bit 10: Employment History (0=not required, 1=required)
-     - Bits 11-13: Employment Timeline Years (000=1yr, 011=3yrs, 101=5yrs, 111=7yrs, 101=10yrs)
+2. **Personal Info** (1+ characters)
+   - Defines what personal information is required
+   - Values:
+     - N: Disabled (skips to next enabled step)
+     - E: Email only
+     - P: Phone only
+     - M: Full name only
+     - A: Name alias only
+     - Combinations: EP, EPA, EPM, EPMA, etc.
+     - Invalid: Defaults to P (phone only)
+
+3. **Consents Required** (1+ characters)
+   - Defines which consents are required
+   - Values:
+     - N: No consents
+     - D: Driver license consent
+     - T: Drug test consent
+     - B: Biometric consent
+     - Combinations: DT, DB, TB, DTB
+     - Invalid: Defaults to N
+
+4. **Residence History** (2 characters)
+   - Defines if residence history is required and for how many years
+   - Values:
+     - N: Disabled
+     - R1: 1 year
+     - R3: 3 years
+     - R5: 5 years
+     - Invalid: Defaults to R1 if enabled
+
+5. **Employment History** (2-3 characters)
+   - Defines if employment history is required and for how many years/employers
+   - Values:
+     - N: Disabled
+     - Years mode: E1 (1 year), E3 (3 years), E5 (5 years)
+     - Employers mode: EN1 (1 employer), EN2 (2 employers), EN3 (3 employers)
+     - Invalid: Defaults to E1 if enabled
+
+6. **Education** (1 character)
+   - Defines if education information is required
+   - Values:
+     - N: Disabled
+     - E: Enabled
+     - Invalid: Defaults to N
+
+7. **Professional Licenses** (1 character)
+   - Defines if professional license information is required
+   - Values:
+     - N: Disabled
+     - P: Enabled
+     - Invalid: Defaults to N
+
+8. **Signature** (1 character)
+   - Defines if and what type of signature is required
+   - Values:
+     - N: Not required
+     - C: Checkbox
+     - W: Wet signature
+     - Invalid: Defaults to N
 
 ### Example Collection Keys
 
-1. **en100000000000**: English, Personal Information only
-2. **en110000000000**: English, Personal Information + Driver's License Consent
-3. **en111000000000**: English, Personal Information + All Consents
-4. **en100100000000**: English, Personal Information + Education
-5. **en100010000000**: English, Personal Information + Professional Licenses
-6. **en100001101000**: English, Personal Information + Residence History (5 years)
-7. **en100000001111**: English, Personal Information + Employment History (7 years)
-8. **en111111101111**: English, All Steps Enabled (Full Collection)
-9. **es111111101111**: Spanish, All Steps Enabled (Full Collection)
+1. **en-P-N-N-N-N-N-N**: English, Personal Information (phone only)
+2. **en-EP-D-N-N-N-N-N**: English, Personal Information (email & phone) + Driver's License Consent
+3. **en-EPA-DTB-N-N-N-N-W**: English, Personal Information (email, phone, alias) + All Consents + Wet Signature
+4. **en-EP-N-N-N-E-N-C**: English, Personal Information + Education + Checkbox Signature
+5. **en-EP-N-N-N-N-P-W**: English, Personal Information + Professional Licenses + Wet Signature
+6. **en-EP-N-R5-N-N-N-W**: English, Personal Information + Residence History (5 years) + Wet Signature
+7. **en-EP-N-N-E5-N-N-C**: English, Personal Information + Employment History (5 years) + Checkbox Signature
+8. **en-EPMA-DTB-R5-E5-E-P-W**: English, All Steps Enabled (Full Collection) + Wet Signature
+9. **es-EPMA-DTB-R5-E5-E-P-W**: Spanish, All Steps Enabled (Full Collection) + Wet Signature
 
 ## Collection Flow Details
 
@@ -187,7 +234,7 @@ The Collection Key is a 14-character hybrid string that drives the dynamic behav
 
 1. **Invitation URL**
    - Candidate receives a URL with the tracking_id and collection_key parameters
-   - Example: `https://verify.trua.com/?tracking_id=abc123&collection_key=en101110101100`
+   - Example: `https://verify.trua.com/?tracking_id=abc123&collection_key=en-EPA-DTB-R3-E3-E-P-W`
 
 2. **Landing Page**
    - Displays welcome message and explanation of the verification process
@@ -216,19 +263,19 @@ The Collection Key is a 14-character hybrid string that drives the dynamic behav
   - Email must be in valid format
   - Date of Birth must be a valid date
 
-### 3. Consents (Optional, Based on Bits 1-3)
+### 3. Consents (Optional, Based on Consents Facet)
 
-- **Driver's License Consent** (Bit 1):
+- **Driver's License Consent** (D in Consents Facet):
   - Checkbox: "I consent to a DMV record check"
   - Date (auto-filled when granted)
   - Notes field (optional)
 
-- **Drug Test Consent** (Bit 2):
+- **Drug Test Consent** (T in Consents Facet):
   - Checkbox: "I consent to drug testing"
   - Date (auto-filled when granted)
   - Notes field (optional)
 
-- **Biometric Consent** (Bit 3):
+- **Biometric Consent** (B in Consents Facet):
   - Checkbox: "I consent to biometric data collection"
   - Date (auto-filled when granted)
   - Notes field (optional)
@@ -236,7 +283,7 @@ The Collection Key is a 14-character hybrid string that drives the dynamic behav
 - **Validation**:
   - Required consents must be granted to proceed
 
-### 4. Education (Optional, Based on Bit 4)
+### 4. Education (Optional, Based on Education Facet)
 
 - **Highest Level Attained**:
   - Dropdown: None, High School, Associate's, Bachelor's, Master's, Doctorate
@@ -254,7 +301,7 @@ The Collection Key is a 14-character hybrid string that drives the dynamic behav
   - All required fields must be completed
   - Award date must be a valid date
 
-### 5. Professional Licenses (Optional, Based on Bit 5)
+### 5. Professional Licenses (Optional, Based on ProLicense Facet)
 
 - **License Entry Form**:
   - Category (dropdown, required)
@@ -277,11 +324,11 @@ The Collection Key is a 14-character hybrid string that drives the dynamic behav
   - All required fields must be completed for each license
   - Dates must be valid
 
-### 6. Residence History (Optional, Based on Bit 6)
+### 6. Residence History (Optional, Based on Residence Facet)
 
 - **Timeline Requirement**:
-  - Years required determined by Bits 7-9
-  - 000 = 1 year, 011 = 3 years, 101 = 5 years, 111 = 7 years, 101 = 10 years
+  - Years required determined by Residence Facet
+  - R1 = 1 year, R3 = 3 years, R5 = 5 years
 
 - **Address Entry Form**:
   - Address (required)
@@ -303,11 +350,12 @@ The Collection Key is a 14-character hybrid string that drives the dynamic behav
   - Dates must be valid and not overlap
   - Total years covered must meet the requirement
 
-### 7. Employment History (Optional, Based on Bit 10)
+### 7. Employment History (Optional, Based on Employment Facet)
 
 - **Timeline Requirement**:
-  - Years required determined by Bits 11-13
-  - 000 = 1 year, 011 = 3 years, 101 = 5 years, 111 = 7 years, 101 = 10 years
+  - Years/employers required determined by Employment Facet
+  - E1 = 1 year, E3 = 3 years, E5 = 5 years
+  - EN1 = 1 employer, EN2 = 2 employers, EN3 = 3 employers
 
 - **Job Entry Form**:
   - Type (dropdown: Job, Education, Unemployed, Other, required)
@@ -363,67 +411,196 @@ The Collection Key concept will be implemented using TypeScript interfaces and u
 // Collection Key Types
 interface CollectionKey {
   language: string;
-  bits: string;
+  personal: string;
+  consents: string;
+  residence: string;
+  employment: string;
+  education: string;
+  proLicense: string;
+  signature: string;
 }
 
 // Parse Collection Key
 function parseCollectionKey(key: string): CollectionKey {
-  return {
-    language: key.substring(0, 2),
-    bits: key.substring(2)
-  };
-}
-
-// Check if a specific bit is enabled
-function isBitEnabled(bits: string, position: number): boolean {
-  return bits.charAt(position) === '1';
-}
-
-// Get timeline years from bits
-function getTimelineYears(bits: string, startPosition: number): number {
-  const timelineBits = bits.substring(startPosition, startPosition + 3);
-  switch (timelineBits) {
-    case '000': return 1;
-    case '011': return 3;
-    case '101': return 5;
-    case '111': return 7;
-    case '101': return 10;
-    default: return 1;
+  // Split by hyphens
+  const parts = key.split('-');
+  
+  // Validate key format
+  if (parts.length !== 8) {
+    throw new Error('Invalid collection key: must have 8 facets separated by -');
   }
+  
+  // Extract parts
+  const [language, personal, consents, residence, employment, education, proLicense, signature] = parts;
+  
+  // Validate language code
+  if (language.length !== 2) {
+    throw new Error('Invalid language code: must be 2 characters');
+  }
+  
+  return {
+    language,
+    personal,
+    consents,
+    residence,
+    employment,
+    education,
+    proLicense,
+    signature
+  };
 }
 
 // Get form requirements from collection key
 function getRequirements(collectionKey: string): Requirements {
-  const { language, bits } = parseCollectionKey(collectionKey);
+  const facets = parseCollectionKey(collectionKey);
+  
+  // Process personal info requirements
+  const personalInfo = processPersonalFacet(facets.personal);
+  
+  // Process consents requirements
+  const consentsRequired = processConsentsFacet(facets.consents);
+  
+  // Process residence history requirements
+  const residenceHistory = processResidenceFacet(facets.residence);
+  
+  // Process employment history requirements
+  const employmentHistory = processEmploymentFacet(facets.employment);
+  
+  // Process education requirements
+  const education = processEducationFacet(facets.education);
+  
+  // Process professional license requirements
+  const proLicense = processProLicenseFacet(facets.proLicense);
+  
+  // Process signature requirements
+  const signature = processSignatureFacet(facets.signature);
   
   return {
-    language,
-    consents_required: {
-      driver_license: isBitEnabled(bits, 1),
-      drug_test: isBitEnabled(bits, 2),
-      biometric: isBitEnabled(bits, 3)
+    language: facets.language,
+    personalInfo,
+    consentsRequired,
+    verificationSteps: {
+      education,
+      professionalLicense: proLicense,
+      residenceHistory,
+      employmentHistory
     },
-    verification_steps: {
-      education: {
-        enabled: isBitEnabled(bits, 4),
-        required_verifications: ["degree", "institution", "graduation_date"]
-      },
-      professional_license: {
-        enabled: isBitEnabled(bits, 5),
-        required_verifications: ["status", "expiration_date"]
-      },
-      residence_history: {
-        enabled: isBitEnabled(bits, 6),
-        years: getTimelineYears(bits, 7),
-        required_verifications: ["address", "duration"]
-      },
-      employment_history: {
-        enabled: isBitEnabled(bits, 10),
-        years: getTimelineYears(bits, 11),
-        required_verifications: ["employment", "duration", "position"]
-      }
+    signature
+  };
+}
+
+// Process personal info facet
+function processPersonalFacet(facet: string): PersonalInfoRequirements {
+  // Default to phone only if invalid
+  if (facet === 'N') {
+    return { enabled: false };
+  }
+  
+  return {
+    enabled: true,
+    modes: {
+      email: facet.includes('E'),
+      phone: facet.includes('P') || (!facet.includes('E') && !facet.includes('M') && !facet.includes('A')),
+      fullName: facet.includes('M'),
+      nameAlias: facet.includes('A')
     }
   };
+}
+
+// Process consents facet
+function processConsentsFacet(facet: string): ConsentsRequirements {
+  return {
+    driverLicense: facet.includes('D'),
+    drugTest: facet.includes('T'),
+    biometric: facet.includes('B')
+  };
+}
+
+// Process residence facet
+function processResidenceFacet(facet: string): ResidenceRequirements {
+  if (facet === 'N') {
+    return { enabled: false, years: 1 };
+  }
+  
+  // Validate format (R followed by a number)
+  const match = facet.match(/^R([135])$/);
+  if (!match) {
+    throw new Error('Invalid residence code: must be N or R followed by 1, 3, or 5');
+  }
+  
+  return {
+    enabled: true,
+    years: parseInt(match[1], 10)
+  };
+}
+
+// Process employment facet
+function processEmploymentFacet(facet: string): EmploymentRequirements {
+  if (facet === 'N') {
+    return { enabled: false, mode: 'years', years: 1 };
+  }
+  
+  // Check for years mode (E followed by a number)
+  const yearsMatch = facet.match(/^E([135])$/);
+  if (yearsMatch) {
+    return {
+      enabled: true,
+      mode: 'years',
+      years: parseInt(yearsMatch[1], 10)
+    };
+  }
+  
+  // Check for employers mode (EN followed by a number)
+  const employersMatch = facet.match(/^EN([123])$/);
+  if (employersMatch) {
+    return {
+      enabled: true,
+      mode: 'employers',
+      employers: parseInt(employersMatch[1], 10)
+    };
+  }
+  
+  throw new Error('Invalid employment code: must be N, E followed by 1, 3, 5, or EN followed by 1, 2, 3');
+}
+
+// Process education facet
+function processEducationFacet(facet: string): EducationRequirements {
+  if (facet !== 'E' && facet !== 'N') {
+    throw new Error('Invalid education code: must be E or N');
+  }
+  
+  return {
+    enabled: facet === 'E'
+  };
+}
+
+// Process professional license facet
+function processProLicenseFacet(facet: string): ProLicenseRequirements {
+  if (facet !== 'P' && facet !== 'N') {
+    throw new Error('Invalid professional license code: must be P or N');
+  }
+  
+  return {
+    enabled: facet === 'P'
+  };
+}
+
+// Process signature facet
+function processSignatureFacet(facet: string): SignatureRequirements {
+  if (facet === 'N') {
+    return { required: false };
+  }
+  
+  if (facet === 'C') {
+    return { required: true, mode: 'checkbox' };
+  }
+  
+  if (facet === 'W') {
+    return { required: true, mode: 'wet' };
+  }
+  
+  // Default to not required if invalid
+  return { required: false };
 }
 
 // Determine the initial step based on collection key and isDefaultKey flag
@@ -434,22 +611,25 @@ function determineInitialStep(requirements: Requirements, isDefaultKey: boolean)
   }
   
   // For custom keys, determine the first enabled step
-  const { verification_steps } = requirements;
+  const { verificationSteps, personalInfo } = requirements;
   
-  // Check each step in priority order
-  if (verification_steps.residence_history.enabled) {
-    return 'residence-history';
-  } else if (verification_steps.professional_license.enabled) {
-    return 'professional-licenses';
-  } else if (verification_steps.education.enabled) {
-    return 'education';
-  } else if (requirements.consents_required.driver_license ||
-             requirements.consents_required.drug_test ||
-             requirements.consents_required.biometric) {
-    return 'consents';
+  // Check if personal info is disabled
+  if (!personalInfo.enabled) {
+    // Check each step in priority order
+    if (verificationSteps.residenceHistory.enabled) {
+      return 'residence-history';
+    } else if (verificationSteps.professionalLicense.enabled) {
+      return 'professional-licenses';
+    } else if (verificationSteps.education.enabled) {
+      return 'education';
+    } else if (requirements.consentsRequired.driverLicense ||
+               requirements.consentsRequired.drugTest ||
+               requirements.consentsRequired.biometric) {
+      return 'consents';
+    }
   }
   
-  // Default to personal-info if no other steps are enabled
+  // Default to personal-info if no other steps are enabled or if personal info is enabled
   return 'personal-info';
 }
 ```
@@ -518,12 +698,12 @@ function determineInitialStep(requirements: Requirements, isDefaultKey: boolean)
 
 1. **URL Parameter-Based Testing**
    - Use URL parameters to control the form behavior for testing
-   - Example: `http://localhost:3000/?key=en000001100100` to start at residence history step
+   - Example: `http://localhost:3000/?key=en-N-N-R3-N-N-N-W` to start at residence history step
    - Parameters are preserved during routing to maintain consistent behavior
 
 2. **Default vs. Custom Collection Keys**
    - Default collection key is configured in the environment settings (.env file)
-   - Default key (typically `en000111100100`) enables all steps and starts at personal-info
+   - Default key (typically `en-EP-N-R3-E3-E-P-C`) enables all steps and starts at personal-info
    - Custom collection keys can enable specific steps and start at any enabled step
    - This provides flexibility for both general testing and focused testing of specific sections
 
@@ -535,5 +715,6 @@ function determineInitialStep(requirements: Requirements, isDefaultKey: boolean)
 4. **Environment Configuration**
    - Default collection key is stored in the .env file as `DEFAULT_COLLECTION_KEY`
    - Example configuration is provided in .env.example
+   - Example: `DEFAULT_COLLECTION_KEY=en-EP-N-R3-E3-E-P-C`
    - This allows different environments (development, staging, production) to use different default keys
    - Prevents hardcoding configuration values in the application code

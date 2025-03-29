@@ -1,8 +1,8 @@
 import type { Requirements } from './collectionKeyParser';
-import { parseCollectionKey } from './collectionKeyParser';
+import { getRequirements } from './collectionKeyParser';
 import { getConfig } from './EnvironmentConfig';
 
-// Input/Output Types
+// Input/Output Types (unchanged from original)
 export type FormStepId = 
   | 'personal-info'
   | 'residence-history'
@@ -35,6 +35,7 @@ export interface FormStep {
   fields: FormField[];
   validationRules?: {
     requiredYears?: number;
+    requiredEmployers?: number;
     requiredVerifications?: string[];
   };
 }
@@ -50,68 +51,95 @@ export interface FormConfig {
 }
 
 // Helper Functions
-function generatePersonalInfoStep(): FormStep {
+function generatePersonalInfoStep(requirements: Requirements): FormStep | null {
+  const personalInfo = requirements.verificationSteps.personalInfo;
+  if (!personalInfo.enabled) return null;
+
+  const { modes } = personalInfo;
+  const fields: FormField[] = [];
+
+  if (modes.email) {
+    fields.push({
+      id: 'email',
+      type: 'email',
+      label: 'Email Address',
+      required: true,
+      validation: [
+        { type: 'required', message: 'Email is required' },
+        { type: 'pattern', value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Invalid email format' }
+      ]
+    });
+  }
+
+  if (modes.phone) {
+    fields.push({
+      id: 'phone',
+      type: 'tel',
+      label: 'Phone Number',
+      required: true,
+      validation: [
+        { type: 'required', message: 'Phone number is required' },
+        { type: 'pattern', value: /^\d{10}$/, message: 'Phone number must be 10 digits' }
+      ]
+    });
+  }
+
+  if (modes.fullName) {
+    fields.push({
+      id: 'fullName',
+      type: 'text',
+      label: 'Full Name',
+      required: true,
+      validation: [
+        { type: 'required', message: 'Full name is required' },
+        { type: 'minLength', value: 2, message: 'Name must be at least 2 characters' }
+      ]
+    });
+  }
+
+  if (modes.nameAlias) {
+    fields.push({
+      id: 'nameAlias',
+      type: 'text',
+      label: 'Name Alias',
+      required: false,
+      validation: []
+    });
+  }
+
   return {
     id: 'personal-info',
     title: 'Personal Information',
     enabled: true,
     required: true,
     order: 1,
-    fields: [
-      {
-        id: 'fullName',
-        type: 'text',
-        label: 'Full Name',
-        required: true,
-        validation: [
-          { type: 'required', message: 'Full name is required' },
-          { type: 'minLength', value: 2, message: 'Name must be at least 2 characters' }
-        ]
-      },
-      {
-        id: 'email',
-        type: 'email',
-        label: 'Email Address',
-        required: true,
-        validation: [
-          { type: 'required', message: 'Email is required' },
-          { type: 'pattern', value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Invalid email format' }
-        ]
-      }
-    ]
+    fields
   };
 }
 
 function generateConsentsStep(requirements: Requirements): FormStep | null {
-  const { driver_license, drug_test, biometric } = requirements.consents_required;
-  
-  if (!driver_license && !drug_test && !biometric) {
-    return null;
-  }
+  const { driverLicense, drugTest, biometric } = requirements.consentsRequired;
+  if (!driverLicense && !drugTest && !biometric) return null;
 
   const fields: FormField[] = [];
 
-  if (driver_license) {
+  if (driverLicense) {
     fields.push({
       id: 'driverLicenseConsent',
       type: 'checkbox',
       label: 'Driver License Consent',
       required: true,
-      validation: [
-        { type: 'required', message: 'Driver license consent is required' }
-      ]
+      validation: [{ type: 'required', message: 'Driver license consent is required' }]
     });
   }
 
-  if (drug_test) {
+  if (drugTest) {
     fields.push({
       id: 'drugTestConsent',
       type: 'checkbox',
       label: 'Drug Test Consent',
       required: true,
-      validation: [
-        { type: 'required', message: 'Drug test consent is required' }
-      ]
+      validation: [{ type: 'required', message: 'Drug test consent is required' }]
     });
   }
 
@@ -121,9 +149,7 @@ function generateConsentsStep(requirements: Requirements): FormStep | null {
       type: 'checkbox',
       label: 'Biometric Consent',
       required: true,
-      validation: [
-        { type: 'required', message: 'Biometric consent is required' }
-      ]
+      validation: [{ type: 'required', message: 'Biometric consent is required' }]
     });
   }
 
@@ -137,227 +163,193 @@ function generateConsentsStep(requirements: Requirements): FormStep | null {
   };
 }
 
-// Main Generator Function
-export function generateFormConfig(requirements: Requirements, isDefaultKey: boolean = true): FormConfig {
-  const steps: FormStep[] = [];
-  const requiredSteps: FormStepId[] = ['personal-info'];
+function generateSignatureStep(requirements: Requirements): FormStep {
+  const { signature } = requirements;
+  const fields: FormField[] = [];
 
-  // Always add personal info step
-  steps.push(generatePersonalInfoStep());
-
-  // Add consents if required
-  const consentsStep = generateConsentsStep(requirements);
-  if (consentsStep) {
-    steps.push(consentsStep);
-    requiredSteps.push('consents');
-  }
-
-  // Add verification steps based on requirements
-  const { verification_steps } = requirements;
-
-  if (verification_steps.education.enabled) {
-    steps.push({
-      id: 'education',
-      title: 'Education History',
-      enabled: true,
+  if (signature.required) {
+    fields.push({
+      id: 'signature',
+      type: signature.mode === 'wet' ? 'signature' : 'checkbox',
+      label: signature.mode === 'wet' ? 'Digital Signature' : 'Signature Acknowledgment',
       required: true,
-      order: steps.length + 1,
-      fields: [
-        {
-          id: 'highestLevel',
-          type: 'select',
-          label: 'Highest Education Level',
-          required: true,
-          validation: [
-            { type: 'required', message: 'Highest education level is required' }
-          ]
-        },
-        {
-          id: 'institution',
-          type: 'text',
-          label: 'Institution Name',
-          required: false,
-          validation: []
-        },
-        {
-          id: 'degree',
-          type: 'text',
-          label: 'Degree',
-          required: false,
-          validation: []
-        }
-      ],
-      validationRules: {
-        requiredVerifications: verification_steps.education.required_verifications
-      }
+      validation: [{ type: 'required', message: 'Signature is required' }]
     });
-    requiredSteps.push('education');
   }
 
-  if (verification_steps.professional_license.enabled) {
-    steps.push({
-      id: 'professional-licenses',
-      title: 'Professional Licenses',
-      enabled: true,
-      required: true,
-      order: steps.length + 1,
-      fields: [
-        {
-          id: 'licenseType',
-          type: 'text',
-          label: 'License Type',
-          required: false,
-          validation: []
-        },
-        {
-          id: 'licenseNumber',
-          type: 'text',
-          label: 'License Number',
-          required: false,
-          validation: []
-        }
-      ],
-      validationRules: {
-        requiredVerifications: verification_steps.professional_license.required_verifications
-      }
-    });
-    requiredSteps.push('professional-licenses');
-  }
-
-  if (verification_steps.residence_history.enabled) {
-    steps.push({
-      id: 'residence-history',
-      title: 'Residence History',
-      enabled: true,
-      required: true,
-      order: steps.length + 1,
-      fields: [],
-      validationRules: {
-        requiredYears: verification_steps.residence_history.years,
-        requiredVerifications: verification_steps.residence_history.required_verifications
-      }
-    });
-    requiredSteps.push('residence-history');
-  }
-
-  if (verification_steps.employment_history.enabled) {
-    steps.push({
-      id: 'employment-history',
-      title: 'Employment History',
-      enabled: true,
-      required: true,
-      order: steps.length + 1,
-      fields: [],
-      validationRules: {
-        requiredYears: verification_steps.employment_history.years,
-        requiredVerifications: verification_steps.employment_history.required_verifications
-      }
-    });
-    requiredSteps.push('employment-history');
-  }
-
-  // Always add signature step last
-  steps.push({
+  return {
     id: 'signature',
     title: 'Review & Sign',
     enabled: true,
-    required: true,
-    order: steps.length + 1,
-    fields: [
-      {
-        id: 'signature',
-        type: 'text',
-        label: 'Digital Signature',
-        required: true,
-        validation: [
-          { type: 'required', message: 'Signature is required' }
-        ]
-      }
-    ]
-  });
-  requiredSteps.push('signature');
-
-  // Get the actual collection key from the requirements
-  const collectionKey = requirements.language + requirements.verification_steps.education.enabled +
-                       requirements.verification_steps.professional_license.enabled +
-                       requirements.verification_steps.residence_history.enabled;
-  
-  console.log('FormConfigGenerator: Raw requirements:', JSON.stringify(requirements));
-  console.log('FormConfigGenerator: Verification steps:', {
-    education: requirements.verification_steps.education.enabled,
-    professional_license: requirements.verification_steps.professional_license.enabled,
-    residence_history: requirements.verification_steps.residence_history.enabled,
-    employment_history: requirements.verification_steps.employment_history.enabled
-  });
-  
-  // Get the default collection key from environment configuration
-  const config = getConfig();
-  const defaultCollectionKey = config.defaultCollectionKey;
-  
-  // Use the default collection key from environment configuration
-  // The collection key format is: en + 12 bits
-  const { bits } = parseCollectionKey(defaultCollectionKey);
-  console.log('FormConfigGenerator: Using default collection key from environment:', defaultCollectionKey);
-  
-  // Map bits to steps
-  const stepMap: FormStepId[] = [
-    'personal-info',       // Always enabled
-    'consents',            // Bit 0-2 (consents)
-    'education',           // Bit 3
-    'professional-licenses', // Bit 4
-    'residence-history',   // Bit 5
-    'employment-history',  // Bit 9
-    'signature'            // Always last
-  ];
-  
-  // Log whether we're using the default collection key
-  console.log('FormConfigGenerator: Using default collection key (from parameter):', isDefaultKey);
-  
-  // Find the first enabled step based on the bits
-  let firstEnabledStep: FormStepId = 'personal-info';
-  
-  // Only override the first step if we're not using the default key
-  if (!isDefaultKey) {
-    console.log('FormConfigGenerator: Using custom collection key, determining first enabled step');
-    // Check bits 3, 4, 5, 9 for enabled steps
-    if (requirements.verification_steps.residence_history.enabled) {
-      firstEnabledStep = 'residence-history';
-    } else if (requirements.verification_steps.professional_license.enabled) {
-      firstEnabledStep = 'professional-licenses';
-    } else if (requirements.verification_steps.education.enabled) {
-      firstEnabledStep = 'education';
-    }
-  } else {
-    console.log('FormConfigGenerator: Using default collection key, starting at personal-info');
-  }
-  
-  // Sort steps by order
-  const sortedSteps = steps.sort((a, b) => a.order - b.order);
-  
-  console.log('FormConfigGenerator: Collection key bits:', bits);
-  console.log('FormConfigGenerator: Education enabled:', requirements.verification_steps.education.enabled);
-  console.log('FormConfigGenerator: Professional licenses enabled:', requirements.verification_steps.professional_license.enabled);
-  console.log('FormConfigGenerator: Residence history enabled:', requirements.verification_steps.residence_history.enabled);
-  console.log('FormConfigGenerator: Employment history enabled:', requirements.verification_steps.employment_history.enabled);
-  console.log('FormConfigGenerator: First enabled step:', firstEnabledStep);
-  console.log('FormConfigGenerator: All steps:', sortedSteps.map(s => s.id));
-  console.log('FormConfigGenerator: Required steps:', requiredSteps);
-  
-  return {
-    steps: sortedSteps,
-    initialStep: firstEnabledStep,
-    navigation: {
-      allowSkip: false,
-      allowPrevious: true,
-      requiredSteps
-    }
+    required: signature.required,
+    order: 100, // Always last
+    fields
   };
 }
 
-// Export the class
-export class FormConfigGenerator {
-  static generateFormConfig(requirements: Requirements, isDefaultKey: boolean = true): FormConfig {
-    // Use the standalone function implementation
-    return generateFormConfig(requirements, isDefaultKey);
+// Add a guaranteed default config
+const DEFAULT_CONFIG: FormConfig = {
+  steps: [
+    {
+      id: 'personal-info',
+      title: 'Personal Information',
+      enabled: true,
+      required: true,
+      order: 1,
+      fields: [
+        {
+          id: 'fullName',
+          type: 'text',
+          label: 'Full Name',
+          required: true,
+          validation: [
+            { type: 'required', message: 'Full name is required' },
+            { type: 'minLength', value: 2, message: 'Name must be at least 2 characters' }
+          ]
+        }
+      ]
+    }
+  ],
+  initialStep: 'personal-info' as FormStepId,
+  navigation: {
+    allowSkip: false,
+    allowPrevious: true,
+    requiredSteps: ['personal-info']
   }
+};
+
+// Update main generator function with better error handling
+export function generateFormConfig(collectionKey: string, isDefaultKey: boolean = true): FormConfig {
+  try {
+    const requirements = getRequirements(isDefaultKey ? getConfig().defaultCollectionKey : collectionKey);
+    const steps: FormStep[] = [];
+    const requiredSteps: FormStepId[] = [];
+    let order = 1;
+
+    // Personal Info (always include as fallback)
+    const personalInfoStep = generatePersonalInfoStep(requirements);
+    if (personalInfoStep) {
+      personalInfoStep.order = order++;
+      steps.push(personalInfoStep);
+      requiredSteps.push('personal-info');
+    }
+
+    // Add other steps...
+    if (requirements.verificationSteps.residenceHistory?.enabled) {
+      steps.push({
+        id: 'residence-history',
+        title: 'Residence History',
+        enabled: true,
+        required: true,
+        order: order++,
+        fields: [
+          {
+            id: 'address',
+            type: 'text',
+            label: 'Address',
+            required: true,
+            validation: [{ type: 'required', message: 'Address is required' }]
+          }
+        ],
+        validationRules: {
+          requiredYears: requirements.verificationSteps.residenceHistory.years
+        }
+      });
+      requiredSteps.push('residence-history');
+    }
+
+    // Employment History (with corrected naming)
+    if (requirements.verificationSteps.employmentHistory?.enabled) {
+      steps.push({
+        id: 'employment-history',
+        title: 'Employment History',
+        enabled: true,
+        required: true,
+        order: order++,
+        fields: [
+          {
+            id: 'company',
+            type: 'text',
+            label: 'Company Name',
+            required: true,
+            validation: [{ type: 'required', message: 'Company name is required' }]
+          }
+        ],
+        validationRules: {
+          requiredYears: requirements.verificationSteps.employmentHistory.modes.years
+        }
+      });
+      requiredSteps.push('employment-history');
+    }
+
+    // Always include signature step
+    const signatureStep = generateSignatureStep(requirements);
+    steps.push(signatureStep);
+    if (signatureStep.required) {
+      requiredSteps.push('signature');
+    }
+
+    // Ensure we have at least one step
+    if (steps.length === 0) {
+      console.warn('No steps generated, using default config');
+      return DEFAULT_CONFIG;
+    }
+
+    // Determine initial step with fallback
+    const initialStep = steps.find(step => step.enabled)?.id || 'personal-info';
+
+    return {
+      steps,
+      initialStep,
+      navigation: {
+        allowSkip: false,
+        allowPrevious: true,
+        requiredSteps
+      }
+    };
+  } catch (error) {
+    console.error('Error generating form config:', error);
+    return DEFAULT_CONFIG;
+  }
+}
+
+// Update the class implementation
+export class FormConfigGenerator {
+  static DEFAULT_COLLECTION_KEY = 'en-EPMA-DTB-R5-E5-E-P-W';
+
+  static generateFormConfig(collectionKey?: string): FormConfig {
+    try {
+      const effectiveKey = collectionKey || this.DEFAULT_COLLECTION_KEY;
+      console.log('FormConfigGenerator: Using collection key:', effectiveKey);
+      
+      const config = generateFormConfig(effectiveKey, false);
+      
+      // Validate the generated config
+      if (!config.initialStep || !config.steps.length) {
+        console.warn('Invalid config generated, using default');
+        return DEFAULT_CONFIG;
+      }
+
+      return config;
+    } catch (error) {
+      console.error('Error in FormConfigGenerator:', error);
+      return DEFAULT_CONFIG;
+    }
+  }
+}
+
+// Update type definitions to ensure consistency
+export interface EmploymentEntryData {
+  id: string;
+  company: string;
+  position: string;
+  startDate: string;
+  endDate: string | null;
+  isCurrent: boolean;
+}
+
+export interface ConsentsData {
+  driverLicense: boolean;  // Note: consistent naming
+  drugTest: boolean;
+  biometric: boolean;
 }

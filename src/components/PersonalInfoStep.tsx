@@ -14,9 +14,9 @@ export const PersonalInfoStep: React.FC = () => {
     canMoveNext  } = useForm();
   const [errors, setErrors] = useState<Record<string, string>>({});
   
-  // Get form values
-  const fullName = getValue('personal-info', 'fullName') || '';
-  const email = getValue('personal-info', 'email') || '';
+  // Get form values with proper type assertions
+  const fullName = (getValue('personal-info', 'fullName') as string) || '';
+  const email = (getValue('personal-info', 'email') as string) || '';
   
   // Get errors from form context
   useEffect(() => {

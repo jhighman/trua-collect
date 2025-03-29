@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useForm, FormStepId } from '../context/FormContext';
+import { useForm, FormStepId, TimelineEntry } from '../context/FormContext';
 import { useTranslation } from '../context/TranslationContext';
 import { EmploymentEntry } from './EmploymentEntry';
 import type { EmploymentEntryData } from './EmploymentEntry';
@@ -24,7 +24,7 @@ export const EmploymentHistoryStep: React.FC = () => {
 
   const [entries, setEntries] = useState<EmploymentEntryData[]>(() => {
     // Initialize state with existing entries
-    return getValue('employment-history', 'entries') || [];
+    return getValue('employment-history', 'entries') as unknown as EmploymentEntryData[] || [];
   });
 
   const [totalYears, setTotalYears] = useState<number>(0);
@@ -49,13 +49,13 @@ export const EmploymentHistoryStep: React.FC = () => {
   const key = urlParams.get('key');
   
   // If we have a key, use it to get the requirements, otherwise use the default key
-  const collectionKey = key || 'en000111100100'; // Default key with 7 years for employment history
+  const collectionKey = key || 'en-EPMA-DTB-R5-E5-E-P-W'; // Default key with proper format
   const requirements = getRequirements(collectionKey);
-  const requiredYears = requirements.verification_steps.employment_history.years;
+  const requiredYears = requirements.verificationSteps.employmentHistory.modes.years || 1;
   
   // Move the getValue call outside useEffect and memoize it
   const getExistingEntries = useCallback(() => {
-    return getValue('employment-history', 'entries') || [];
+    return getValue('employment-history', 'entries') as unknown as EmploymentEntryData[] || [];
   }, [getValue]);
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export const EmploymentHistoryStep: React.FC = () => {
 
   // Update form state when entries change
   useEffect(() => {
-    setValue('employment-history', 'entries', entries);
+    setValue('employment-history', 'entries', entries as unknown as TimelineEntry[]);
     
     // Calculate total years
     const total = entries.reduce((sum, entry) => sum + (entry.duration_years || 0), 0);
@@ -83,7 +83,7 @@ export const EmploymentHistoryStep: React.FC = () => {
   const handleAddEntry = (entry: EmploymentEntryData) => {
     const newEntries = [...entries, entry];
     setEntries(newEntries);
-    setValue('employment-history', 'entries', newEntries);
+    setValue('employment-history', 'entries', newEntries as unknown as TimelineEntry[]);
   };
 
   const handleCancelAdd = () => {
@@ -117,7 +117,7 @@ export const EmploymentHistoryStep: React.FC = () => {
     
     const newEntries = [...entries, entryWithDuration];
     setEntries(newEntries);
-    setValue('employment-history', 'entries', newEntries);
+    setValue('employment-history', 'entries', newEntries as unknown as TimelineEntry[]);
     setShowAddForm(false);
     setNewEntry({
       type: '',
@@ -137,14 +137,14 @@ export const EmploymentHistoryStep: React.FC = () => {
   const handleRemoveEntry = (index: number) => {
     const newEntries = entries.filter((_, i) => i !== index);
     setEntries(newEntries);
-    setValue('employment-history', 'entries', newEntries);
+    setValue('employment-history', 'entries', newEntries as unknown as TimelineEntry[]);
   };
 
   const handleUpdateEntry = (index: number, entry: EmploymentEntryData) => {
     const newEntries = [...entries];
     newEntries[index] = entry;
     setEntries(newEntries);
-    setValue('employment-history', 'entries', newEntries);
+    setValue('employment-history', 'entries', newEntries as unknown as TimelineEntry[]);
   };
 
   // Employment type options
