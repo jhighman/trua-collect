@@ -1,25 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useForm, FormStepId, TimelineEntry } from '../context/FormContext';
 import type { FormValue } from '../utils/FormStateManager';
-import { ResidenceEntry } from './ResidenceEntry';
+import { ResidenceEntry, type ResidenceEntryData } from './ResidenceEntry';
 import Timeline from './Timeline';
+import { DEFAULT_COUNTRY } from '../utils/countries';
 import './Timeline.css';
 import './ResidenceHistoryStep.css';
 import { getRequirements } from '../utils/collectionKeyParser';
 import { useTranslation } from '../context/TranslationContext';
-
-// Define the base interface for residence entry data
-interface ResidenceEntryData {
-  address: string;
-  city: string;
-  state_province: string;
-  zip_postal: string;
-  country: string;
-  start_date: string;
-  end_date: string | null;
-  is_current: boolean;
-  duration_years?: number;
-}
 
 // Define the interface for entries in state
 interface ResidenceEntryState extends ResidenceEntryData {
@@ -49,14 +37,15 @@ export const ResidenceHistoryStep: React.FC = () => {
   const [totalYears, setTotalYears] = useState<number>(0);
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
   const [newEntry, setNewEntry] = useState<ResidenceEntryData>({
+    country: DEFAULT_COUNTRY,
     address: '',
     city: '',
     state_province: '',
     zip_postal: '',
-    country: '',
     start_date: '',
     end_date: null,
-    is_current: false
+    is_current: false,
+    duration_years: 0
   });
 
   // Get the required years from the collection key parser
@@ -111,43 +100,45 @@ export const ResidenceHistoryStep: React.FC = () => {
   const handleCancelAdd = () => {
     setShowAddForm(false);
     setNewEntry({
+      country: DEFAULT_COUNTRY,
       address: '',
       city: '',
       state_province: '',
       zip_postal: '',
-      country: '',
       start_date: '',
       end_date: null,
-      is_current: false
+      is_current: false,
+      duration_years: 0
     });
   };
 
-  const handleSaveEntry = () => {
+  const handleSaveEntry = (updatedEntry: ResidenceEntryData) => {
     // Calculate duration
-    const startDate = new Date(newEntry.start_date);
-    const endDate = newEntry.is_current ? new Date() : new Date(newEntry.end_date || '');
+    const startDate = new Date(updatedEntry.start_date);
+    const endDate = updatedEntry.is_current ? new Date() : new Date(updatedEntry.end_date || '');
     const durationMs = endDate.getTime() - startDate.getTime();
     const durationYears = durationMs / (1000 * 60 * 60 * 24 * 365.25);
     
     const entryWithDuration: ResidenceEntryState = {
-      ...newEntry,
+      ...updatedEntry,
       duration_years: parseFloat(durationYears.toFixed(2)),
-      startDate: newEntry.start_date,
-      endDate: newEntry.end_date,
-      isCurrent: newEntry.is_current
+      startDate: updatedEntry.start_date,
+      endDate: updatedEntry.end_date,
+      isCurrent: updatedEntry.is_current
     };
     
     setEntries([...entries, entryWithDuration]);
     setShowAddForm(false);
     setNewEntry({
+      country: DEFAULT_COUNTRY,
       address: '',
       city: '',
       state_province: '',
       zip_postal: '',
-      country: '',
       start_date: '',
       end_date: null,
-      is_current: false
+      is_current: false,
+      duration_years: 0
     });
   };
 
@@ -200,222 +191,72 @@ export const ResidenceHistoryStep: React.FC = () => {
         entries={entries.map(entry => ({
           ...entry,
           startDate: entry.start_date,
-          endDate: entry.end_date
+          endDate: entry.end_date,
+          type: 'residence'
         }))}
         type="residence"
-        requiredYears={Number(yearsRequired)}
+        requiredYears={yearsRequired}
         onEntryClick={(entry) => {
-          // Find the index of the entry in the entries array
-          const index = entries.findIndex(e =>
-            e.start_date === entry.start_date &&
-            e.end_date === entry.end_date
+          const index = entries.findIndex(e => 
+            e.start_date === entry.startDate && 
+            e.end_date === entry.endDate
           );
           if (index !== -1) {
-            // Open the edit form for this entry
-            const entryElement = document.querySelector(`.residence-entry:nth-child(${index + 1}) .button.icon[aria-label="Edit residence"]`);
-            if (entryElement) {
-              (entryElement as HTMLElement).click();
-            }
+            // Set the entry to edit mode
+            const updatedEntries = [...entries];
+            setEntries(updatedEntries);
           }
         }}
       />
-      
-      {errors._timeline && (
-        <div className="error-message">{errors._timeline}</div>
-      )}
-      
-      {/* List of existing entries */}
-      {entries.length > 0 && (
-        <div className="entries-list">
-          <h3>Your Residences</h3>
-          {entries.map((entry: ResidenceEntryState, index: number) => (
-            <ResidenceEntry
-              key={index}
-              entry={{
-                address: entry.address,
-                city: entry.city,
-                state_province: entry.state_province,
-                zip_postal: entry.zip_postal,
-                country: entry.country,
-                start_date: entry.startDate,
-                end_date: entry.endDate,
-                is_current: entry.isCurrent
-              }}
-              index={index}
-              onUpdate={(updatedEntry) => handleUpdateEntry(index, updatedEntry)}
-              onRemove={() => handleRemoveEntry(index)}
-            />
-          ))}
-        </div>
-      )}
-      
-      {/* Add new entry form */}
-      {showAddForm ? (
-        <div className="add-entry-form">
-          <h3>Add Residence</h3>
-          <div className="form-group">
-            <label htmlFor="address">Street Address</label>
-            <input
-              type="text"
-              id="address"
-              value={newEntry.address}
-              onChange={(e) => setNewEntry({...newEntry, address: e.target.value})}
-              required
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="city">City</label>
-            <input
-              type="text"
-              id="city"
-              value={newEntry.city}
-              onChange={(e) => setNewEntry({...newEntry, city: e.target.value})}
-              required
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="state_province">State/Province</label>
-            <input
-              type="text"
-              id="state_province"
-              value={newEntry.state_province}
-              onChange={(e) => setNewEntry({...newEntry, state_province: e.target.value})}
-              required
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="zip_postal">ZIP/Postal Code</label>
-            <input
-              type="text"
-              id="zip_postal"
-              value={newEntry.zip_postal}
-              onChange={(e) => setNewEntry({...newEntry, zip_postal: e.target.value})}
-              required
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="country">Country</label>
-            <input
-              type="text"
-              id="country"
-              value={newEntry.country}
-              onChange={(e) => setNewEntry({...newEntry, country: e.target.value})}
-              required
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="start_date">Start Date</label>
-            <input
-              type="date"
-              id="start_date"
-              value={newEntry.start_date}
-              onChange={(e) => setNewEntry({...newEntry, start_date: e.target.value})}
-              required
-            />
-          </div>
-          
-          <div className="form-group">
-            <input
-              type="checkbox"
-              id="is_current"
-              checked={newEntry.is_current}
-              onChange={(e) => setNewEntry({
-                ...newEntry, 
-                is_current: e.target.checked,
-                end_date: e.target.checked ? null : newEntry.end_date
-              })}
-            />
-            <label htmlFor="is_current">I currently live at this address</label>
-          </div>
-          
-          {!newEntry.is_current && (
-            <div className="form-group">
-              <label htmlFor="end_date">End Date</label>
-              <input
-                type="date"
-                id="end_date"
-                value={newEntry.end_date || ''}
-                onChange={(e) => setNewEntry({...newEntry, end_date: e.target.value})}
-                required
-              />
-            </div>
-          )}
-          
-          <div className="form-actions">
-            <button 
-              type="button" 
-              className="button secondary" 
-              onClick={handleCancelAdd}
-            >
-              Cancel
-            </button>
-            <button 
-              type="button" 
-              className="button primary" 
-              onClick={handleSaveEntry}
-              disabled={
-                !newEntry.address || 
-                !newEntry.city || 
-                !newEntry.state_province || 
-                !newEntry.zip_postal || 
-                !newEntry.country || 
-                !newEntry.start_date || 
-                (!newEntry.is_current && !newEntry.end_date)
-              }
-            >
-              Save Residence
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="add-entry-container">
-          <button
-            type="button"
-            className="add-button"
-            onClick={handleAddEntry}
-          >
-            {t('residence.add_button') || 'Add Residence'}
-          </button>
-        </div>
-      )}
-      
-      {/* Form status */}
-      <div className="form-status">
-        {isStepValid('residence-history') ? (
-          <div className="valid-status">
-            {t('residence.valid') || 'Residence history information is complete'}
-          </div>
-        ) : (
-          <div className="invalid-status">
-            {t('residence.invalid') || `Please provide a complete residence history for the past ${yearsRequired} years`}
-          </div>
-        )}
+
+      <div className="entries-list">
+        {entries.map((entry, index) => (
+          <ResidenceEntry
+            key={index}
+            entry={entry}
+            onUpdate={(updatedEntry) => handleUpdateEntry(index, updatedEntry)}
+            onDelete={() => handleRemoveEntry(index)}
+          />
+        ))}
       </div>
-      
-      {/* Navigation buttons */}
-      <div className="form-navigation">
+
+      {showAddForm ? (
+        <ResidenceEntry
+          entry={newEntry}
+          onUpdate={handleSaveEntry}
+          onDelete={handleCancelAdd}
+          isEditing={true}
+        />
+      ) : (
+        <button onClick={handleAddEntry} className="add-entry-button">
+          {t('residence.add_address') || 'Add Address'}
+        </button>
+      )}
+
+      <div className="step-navigation">
         <button
-          type="button"
-          className="button secondary"
           onClick={moveToPreviousStep}
           disabled={!canMovePrevious}
+          className="previous-button"
         >
           {t('common.previous') || 'Previous'}
         </button>
         <button
-          type="button"
-          className="button primary"
           onClick={moveToNextStep}
-          disabled={!canMoveNext}
+          disabled={!canMoveNext || totalYears < yearsRequired}
+          className="next-button"
         >
           {t('common.next') || 'Next'}
         </button>
       </div>
+
+      {errors && Array.isArray(errors) && errors.length > 0 && (
+        <div className="error-messages">
+          {errors.map((error: string, index: number) => (
+            <p key={index} className="error">{error}</p>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

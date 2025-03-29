@@ -1,222 +1,212 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { formatDisplayDate } from '../utils/dateUtils';
+import { countries, getCountryByCode, type Country } from '../utils/countries';
+import { getStatesByCountry, getStateByCode, type State } from '../utils/states';
 
-interface ResidenceEntryData {
+export interface ResidenceEntryData {
+  country: string;
   address: string;
   city: string;
   state_province: string;
   zip_postal: string;
-  country: string;
   start_date: string;
   end_date: string | null;
   is_current: boolean;
-  duration_years?: number;
+  duration_years: number;
 }
 
 interface ResidenceEntryProps {
   entry: ResidenceEntryData;
-  index: number;
-  onUpdate: (updatedEntry: ResidenceEntryData) => void;
-  onRemove: () => void;
+  onUpdate: (entry: ResidenceEntryData) => void;
+  onDelete: () => void;
+  isEditing?: boolean;
 }
 
-export const ResidenceEntry: React.FC<ResidenceEntryProps> = ({
-  entry,
-  index,
-  onUpdate,
-  onRemove
-}) => {
-  const [isEditing, setIsEditing] = useState(false);
+export function ResidenceEntry({ entry, onUpdate, onDelete, isEditing = false }: ResidenceEntryProps) {
+  const { t } = useTranslation();
   const [editedEntry, setEditedEntry] = useState<ResidenceEntryData>(entry);
+  const [isEditable, setIsEditable] = useState(isEditing);
 
-  const handleEdit = () => {
-    setIsEditing(true);
-    setEditedEntry({...entry});
+  useEffect(() => {
+    setEditedEntry(entry);
+  }, [entry]);
+
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const countryCode = e.target.value;
+    setEditedEntry(prev => ({
+      ...prev,
+      country: countryCode,
+      state_province: '', // Reset state when country changes
+    }));
   };
 
-  const handleCancel = () => {
-    setIsEditing(false);
-    setEditedEntry({...entry});
+  const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setEditedEntry(prev => ({
+      ...prev,
+      state_province: e.target.value,
+    }));
   };
 
   const handleSave = () => {
-    // Calculate duration
-    const startDate = new Date(editedEntry.start_date);
-    const endDate = editedEntry.is_current ? new Date() : new Date(editedEntry.end_date || '');
-    const durationMs = endDate.getTime() - startDate.getTime();
-    const durationYears = durationMs / (1000 * 60 * 60 * 24 * 365.25);
-    
-    const updatedEntry = {
-      ...editedEntry,
-      duration_years: parseFloat(durationYears.toFixed(2))
-    };
-    
-    onUpdate(updatedEntry);
-    setIsEditing(false);
+    onUpdate(editedEntry);
+    setIsEditable(false);
   };
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
-  };
+  const availableStates = editedEntry.country ? getStatesByCountry(editedEntry.country) : [];
+
+  if (!isEditable) {
+    return (
+      <div className="residence-entry">
+        <div className="entry-summary">
+          <div className="entry-location">
+            {editedEntry.country && <span className="country">{t(`countries.${editedEntry.country}`)}</span>}
+            <span className="address">{editedEntry.address}</span>
+            <span className="city-state">
+              {editedEntry.city}, {editedEntry.state_province} {editedEntry.zip_postal}
+            </span>
+          </div>
+          <div className="entry-dates">
+            {formatDisplayDate(entry.start_date)} - {entry.is_current ? t('common.present') : formatDisplayDate(entry.end_date)}
+          </div>
+        </div>
+        <div className="entry-actions">
+          <button onClick={() => setIsEditable(true)} className="edit-button">{t('common.edit')}</button>
+          <button onClick={onDelete} className="delete-button">{t('common.delete')}</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="residence-entry">
-      {isEditing ? (
-        <div className="edit-form">
-          <div className="form-group">
-            <label htmlFor={`edit-address-${index}`}>Street Address</label>
-            <input
-              type="text"
-              id={`edit-address-${index}`}
-              value={editedEntry.address}
-              onChange={(e) => setEditedEntry({...editedEntry, address: e.target.value})}
-              required
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor={`edit-city-${index}`}>City</label>
-            <input
-              type="text"
-              id={`edit-city-${index}`}
-              value={editedEntry.city}
-              onChange={(e) => setEditedEntry({...editedEntry, city: e.target.value})}
-              required
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor={`edit-state-${index}`}>State/Province</label>
-            <input
-              type="text"
-              id={`edit-state-${index}`}
-              value={editedEntry.state_province}
-              onChange={(e) => setEditedEntry({...editedEntry, state_province: e.target.value})}
-              required
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor={`edit-zip-${index}`}>ZIP/Postal Code</label>
-            <input
-              type="text"
-              id={`edit-zip-${index}`}
-              value={editedEntry.zip_postal}
-              onChange={(e) => setEditedEntry({...editedEntry, zip_postal: e.target.value})}
-              required
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor={`edit-country-${index}`}>Country</label>
-            <input
-              type="text"
-              id={`edit-country-${index}`}
-              value={editedEntry.country}
-              onChange={(e) => setEditedEntry({...editedEntry, country: e.target.value})}
-              required
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor={`edit-start-date-${index}`}>Start Date</label>
-            <input
-              type="date"
-              id={`edit-start-date-${index}`}
-              value={editedEntry.start_date}
-              onChange={(e) => setEditedEntry({...editedEntry, start_date: e.target.value})}
-              required
-            />
-          </div>
-          
-          <div className="form-group">
+    <div className="residence-entry-form">
+      <div className="form-row">
+        <div className="form-group">
+          <label htmlFor="country">{t('residence.country')}</label>
+          <select
+            id="country"
+            value={editedEntry.country}
+            onChange={handleCountryChange}
+          >
+            <option value="">{t('residence.select_country')}</option>
+            {countries.map(country => (
+              <option key={country.code} value={country.code}>
+                {country.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="form-row">
+        <div className="form-group">
+          <label htmlFor="address">{t('residence.address')}</label>
+          <input
+            type="text"
+            id="address"
+            value={editedEntry.address}
+            onChange={(e) => setEditedEntry({ ...editedEntry, address: e.target.value })}
+          />
+        </div>
+      </div>
+
+      <div className="form-row">
+        <div className="form-group">
+          <label htmlFor="city">{t('residence.city')}</label>
+          <input
+            type="text"
+            id="city"
+            value={editedEntry.city}
+            onChange={(e) => setEditedEntry({ ...editedEntry, city: e.target.value })}
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="state_province">{t('residence.state_province')}</label>
+          <select
+            id="state_province"
+            value={editedEntry.state_province}
+            onChange={handleStateChange}
+            disabled={!editedEntry.country}
+          >
+            <option value="">{t('residence.select_state')}</option>
+            {availableStates.map(state => (
+              <option key={state.code} value={state.code}>
+                {state.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="zip_postal">{t('residence.zip_postal')}</label>
+          <input
+            type="text"
+            id="zip_postal"
+            value={editedEntry.zip_postal}
+            onChange={(e) => setEditedEntry({ ...editedEntry, zip_postal: e.target.value })}
+          />
+        </div>
+      </div>
+
+      <div className="form-row dates">
+        <div className="form-group">
+          <label htmlFor="start_date">{t('common.start_date')}</label>
+          <input
+            type="month"
+            id="start_date"
+            value={editedEntry.start_date}
+            onChange={(e) => setEditedEntry({ ...editedEntry, start_date: e.target.value })}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>
             <input
               type="checkbox"
-              id={`edit-is-current-${index}`}
               checked={editedEntry.is_current}
               onChange={(e) => setEditedEntry({
-                ...editedEntry, 
+                ...editedEntry,
                 is_current: e.target.checked,
-                end_date: e.target.checked ? null : editedEntry.end_date
+                end_date: e.target.checked ? null : editedEntry.end_date,
               })}
             />
-            <label htmlFor={`edit-is-current-${index}`}>I currently live at this address</label>
-          </div>
-          
-          {!editedEntry.is_current && (
-            <div className="form-group">
-              <label htmlFor={`edit-end-date-${index}`}>End Date</label>
-              <input
-                type="date"
-                id={`edit-end-date-${index}`}
-                value={editedEntry.end_date || ''}
-                onChange={(e) => setEditedEntry({...editedEntry, end_date: e.target.value})}
-                required
-              />
-            </div>
-          )}
-          
-          <div className="form-actions">
-            <button 
-              type="button" 
-              className="button secondary" 
-              onClick={handleCancel}
-            >
-              Cancel
-            </button>
-            <button 
-              type="button" 
-              className="button primary" 
-              onClick={handleSave}
-              disabled={
-                !editedEntry.address || 
-                !editedEntry.city || 
-                !editedEntry.state_province || 
-                !editedEntry.zip_postal || 
-                !editedEntry.country || 
-                !editedEntry.start_date || 
-                (!editedEntry.is_current && !editedEntry.end_date)
-              }
-            >
-              Save Changes
-            </button>
-          </div>
+            {t('common.current')}
+          </label>
         </div>
-      ) : (
-        <div className="entry-display">
-          <div className="entry-header">
-            <h4>{entry.address}</h4>
-            <div className="entry-actions">
-              <button 
-                type="button" 
-                className="button icon" 
-                onClick={handleEdit}
-                aria-label="Edit residence"
-              >
-                ✏️
-              </button>
-              <button 
-                type="button" 
-                className="button icon" 
-                onClick={onRemove}
-                aria-label="Remove residence"
-              >
-                🗑️
-              </button>
-            </div>
-          </div>
-          
-          <div className="entry-details">
-            <p>{entry.city}, {entry.state_province} {entry.zip_postal}</p>
-            <p>{entry.country}</p>
-            <p className="date-range">
-              {formatDate(entry.start_date)} - {entry.is_current ? 'Present' : formatDate(entry.end_date)}
-              <span className="duration">({entry.duration_years?.toFixed(1)} years)</span>
-            </p>
-          </div>
+
+        <div className="form-group">
+          <label htmlFor="end_date">{t('common.end_date')}</label>
+          <input
+            type="month"
+            id="end_date"
+            value={editedEntry.end_date || ''}
+            onChange={(e) => setEditedEntry({ ...editedEntry, end_date: e.target.value })}
+            disabled={editedEntry.is_current}
+          />
         </div>
-      )}
+      </div>
+
+      <div className="form-actions">
+        <button
+          onClick={handleSave}
+          disabled={
+            !editedEntry.country ||
+            !editedEntry.address ||
+            !editedEntry.city ||
+            !editedEntry.state_province ||
+            !editedEntry.zip_postal ||
+            !editedEntry.start_date ||
+            (!editedEntry.is_current && !editedEntry.end_date)
+          }
+          className="save-button"
+        >
+          {t('common.save')}
+        </button>
+        <button onClick={() => setIsEditable(false)} className="cancel-button">
+          {t('common.cancel')}
+        </button>
+      </div>
     </div>
   );
-};
+}

@@ -84,7 +84,7 @@ classDiagram
         zip_postal: string
         country: string
         start_date: string
-        end_date: string
+        end_date: string | null
         is_current: boolean
         duration_years: number
     }
@@ -102,7 +102,7 @@ classDiagram
         city: string
         state_province: string
         start_date: string
-        end_date: string
+        end_date: string | null
         is_current: boolean
         description: string
         contact_name: string
@@ -1062,3 +1062,25 @@ The data model could be extended to include:
 5. **Address Verification**:
    - Add verification status for each residence entry
    - Include verification method and results
+
+## New Validation Rules
+
+### Validation Rule Interface
+
+```typescript
+interface ValidationRule {
+  type: 'required' | 'pattern' | 'minLength' | 'maxLength' | 'custom';
+  message: string;
+  value?: RegExp | number | ((value: any) => boolean);
+}
+
+### Step Validation Interface
+
+```typescript
+interface StepValidation {
+  requiredYears?: number;
+  requiredEmployers?: number;
+  requiredVerifications?: string[];
+  customRules?: ValidationRule[];
+}
+```

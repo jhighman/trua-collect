@@ -113,37 +113,9 @@ export const Timeline: React.FC<TimelineProps> = ({
     }
 
     // Calculate years accounted for (handling overlaps)
-    let yearsAccounted = 0;
-    
-    // Create a sorted array of all date events (start or end)
-    const dateEvents: Array<{ date: Date; isStart: boolean }> = [];
-    
-    sortedEntries.forEach(entry => {
-      dateEvents.push({ date: new Date(entry.startDate), isStart: true });
-      dateEvents.push({ 
-        date: entry.endDate ? new Date(entry.endDate) : new Date(), 
-        isStart: false 
-      });
-    });
-    
-    // Sort date events chronologically
-    dateEvents.sort((a, b) => a.date.getTime() - b.date.getTime());
-    
-    // Process events to calculate covered time
-    let activeEntries = 0;
-    let lastEventDate: Date | null = null;
-    
-    dateEvents.forEach(event => {
-      if (lastEventDate && activeEntries > 0) {
-        // Calculate time between this event and the last one
-        const timeDiff = event.date.getTime() - lastEventDate.getTime();
-        yearsAccounted += timeDiff / (1000 * 60 * 60 * 24 * 365.25);
-      }
-      
-      // Update active entries count
-      activeEntries += event.isStart ? 1 : -1;
-      lastEventDate = event.date;
-    });
+    const yearsAccounted = sortedEntries.reduce((sum, entry) => {
+      return sum + (entry.duration_years || 0);
+    }, 0);
 
     return {
       segments,
