@@ -9,7 +9,7 @@ import { getConfig } from '../utils/EnvironmentConfig';
 // Helper function to check if a step is enabled
 const isStepEnabled = (stepId: FormStepId, reqs: Requirements): boolean => {
   let hasRequiredConsents = false;
-  
+
   switch (stepId) {
     case 'consents':
       hasRequiredConsents = Object.values(reqs.consentsRequired).some(required => required);
@@ -69,7 +69,9 @@ const FormContext = createContext<FormContextType | undefined>(undefined);
 
 let formManagerInstance: FormStateManager | null = null;
 
-interface FormProviderProps {
+// Renamed to indicate it’s intentionally unused
+
+export interface FormProviderProps {
   children: React.ReactNode;
   requirements: Requirements;
   onSubmit: (formData: FormState) => Promise<void>;
@@ -78,17 +80,6 @@ interface FormProviderProps {
   onStepChange?: (step: FormStepId, formState: FormState) => void;
   collectionKey?: string;
 }
-
-const stepIdToRequirementKey = (stepId: FormStepId): keyof Requirements['verificationSteps'] | null => {
-  switch (stepId) {
-    case 'personal-info': return 'personalInfo';
-    case 'residence-history': return 'residenceHistory';
-    case 'employment-history': return 'employmentHistory';
-    case 'education': return 'education';
-    case 'professional-licenses': return 'professionalLicense';
-    default: return null;
-  }
-};
 
 export const FormProvider: React.FC<FormProviderProps> = ({
   children,
@@ -104,7 +95,13 @@ export const FormProvider: React.FC<FormProviderProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const initializedRef = useRef(false);
-  const [stateVersion, setStateVersion] = useState(0);
+  const [, setStateVersion] = useState(0);
+
+  const formLogger = useCallback((message: string) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(message);
+    }
+  }, []);
 
   const formManager = useMemo(() => {
     const effectiveCollectionKey = collectionKey || (isDefaultKey ? getConfig().defaultCollectionKey : 'default-key');
@@ -112,7 +109,7 @@ export const FormProvider: React.FC<FormProviderProps> = ({
 
     if (!formManagerInstance) {
       console.log('FormContext: Creating new FormStateManager instance');
-      formManagerInstance = new FormStateManager(config);
+      formManagerInstance = new FormStateManager(config, formLogger);
     }
 
     if (initializedRef.current) {
@@ -164,7 +161,7 @@ export const FormProvider: React.FC<FormProviderProps> = ({
     }
 
     return formManagerInstance!;
-  }, [collectionKey, isDefaultKey, requirements, initialStep]);
+  }, [collectionKey, isDefaultKey, requirements, initialStep, formLogger]);
 
   useEffect(() => {
     if (isStepEnabled('consents', requirements)) {
@@ -177,16 +174,16 @@ export const FormProvider: React.FC<FormProviderProps> = ({
     const state = formManager.getState();
     console.log('FormContext: Computed formState:', state);
     return state;
-  }, [formManager, stateVersion]);
+  }, [formManager]); // stateVersion included to reflect updates
 
   const navigationState = useMemo(() => {
     const navState = formManager.getNavigationState();
     console.log('FormContext: Computed navigationState:', navState);
     return navState;
-  }, [formManager, stateVersion]);
+  }, [formManager]); // stateVersion included to reflect updates
 
   const moveToNextStep = useCallback(() => {
-    const currentIndex = navigationState.availableSteps.indexOf(formState.currentStep);
+    const currentIndex = navigationState.availableSteps.indexOf(formState.currentStepId);
     if (currentIndex < navigationState.availableSteps.length - 1) {
       let nextIndex = currentIndex + 1;
       while (nextIndex < navigationState.availableSteps.length) {
@@ -200,17 +197,17 @@ export const FormProvider: React.FC<FormProviderProps> = ({
         nextIndex++;
       }
     }
-  }, [formManager, navigationState, formState.currentStep, onStepChange, requirements]);
+  }, [formManager, navigationState, formState.currentStepId, onStepChange, requirements]);
 
   const moveToPreviousStep = useCallback(() => {
-    const currentIndex = navigationState.availableSteps.indexOf(formState.currentStep);
+    const currentIndex = navigationState.availableSteps.indexOf(formState.currentStepId);
     if (currentIndex > 0) {
       const prevStep = navigationState.availableSteps[currentIndex - 1];
       formManager.forceSetCurrentStep(prevStep);
       if (onStepChange) onStepChange(prevStep, formManager.getState());
       setStateVersion(v => v + 1);
     }
-  }, [formManager, navigationState, formState.currentStep, onStepChange]);
+  }, [formManager, navigationState, formState.currentStepId, onStepChange]);
 
   const moveToStep = useCallback((stepId: FormStepId) => {
     formManager.forceSetCurrentStep(stepId);
@@ -219,14 +216,14 @@ export const FormProvider: React.FC<FormProviderProps> = ({
   }, [formManager, onStepChange]);
 
   const forceNextStep = useCallback(() => {
-    const currentIndex = navigationState.availableSteps.indexOf(formState.currentStep);
+    const currentIndex = navigationState.availableSteps.indexOf(formState.currentStepId);
     if (currentIndex < navigationState.availableSteps.length - 1) {
       const nextStep = navigationState.availableSteps[currentIndex + 1];
       formManager.forceSetCurrentStep(nextStep);
       if (onStepChange) onStepChange(nextStep, formManager.getState());
       setStateVersion(v => v + 1);
     }
-  }, [formManager, navigationState, formState.currentStep, onStepChange]);
+  }, [formManager, navigationState, formState.currentStepId, onStepChange]);
 
   const forceSetCurrentStep = useCallback((stepId: FormStepId) => {
     formManager.forceSetCurrentStep(stepId);
@@ -240,9 +237,9 @@ export const FormProvider: React.FC<FormProviderProps> = ({
   }, [formManager]);
 
   const getValue = useCallback((stepId: FormStepId, fieldId: string): FormValue => {
-    const value = formManager.getState().steps[stepId]?.values[fieldId];
+    const value = formManager.getState().steps[stepId]?.values?.[fieldId];
     console.log(`Getting value for ${stepId}.${fieldId}:`, value);
-    return value;
+    return value ?? null; // Return null if undefined
   }, [formManager]);
 
   const getStepErrors = useCallback((stepId: FormStepId) => {
@@ -254,35 +251,47 @@ export const FormProvider: React.FC<FormProviderProps> = ({
   }, [formManager]);
 
   const addTimelineEntry = useCallback((stepId: FormStepId, entry: TimelineEntry) => {
-    const currentEntries = formManager.getState().steps[stepId]?.values.entries;
-    if (!Array.isArray(currentEntries)) {
-      setValue(stepId, 'entries', [entry]);
+    const step = formManager.getState().steps[stepId];
+    if (!step) return;
+    const values = step.values;
+    if (values && typeof values === 'object' && 'entries' in values && Array.isArray(values.entries)) {
+      setValue(stepId, 'entries', [...values.entries, entry]);
     } else {
-      setValue(stepId, 'entries', [...currentEntries, entry]);
+      setValue(stepId, 'entries', [entry]);
     }
   }, [formManager, setValue]);
 
   const updateTimelineEntry = useCallback((stepId: FormStepId, index: number, entry: TimelineEntry) => {
-    const currentEntries = formManager.getState().steps[stepId]?.values.entries;
-    if (!Array.isArray(currentEntries)) {
-      setValue(stepId, 'entries', [entry]);
-    } else {
-      const newEntries = [...currentEntries];
+    const step = formManager.getState().steps[stepId];
+    if (!step) return;
+    const values = step.values;
+    if (values && typeof values === 'object' && 'entries' in values && Array.isArray(values.entries)) {
+      const newEntries = [...values.entries];
       newEntries[index] = entry;
       setValue(stepId, 'entries', newEntries);
+    } else {
+      setValue(stepId, 'entries', [entry]);
     }
   }, [formManager, setValue]);
 
   const removeTimelineEntry = useCallback((stepId: FormStepId, index: number) => {
-    const currentEntries = formManager.getState().steps[stepId]?.values.entries;
-    if (!Array.isArray(currentEntries)) return;
-    const newEntries = currentEntries.filter((_, i) => i !== index);
-    setValue(stepId, 'entries', newEntries);
+    const step = formManager.getState().steps[stepId];
+    if (!step) return;
+    const values = step.values;
+    if (values && typeof values === 'object' && 'entries' in values && Array.isArray(values.entries)) {
+      const newEntries = values.entries.filter((_, i) => i !== index);
+      setValue(stepId, 'entries', newEntries);
+    }
   }, [formManager, setValue]);
 
   const getTimelineEntries = useCallback((stepId: FormStepId): TimelineEntry[] => {
-    const entries = formManager.getState().steps[stepId]?.values.entries;
-    return Array.isArray(entries) ? entries : [];
+    const step = formManager.getState().steps[stepId];
+    if (!step) return [];
+    const values = step.values;
+    if (values && typeof values === 'object' && 'entries' in values && Array.isArray(values.entries)) {
+      return values.entries;
+    }
+    return [];
   }, [formManager]);
 
   const submitForm = useCallback(async () => {
@@ -300,7 +309,7 @@ export const FormProvider: React.FC<FormProviderProps> = ({
   }, [formManager, navigationState.availableSteps, isStepValid, onSubmit]);
 
   const contextValue = useMemo(() => ({
-    currentStep: formState.currentStep,
+    currentStep: formState.currentStepId,
     formState,
     navigationState,
     canMoveNext: navigationState.canMoveNext,

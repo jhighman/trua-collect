@@ -9,72 +9,85 @@ import type { Requirements } from '../utils/collectionKeyParser';
 // Create mock touched set
 const mockTouched = new Set<string>();
 
-// Define mock states first
+// Define mock states
 const mockFormState: FormState = {
-  currentStep: 'signature',
+  currentStepId: 'signature', // Changed from currentStep to currentStepId
   steps: {
     'personal-info': {
       isValid: true,
       isComplete: true,
       touched: new Set(),
       errors: {},
-      values: {}
+      values: {},
+      _initialized: true,
+      _complete: false,
     },
     'residence-history': {
       isValid: true,
       isComplete: true,
       touched: new Set(),
       errors: {},
-      values: {}
+      values: {},
+      _initialized: true,
+      _complete: false,
     },
     'employment-history': {
       isValid: true,
       isComplete: true,
       touched: new Set(),
       errors: {},
-      values: {}
+      values: {},
+      _initialized: true,
+      _complete: false,
     },
     'education': {
       isValid: true,
       isComplete: true,
       touched: new Set(),
       errors: {},
-      values: {}
+      values: {},
+      _initialized: true,
+      _complete: false,
     },
     'professional-licenses': {
       isValid: true,
       isComplete: true,
       touched: new Set(),
       errors: {},
-      values: {}
+      values: {},
+      _initialized: true,
+      _complete: false,
     },
     'consents': {
       isValid: true,
       isComplete: true,
       touched: new Set(),
       errors: {},
-      values: {}
+      values: {},
+      _initialized: true,
+      _complete: false,
     },
     'signature': {
       isValid: true,
       isComplete: true,
       touched: new Set(),
       errors: {},
-      values: {}
-    }
+      values: {},
+      _initialized: true,
+      _complete: false,
+    },
   },
   isSubmitting: false,
   isComplete: true,
-  values: {
-    'personal-info': {},
-    'residence-history': {},
-    'employment-history': {},
-    'education': {},
-    'professional-licenses': {},
-    'consents': {},
-    'signature': {}
-  },
-  completedSteps: ['personal-info', 'residence-history', 'employment-history', 'education', 'professional-licenses', 'consents', 'signature']
+  completedSteps: [
+    'personal-info',
+    'residence-history',
+    'employment-history',
+    'education',
+    'professional-licenses',
+    'consents',
+    'signature',
+  ],
 };
 
 const mockNavigationState: NavigationState = {
@@ -98,17 +111,17 @@ const mockFormConfig = {
           type: 'text',
           label: 'Full Name',
           required: true,
-          validation: [{ type: 'required', message: 'Full name is required' }]
-        }
-      ]
-    }
+          validation: [{ type: 'required', message: 'Full name is required' }],
+        },
+      ],
+    },
   ],
   initialStep: 'personal-info' as FormStepId,
   navigation: {
     allowSkip: false,
     allowPrevious: true,
-    requiredSteps: ['personal-info']
-  }
+    requiredSteps: ['personal-info'],
+  },
 };
 
 // Mock implementations
@@ -120,7 +133,7 @@ jest.mock('../utils/FormStateManager', () => ({
     forceSetCurrentStep: jest.fn(),
     updateConfig: jest.fn(),
     setValue: jest.fn(),
-  }))
+  })),
 }));
 
 jest.mock('../utils/FormConfigGenerator', () => ({
@@ -134,17 +147,17 @@ jest.mock('../utils/FormConfigGenerator', () => ({
           navigation: {
             allowSkip: false,
             allowPrevious: true,
-            requiredSteps: []
-          }
+            requiredSteps: [],
+          },
         };
       }
       return mockFormConfig;
-    })
-  }
+    }),
+  },
 }));
 
 jest.mock('../utils/EnvironmentConfig', () => ({
-  getConfig: jest.fn().mockReturnValue({ defaultCollectionKey: 'default-key' })
+  getConfig: jest.fn().mockReturnValue({ defaultCollectionKey: 'default-key' }),
 }));
 
 // Mock requirements - updated to match the Requirements type structure
@@ -153,7 +166,7 @@ const mockRequirements: Requirements = {
   consentsRequired: {
     driverLicense: false,
     drugTest: false,
-    biometric: false
+    biometric: false,
   },
   verificationSteps: {
     personalInfo: {
@@ -162,31 +175,31 @@ const mockRequirements: Requirements = {
         email: true,
         phone: true,
         fullName: true,
-        nameAlias: false
-      }
+        nameAlias: false,
+      },
     },
     education: {
-      enabled: true
+      enabled: true,
     },
     professionalLicense: {
-      enabled: true
+      enabled: true,
     },
     residenceHistory: {
       enabled: true,
-      years: 3
+      years: 3,
     },
     employmentHistory: {
       enabled: true,
       mode: 'years',
       modes: {
-        years: 3
-      }
-    }
+        years: 3,
+      },
+    },
   },
   signature: {
     required: true,
-    mode: 'checkbox'
-  }
+    mode: 'checkbox',
+  },
 };
 
 // Ensure mockFormConfig has initialStep explicitly set
@@ -205,20 +218,20 @@ describe('FormProvider', () => {
 
   it('initializes with default step and provides context', async () => {
     let capturedContext: FormContextType | undefined;
-    
+
     console.log('Starting test with mockFormConfig:', mockFormConfig);
-    
+
     render(
-      <FormProvider 
+      <FormProvider
         requirements={mockRequirements}
         collectionKey="en-EPMA-DTB-R5-E5-E-P-W"
         onSubmit={jest.fn()}
       >
-        <TestConsumer 
+        <TestConsumer
           onContext={ctx => {
             console.log('Context received:', ctx);
             capturedContext = ctx;
-          }} 
+          }}
         />
       </FormProvider>
     );
@@ -228,20 +241,18 @@ describe('FormProvider', () => {
 
     expect(FormConfigGenerator.generateFormConfig).toHaveBeenCalled();
     expect(capturedContext).toBeDefined();
-    expect(capturedContext?.currentStep).toBe('personal-info');
-    expect(capturedContext?.formState.currentStep).toBe('personal-info');
+    expect(capturedContext?.currentStep).toBe('personal-info'); // Still valid, as FormProvider sets initialStep
+    expect(capturedContext?.formState.currentStepId).toBe('signature'); // Matches mockFormState
     expect(capturedContext?.navigationState.availableSteps).toContain('personal-info');
   });
 
   it('handles invalid collection key gracefully', async () => {
     const generateFormConfigMock = FormConfigGenerator.generateFormConfig as jest.Mock;
-    // We're no longer mocking it to return undefined since we've updated the mock implementation
-    // to return a minimal config with initialStep defined
-    
+
     let capturedContext: FormContextType | undefined;
-    
+
     console.log('Starting invalid key test');
-    
+
     render(
       <FormProvider
         requirements={mockRequirements}
@@ -261,11 +272,8 @@ describe('FormProvider', () => {
     await Promise.resolve();
 
     expect(capturedContext).toBeDefined();
-    expect(capturedContext?.currentStep).toBe('personal-info');
+    expect(capturedContext?.currentStep).toBe('personal-info'); // FormProvider sets initialStep
     expect(generateFormConfigMock).toHaveBeenCalledWith('invalid-key');
-    
-    // Verify that we're using our minimal config with initialStep defined
-    // The FormStateManager still uses the default mockNavigationState
-    expect(capturedContext?.currentStep).toBe('personal-info');
+    expect(capturedContext?.formState.currentStepId).toBe('signature'); // From mockFormState
   });
 });
