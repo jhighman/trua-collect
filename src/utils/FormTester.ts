@@ -105,8 +105,15 @@ export class FormTester {
    */
   public addTimelineEntry(entry: Record<string, unknown>) {
     const currentStep = this.formManager.getState().currentStep;
-    const currentEntries = this.formManager.getState().steps[currentStep]?.values.entries || [];
-    this.formManager.setValue(currentStep, 'entries', [...currentEntries, entry]);
+    const currentEntries = this.formManager.getState().steps[currentStep]?.values.entries;
+    
+    // Ensure currentEntries is an array before spreading
+    if (!Array.isArray(currentEntries)) {
+      this.formManager.setValue(currentStep, 'entries', [entry]);
+    } else {
+      this.formManager.setValue(currentStep, 'entries', [...currentEntries, entry]);
+    }
+    
     this.logState(`Added timeline entry to ${currentStep}`);
     return this.formManager.getState();
   }

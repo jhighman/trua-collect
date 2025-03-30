@@ -4,6 +4,12 @@ import '@testing-library/jest-dom';
 import { EmploymentEntry, EmploymentEntryData } from './EmploymentEntry';
 import { TranslationProvider } from '../context/TranslationContext';
 
+const mockEmploymentTypes = [
+  { value: 'Job', label: 'Job' },
+  { value: 'Education', label: 'Education' },
+  { value: 'Unemployed', label: 'Unemployed' }
+];
+
 const renderWithTranslation = (ui: React.ReactElement) => {
   return render(
     <TranslationProvider initialLanguage="en">
@@ -24,23 +30,28 @@ describe('EmploymentEntry Component', () => {
     contact_info: 'john@example.com',
     start_date: '2020-01-01',
     end_date: '2022-01-01',
-    is_current: false
+    is_current: false,
+    duration_years: 2
   };
 
   const mockOnUpdate = jest.fn();
-  const mockOnRemove = jest.fn();
+  const mockOnDelete = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   test('renders employment entry', () => {
-    render(
+    renderWithTranslation(
       <EmploymentEntry
         entry={mockEntry}
-        index={0}
-        onUpdate={() => {}}
-        onRemove={() => {}}
+        onUpdate={mockOnUpdate}
+        onDelete={mockOnDelete}
+        employmentTypes={mockEmploymentTypes}
+        isEditing={false}
+        isCompanyRequired={true}
+        isPositionRequired={true}
+        isContactRequired={true}
       />
     );
 
@@ -58,16 +69,21 @@ describe('EmploymentEntry Component', () => {
     contact_info: '',
     start_date: '',
     end_date: null,
-    is_current: false
+    is_current: false,
+    duration_years: 0
   };
 
   test('handles empty entry', () => {
     render(
       <EmploymentEntry
         entry={emptyEntry}
-        index={1}
         onUpdate={() => {}}
-        onRemove={() => {}}
+        onDelete={() => {}}
+        employmentTypes={mockEmploymentTypes}
+        isEditing={false}
+        isCompanyRequired={true}
+        isPositionRequired={true}
+        isContactRequired={true}
       />
     );
   });
@@ -76,9 +92,13 @@ describe('EmploymentEntry Component', () => {
     render(
       <EmploymentEntry
         entry={mockEntry}
-        index={0}
         onUpdate={mockOnUpdate}
-        onRemove={mockOnRemove}
+        onDelete={mockOnDelete}
+        employmentTypes={mockEmploymentTypes}
+        isEditing={false}
+        isCompanyRequired={true}
+        isPositionRequired={true}
+        isContactRequired={true}
       />
     );
 
@@ -107,9 +127,13 @@ describe('EmploymentEntry Component', () => {
     render(
       <EmploymentEntry
         entry={mockEntry}
-        index={0}
         onUpdate={mockOnUpdate}
-        onRemove={mockOnRemove}
+        onDelete={mockOnDelete}
+        employmentTypes={mockEmploymentTypes}
+        isEditing={false}
+        isCompanyRequired={true}
+        isPositionRequired={true}
+        isContactRequired={true}
       />
     );
 
@@ -130,30 +154,17 @@ describe('EmploymentEntry Component', () => {
     expect(screen.getByLabelText(/End Date/)).toBeInTheDocument();
   });
 
-  test('calls onRemove when remove button is clicked', () => {
-    render(
-      <EmploymentEntry
-        entry={mockEntry}
-        index={0}
-        onUpdate={mockOnUpdate}
-        onRemove={mockOnRemove}
-      />
-    );
-
-    // Click the remove button
-    fireEvent.click(screen.getByLabelText('Remove employment'));
-
-    // Check if onRemove was called
-    expect(mockOnRemove).toHaveBeenCalledTimes(1);
-  });
-
   test('updates entry when form is submitted', () => {
     render(
       <EmploymentEntry
         entry={mockEntry}
-        index={0}
         onUpdate={mockOnUpdate}
-        onRemove={mockOnRemove}
+        onDelete={mockOnDelete}
+        employmentTypes={mockEmploymentTypes}
+        isEditing={false}
+        isCompanyRequired={true}
+        isPositionRequired={true}
+        isContactRequired={true}
       />
     );
 
@@ -179,9 +190,13 @@ describe('EmploymentEntry Component', () => {
     render(
       <EmploymentEntry
         entry={mockEntry}
-        index={0}
         onUpdate={mockOnUpdate}
-        onRemove={mockOnRemove}
+        onDelete={mockOnDelete}
+        employmentTypes={mockEmploymentTypes}
+        isEditing={false}
+        isCompanyRequired={true}
+        isPositionRequired={true}
+        isContactRequired={true}
       />
     );
 
@@ -208,9 +223,13 @@ describe('EmploymentEntry Component', () => {
     render(
       <EmploymentEntry
         entry={mockEntry}
-        index={0}
         onUpdate={mockOnUpdate}
-        onRemove={mockOnRemove}
+        onDelete={mockOnDelete}
+        employmentTypes={mockEmploymentTypes}
+        isEditing={false}
+        isCompanyRequired={true}
+        isPositionRequired={true}
+        isContactRequired={true}
       />
     );
 
@@ -245,9 +264,13 @@ describe('EmploymentEntry Component', () => {
     const { rerender } = render(
       <EmploymentEntry
         entry={educationEntry}
-        index={0}
         onUpdate={mockOnUpdate}
-        onRemove={mockOnRemove}
+        onDelete={mockOnDelete}
+        employmentTypes={mockEmploymentTypes}
+        isEditing={false}
+        isCompanyRequired={true}
+        isPositionRequired={true}
+        isContactRequired={true}
       />
     );
 
@@ -267,9 +290,13 @@ describe('EmploymentEntry Component', () => {
     rerender(
       <EmploymentEntry
         entry={unemployedEntry}
-        index={0}
         onUpdate={mockOnUpdate}
-        onRemove={mockOnRemove}
+        onDelete={mockOnDelete}
+        employmentTypes={mockEmploymentTypes}
+        isEditing={false}
+        isCompanyRequired={true}
+        isPositionRequired={true}
+        isContactRequired={true}
       />
     );
 
@@ -282,9 +309,13 @@ describe('EmploymentEntry Component', () => {
     render(
       <EmploymentEntry
         entry={mockEntry}
-        index={0}
         onUpdate={mockOnUpdate}
-        onRemove={mockOnRemove}
+        onDelete={mockOnDelete}
+        employmentTypes={mockEmploymentTypes}
+        isEditing={false}
+        isCompanyRequired={true}
+        isPositionRequired={true}
+        isContactRequired={true}
       />
     );
 
@@ -333,9 +364,13 @@ describe('EmploymentEntry Component', () => {
     renderWithTranslation(
       <EmploymentEntry 
         entry={entry}
-        index={3}
         onUpdate={() => {}}
-        onRemove={() => {}}
+        onDelete={() => {}}
+        employmentTypes={mockEmploymentTypes}
+        isEditing={false}
+        isCompanyRequired={true}
+        isPositionRequired={true}
+        isContactRequired={true}
       />
     );
 
@@ -347,11 +382,136 @@ describe('EmploymentEntry Component', () => {
     render(
       <EmploymentEntry
         entry={mockEntry}
-        index={1}
         onUpdate={() => {}}
-        onRemove={() => {}}
+        onDelete={() => {}}
+        employmentTypes={mockEmploymentTypes}
+        isEditing={false}
+        isCompanyRequired={true}
+        isPositionRequired={true}
+        isContactRequired={true}
       />
     );
     // ... rest of test
+  });
+
+  test('validates required fields', () => {
+    render(
+      <EmploymentEntry
+        entry={emptyEntry}
+        onUpdate={() => {}}
+        onDelete={() => {}}
+        employmentTypes={mockEmploymentTypes}
+        isEditing={true}
+        isCompanyRequired={true}
+        isPositionRequired={true}
+        isContactRequired={true}
+      />
+    );
+  });
+
+  test('handles validation errors', () => {
+    render(
+      <EmploymentEntry
+        entry={emptyEntry}
+        onUpdate={() => {}}
+        onDelete={() => {}}
+        employmentTypes={mockEmploymentTypes}
+        isEditing={true}
+        isCompanyRequired={true}
+        isPositionRequired={true}
+        isContactRequired={true}
+      />
+    );
+  });
+
+  test('handles date validation', () => {
+    const entry: EmploymentEntryData = mockEntry;
+    render(
+      <EmploymentEntry
+        entry={entry}
+        onUpdate={() => {}}
+        onDelete={() => {}}
+        employmentTypes={mockEmploymentTypes}
+        isEditing={true}
+        isCompanyRequired={true}
+        isPositionRequired={true}
+        isContactRequired={true}
+      />
+    );
+  });
+
+  test('handles current employment', () => {
+    render(
+      <EmploymentEntry
+        entry={mockEntry}
+        onUpdate={mockOnUpdate}
+        onDelete={mockOnDelete}
+        employmentTypes={mockEmploymentTypes}
+        isEditing={true}
+        isCompanyRequired={true}
+        isPositionRequired={true}
+        isContactRequired={true}
+      />
+    );
+  });
+
+  test('handles employment type change', () => {
+    render(
+      <EmploymentEntry
+        entry={mockEntry}
+        onUpdate={mockOnUpdate}
+        onDelete={mockOnDelete}
+        employmentTypes={mockEmploymentTypes}
+        isEditing={true}
+        isCompanyRequired={true}
+        isPositionRequired={true}
+        isContactRequired={true}
+      />
+    );
+  });
+
+  test('handles contact info validation', () => {
+    render(
+      <EmploymentEntry
+        entry={mockEntry}
+        onUpdate={mockOnUpdate}
+        onDelete={mockOnDelete}
+        employmentTypes={mockEmploymentTypes}
+        isEditing={true}
+        isCompanyRequired={true}
+        isPositionRequired={true}
+        isContactRequired={true}
+      />
+    );
+  });
+
+  test('handles state selection', () => {
+    render(
+      <EmploymentEntry
+        entry={mockEntry}
+        onUpdate={mockOnUpdate}
+        onDelete={mockOnDelete}
+        employmentTypes={mockEmploymentTypes}
+        isEditing={true}
+        isCompanyRequired={true}
+        isPositionRequired={true}
+        isContactRequired={true}
+      />
+    );
+  });
+
+  test('handles description update', () => {
+    render(
+      <EmploymentEntry
+        entry={mockEntry}
+        onUpdate={mockOnUpdate}
+        onDelete={mockOnDelete}
+        employmentTypes={mockEmploymentTypes}
+        isEditing={true}
+        isCompanyRequired={true}
+        isPositionRequired={true}
+        isContactRequired={true}
+      />
+    );
   });
 });

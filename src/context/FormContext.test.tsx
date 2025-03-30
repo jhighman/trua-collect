@@ -11,35 +11,70 @@ const mockTouched = new Set<string>();
 
 // Define mock states first
 const mockFormState: FormState = {
-  currentStep: 'personal-info' as FormStepId,
-  isSubmitting: false,
-  isComplete: false,
+  currentStep: 'signature',
   steps: {
-    'personal-info': { 
-      id: 'personal-info',
-      values: {}, 
-      errors: {}, 
-      isValid: true, 
-      isComplete: true, 
-      touched: mockTouched 
+    'personal-info': {
+      isValid: true,
+      isComplete: true,
+      touched: new Set(),
+      errors: {},
+      values: {}
     },
-    education: { 
-      id: 'education',
-      values: { highestLevel: 'high-school', entries: [] }, 
-      errors: {}, 
-      isValid: true, 
-      isComplete: true, 
-      touched: mockTouched 
+    'residence-history': {
+      isValid: true,
+      isComplete: true,
+      touched: new Set(),
+      errors: {},
+      values: {}
     },
-    'professional-licenses': { 
-      id: 'professional-licenses',
-      values: { entries: [] }, 
-      errors: {}, 
-      isValid: true, 
-      isComplete: true, 
-      touched: mockTouched 
+    'employment-history': {
+      isValid: true,
+      isComplete: true,
+      touched: new Set(),
+      errors: {},
+      values: {}
     },
-  }
+    'education': {
+      isValid: true,
+      isComplete: true,
+      touched: new Set(),
+      errors: {},
+      values: {}
+    },
+    'professional-licenses': {
+      isValid: true,
+      isComplete: true,
+      touched: new Set(),
+      errors: {},
+      values: {}
+    },
+    'consents': {
+      isValid: true,
+      isComplete: true,
+      touched: new Set(),
+      errors: {},
+      values: {}
+    },
+    'signature': {
+      isValid: true,
+      isComplete: true,
+      touched: new Set(),
+      errors: {},
+      values: {}
+    }
+  },
+  isSubmitting: false,
+  isComplete: true,
+  values: {
+    'personal-info': {},
+    'residence-history': {},
+    'employment-history': {},
+    'education': {},
+    'professional-licenses': {},
+    'consents': {},
+    'signature': {}
+  },
+  completedSteps: ['personal-info', 'residence-history', 'employment-history', 'education', 'professional-licenses', 'consents', 'signature']
 };
 
 const mockNavigationState: NavigationState = {

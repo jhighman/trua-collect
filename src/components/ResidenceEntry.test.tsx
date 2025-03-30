@@ -16,7 +16,7 @@ describe('ResidenceEntry Component', () => {
   };
 
   const mockOnUpdate = jest.fn();
-  const mockOnRemove = jest.fn();
+  const mockOnDelete = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -26,9 +26,9 @@ describe('ResidenceEntry Component', () => {
     render(
       <ResidenceEntry
         entry={mockEntry}
-        index={0}
         onUpdate={mockOnUpdate}
-        onRemove={mockOnRemove}
+        onDelete={mockOnDelete}
+        isEditing={false}
       />
     );
 
@@ -50,9 +50,9 @@ describe('ResidenceEntry Component', () => {
     render(
       <ResidenceEntry
         entry={mockEntry}
-        index={0}
         onUpdate={mockOnUpdate}
-        onRemove={mockOnRemove}
+        onDelete={mockOnDelete}
+        isEditing={false}
       />
     );
 
@@ -69,30 +69,30 @@ describe('ResidenceEntry Component', () => {
     expect(screen.getByLabelText('End Date')).toBeInTheDocument();
   });
 
-  test('calls onRemove when remove button is clicked', () => {
+  test('calls onDelete when remove button is clicked', () => {
     render(
       <ResidenceEntry
         entry={mockEntry}
-        index={0}
         onUpdate={mockOnUpdate}
-        onRemove={mockOnRemove}
+        onDelete={mockOnDelete}
+        isEditing={false}
       />
     );
 
     // Click the remove button
     fireEvent.click(screen.getByLabelText('Remove residence'));
 
-    // Check if onRemove was called
-    expect(mockOnRemove).toHaveBeenCalledTimes(1);
+    // Check if onDelete was called
+    expect(mockOnDelete).toHaveBeenCalledTimes(1);
   });
 
   test('updates entry when form is submitted', () => {
     render(
       <ResidenceEntry
         entry={mockEntry}
-        index={0}
         onUpdate={mockOnUpdate}
-        onRemove={mockOnRemove}
+        onDelete={mockOnDelete}
+        isEditing={false}
       />
     );
 
@@ -118,9 +118,9 @@ describe('ResidenceEntry Component', () => {
     render(
       <ResidenceEntry
         entry={mockEntry}
-        index={0}
         onUpdate={mockOnUpdate}
-        onRemove={mockOnRemove}
+        onDelete={mockOnDelete}
+        isEditing={false}
       />
     );
 
@@ -147,9 +147,9 @@ describe('ResidenceEntry Component', () => {
     render(
       <ResidenceEntry
         entry={mockEntry}
-        index={0}
         onUpdate={mockOnUpdate}
-        onRemove={mockOnRemove}
+        onDelete={mockOnDelete}
+        isEditing={false}
       />
     );
 
@@ -169,5 +169,6 @@ describe('ResidenceEntry Component', () => {
     
     // Check that onUpdate was not called
     expect(mockOnUpdate).not.toHaveBeenCalled();
+    expect(mockOnDelete).not.toHaveBeenCalled();
   });
 });

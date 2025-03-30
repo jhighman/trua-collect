@@ -6,6 +6,19 @@ import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import './Signature.css';
 
+// Define the extended props type
+type ExtendedSignatureCanvasProps = {
+  onEnd?: () => void;
+  ref: React.RefObject<SignatureCanvas>;
+  canvasProps: {
+    className: string;
+    width: number;
+    height: number;
+    'aria-label': string;
+    role: string;
+  };
+};
+
 interface SignatureProps {
   onSignatureChange?: (dataUrl: string | null) => void;
 }

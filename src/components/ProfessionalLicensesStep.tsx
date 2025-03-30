@@ -49,7 +49,10 @@ export const ProfessionalLicensesStep: React.FC = () => {
     isActive: false,
     state: '',
     country: '',
-    description: ''
+    description: '',
+    startDate: '',
+    endDate: '',
+    isCurrent: false
   });
   
   // Handle adding a new entry

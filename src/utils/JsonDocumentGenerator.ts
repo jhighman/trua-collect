@@ -1,4 +1,5 @@
 import { FormState } from '../context/FormContext';
+import type { ProfessionalLicenseEntry } from './FormStateManager';
 
 /**
  * Interface for the JSON document structure
@@ -127,21 +128,29 @@ export class JsonDocumentGenerator {
     
     const values = personalInfoStep.values;
     
-    // Ensure required fields are present
-    if (!values.fullName) {
-      throw new Error('Full name is required in personal information');
+    // Ensure required fields are present and have correct types
+    if (!values.fullName || typeof values.fullName !== 'string') {
+      throw new Error('Full name is required in personal information and must be a string');
     }
     
-    if (!values.email) {
-      throw new Error('Email is required in personal information');
+    if (!values.email || typeof values.email !== 'string') {
+      throw new Error('Email is required in personal information and must be a string');
     }
     
     // Extract all values from the personal info step
-    return {
+    const personalInfo: JsonDocument['personalInfo'] = {
       fullName: values.fullName,
-      email: values.email,
-      ...values
+      email: values.email
     };
+
+    // Add any additional fields that are strings
+    Object.entries(values).forEach(([key, value]) => {
+      if (key !== 'fullName' && key !== 'email' && typeof value === 'string') {
+        personalInfo[key] = value;
+      }
+    });
+
+    return personalInfo;
   }
   
   /**
@@ -167,26 +176,38 @@ export class JsonDocumentGenerator {
     
     // Extract employment history
     const employmentStep = formState.steps['employment-history'];
-    if (employmentStep && employmentStep.values.entries) {
-      timeline.employmentHistory = employmentStep.values.entries;
+    if (employmentStep?.values.entries && Array.isArray(employmentStep.values.entries)) {
+      timeline.employmentHistory = employmentStep.values.entries as JsonDocument['timeline']['employmentHistory'];
     }
     
     // Extract residence history
     const residenceStep = formState.steps['residence-history'];
-    if (residenceStep && residenceStep.values.entries) {
-      timeline.residenceHistory = residenceStep.values.entries;
+    if (residenceStep?.values.entries && Array.isArray(residenceStep.values.entries)) {
+      timeline.residenceHistory = residenceStep.values.entries as JsonDocument['timeline']['residenceHistory'];
     }
     
     // Extract education
     const educationStep = formState.steps['education'];
-    if (educationStep && educationStep.values.entries) {
-      timeline.education = educationStep.values.entries;
+    if (educationStep?.values.entries && Array.isArray(educationStep.values.entries)) {
+      timeline.education = educationStep.values.entries as JsonDocument['timeline']['education'];
     }
     
     // Extract professional licenses
     const licensesStep = formState.steps['professional-licenses'];
-    if (licensesStep && licensesStep.values.entries) {
-      timeline.professionalLicenses = licensesStep.values.entries;
+    if (licensesStep?.values.entries && Array.isArray(licensesStep.values.entries)) {
+      const licenseEntries = (licensesStep.values.entries as ProfessionalLicenseEntry[]).map(entry => ({
+        licenseType: entry.licenseType,
+        licenseNumber: entry.licenseNumber,
+        issuingAuthority: entry.issuingAuthority,
+        issueDate: entry.startDate,
+        expirationDate: entry.endDate,
+        isActive: entry.isCurrent,
+        // Preserve any additional fields from the entry
+        ...Object.entries(entry)
+          .filter(([key]) => !['startDate', 'endDate', 'isCurrent', 'licenseType', 'licenseNumber', 'issuingAuthority'].includes(key))
+          .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {})
+      }));
+      timeline.professionalLicenses = licenseEntries;
     }
     
     return timeline;
@@ -197,8 +218,8 @@ export class JsonDocumentGenerator {
    */
   private static extractSignature(formState: FormState): JsonDocument['signature'] {
     const signatureStep = formState.steps['signature'];
-    if (!signatureStep || !signatureStep.values.signature) {
-      throw new Error('Signature is missing');
+    if (!signatureStep?.values.signature || typeof signatureStep.values.signature !== 'string') {
+      throw new Error('Signature is required and must be a string');
     }
     
     return {

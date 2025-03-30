@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { formatDisplayDate } from '../utils/dateUtils';
 import { countries, getCountryByCode, type Country } from '../utils/countries';
 import { getStatesByCountry, getStateByCode, type State } from '../utils/states';
-import { ResidenceEntryType } from '../types';
+import '../styles/variables.css';
+import '../styles/common.css';
+import './ResidenceEntry.css';
 
 export interface ResidenceEntryData {
   country: string;
@@ -21,10 +23,11 @@ interface ResidenceEntryProps {
   entry: ResidenceEntryData;
   onUpdate: (entry: ResidenceEntryData) => void;
   onDelete: () => void;
+  onRemove?: () => void;  // Alias for onDelete for compatibility
   isEditing?: boolean;
 }
 
-export function ResidenceEntry({ entry, onUpdate, onDelete, isEditing = false }: ResidenceEntryProps) {
+export function ResidenceEntry({ entry, onUpdate, onDelete, onRemove = onDelete, isEditing = false }: ResidenceEntryProps) {
   const { t } = useTranslation();
   const [editedEntry, setEditedEntry] = useState<ResidenceEntryData>(entry);
   const [isEditable, setIsEditable] = useState(isEditing);

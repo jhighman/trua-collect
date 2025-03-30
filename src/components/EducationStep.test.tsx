@@ -48,10 +48,17 @@ const mockFormContext = {
   formState: {
     steps: {
       'education': {
-        values: {
-          entries: mockEntries
-        },
+        values: {},
+        touched: new Set<string>(),
         errors: {},
+        isComplete: false,
+        isValid: true
+      },
+      'personal-info': {
+        values: {},
+        touched: new Set<string>(),
+        errors: {},
+        isComplete: false,
         isValid: true
       }
     },
@@ -66,6 +73,8 @@ const mockFormContext = {
   moveToNextStep: jest.fn(),
   moveToPreviousStep: jest.fn(),
   moveToStep: jest.fn(),
+  forceNextStep: jest.fn(),
+  forceSetCurrentStep: jest.fn(),
   canMoveNext: true,
   canMovePrevious: true,
   availableSteps: ['personal-info', 'education', 'signature'],
@@ -130,32 +139,71 @@ const createMockFormContext = (overrides = {}): FormContextType => ({
     currentStep: 'education',
     isSubmitting: false,
     isComplete: false,
+    completedSteps: ['personal-info'],
+    values: {
+      'personal-info': {},
+      'residence-history': {},
+      'employment-history': {},
+      'education': {},
+      'professional-licenses': {},
+      'consents': {},
+      'signature': {}
+    },
     steps: {
       'personal-info': {
-        id: 'personal-info',
         values: {},
+        touched: new Set<string>(),
         errors: {},
-        isValid: true,
-        isComplete: true,
-        touched: new Set(['name', 'email'])
+        isComplete: false,
+        isValid: true
       },
-      education: {
-        id: 'education',
-        values: {
-          highestLevel: EducationLevel.Bachelors,
-          timelineEntries: []
-        },
+      'residence-history': {
+        values: {},
+        touched: new Set<string>(),
         errors: {},
-        isValid: true,
-        isComplete: true,
-        touched: new Set(['highestLevel', 'timelineEntries'])
+        isComplete: false,
+        isValid: true
+      },
+      'employment-history': {
+        values: {},
+        touched: new Set<string>(),
+        errors: {},
+        isComplete: false,
+        isValid: true
+      },
+      'education': {
+        values: {},
+        touched: new Set<string>(),
+        errors: {},
+        isComplete: false,
+        isValid: true
+      },
+      'professional-licenses': {
+        values: {},
+        touched: new Set<string>(),
+        errors: {},
+        isComplete: false,
+        isValid: true
+      },
+      'consents': {
+        values: {},
+        touched: new Set<string>(),
+        errors: {},
+        isComplete: false,
+        isValid: true
+      },
+      'signature': {
+        values: {},
+        touched: new Set<string>(),
+        errors: {},
+        isComplete: false,
+        isValid: true
       }
     }
   },
 
   // Navigation state
   currentStep: 'education',
-  currentContextStep: 'education',
   availableSteps: [
     'personal-info',
     'education',
@@ -173,6 +221,7 @@ const createMockFormContext = (overrides = {}): FormContextType => ({
   moveToPreviousStep: jest.fn(),
   moveToStep: jest.fn(),
   forceNextStep: jest.fn(),
+  forceSetCurrentStep: jest.fn(),
 
   // Form operations
   getValue: jest.fn((stepId: FormStepId, fieldId: string) => {

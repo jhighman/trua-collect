@@ -33,6 +33,16 @@ describe('DocumentService', () => {
         isValid: true
       }
     },
+    values: {
+      'personal-info': { fullName: 'John Doe', email: 'john@example.com' },
+      'residence-history': {},
+      'employment-history': {},
+      'education': {},
+      'professional-licenses': {},
+      'consents': {},
+      'signature': { signature: 'base64-data' }
+    },
+    completedSteps: ['personal-info', 'signature'],
     isSubmitting: false,
     isComplete: true
   } as FormState;

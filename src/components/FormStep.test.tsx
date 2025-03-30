@@ -25,9 +25,20 @@ const mockFormContext = {
   canMovePrevious: true,
   formState: {
     currentStep: 'personal-info',
+    isSubmitting: false,
+    isComplete: false,
+    completedSteps: [],
+    values: {
+      'personal-info': {},
+      'residence-history': {},
+      'employment-history': {},
+      'education': {},
+      'professional-licenses': {},
+      'consents': {},
+      'signature': {}
+    },
     steps: {
       'personal-info': {
-        id: 'personal-info',
         values: {},
         touched: new Set<string>(),
         errors: {},
@@ -35,16 +46,48 @@ const mockFormContext = {
         isValid: true
       },
       'residence-history': {
-        id: 'residence-history',
+        values: {},
+        touched: new Set<string>(),
+        errors: {},
+        isComplete: false,
+        isValid: true
+      },
+      'employment-history': {
+        values: {},
+        touched: new Set<string>(),
+        errors: {},
+        isComplete: false,
+        isValid: true
+      },
+      'education': {
+        values: {},
+        touched: new Set<string>(),
+        errors: {},
+        isComplete: false,
+        isValid: true
+      },
+      'professional-licenses': {
+        values: {},
+        touched: new Set<string>(),
+        errors: {},
+        isComplete: false,
+        isValid: true
+      },
+      'consents': {
+        values: {},
+        touched: new Set<string>(),
+        errors: {},
+        isComplete: false,
+        isValid: true
+      },
+      'signature': {
         values: {},
         touched: new Set<string>(),
         errors: {},
         isComplete: false,
         isValid: true
       }
-    },
-    isSubmitting: false,
-    isComplete: false
+    }
   },
   navigationState: {
     canMoveNext: true,

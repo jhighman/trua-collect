@@ -16,8 +16,12 @@ import {
 } from "recharts"
 import { cn } from "@/lib/utils"
 
+interface ChartData {
+  [key: string]: string | number
+}
+
 interface ChartProps {
-  data: any[]
+  data: ChartData[]
   type?: "line" | "bar" | "pie"
   xKey?: string
   yKey?: string
@@ -86,7 +90,7 @@ export function Chart({
           </PieChart>
         )
       default:
-        return null
+        return <div>Invalid chart type</div>
     }
   }
 

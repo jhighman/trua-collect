@@ -17,7 +17,10 @@ const mockEntries: ProfessionalLicenseEntryData[] = [
     isActive: true,
     state: 'California',
     country: 'USA',
-    description: 'Licensed to practice public accounting in California'
+    description: 'Licensed to practice public accounting in California',
+    startDate: '2020-01-15',  // Same as issueDate
+    endDate: '2025-01-14',    // Same as expirationDate
+    isCurrent: true           // Same as isActive
   },
   {
     id: 'license-2',
@@ -29,7 +32,10 @@ const mockEntries: ProfessionalLicenseEntryData[] = [
     isActive: false,
     state: 'N/A',
     country: 'USA',
-    description: 'Certified project management professional'
+    description: 'Certified project management professional',
+    startDate: '2019-05-20',  // Same as issueDate
+    endDate: '2022-05-19',    // Same as expirationDate
+    isCurrent: false          // Same as isActive
   }
 ];
 

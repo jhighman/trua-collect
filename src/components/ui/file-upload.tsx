@@ -99,7 +99,7 @@ export function FileUpload({
           "relative flex flex-col items-center justify-center w-full min-h-[200px] border-2 border-dashed rounded-lg transition-colors",
           dragActive
             ? "border-primary bg-primary/5"
-            : "border-border bg-background",
+            : "border border-dashed border-slate-200 bg-slate-50",
           error && "border-destructive"
         )}
         onDragEnter={handleDrag}

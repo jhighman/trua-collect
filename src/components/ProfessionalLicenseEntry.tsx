@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useTranslation } from '../context/TranslationContext';
+import { TimelineEntry } from '../utils/FormStateManager';
 import './ProfessionalLicenseEntry.css';
 
-export interface ProfessionalLicenseEntryData {
+export interface ProfessionalLicenseEntryData extends TimelineEntry {
   id: string;
   licenseType: string;
   licenseNumber: string;
@@ -48,7 +49,14 @@ export const ProfessionalLicenseEntry: React.FC<ProfessionalLicenseEntryProps> =
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    // Sync TimelineEntry fields with license fields
+    const updatedFormData = {
+      ...formData,
+      startDate: formData.issueDate,
+      endDate: formData.expirationDate,
+      isCurrent: formData.isActive
+    };
+    onSave(updatedFormData);
   };
   
   return (

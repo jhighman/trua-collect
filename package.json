@@ -26,11 +26,11 @@
   "author": "Trua Verify Team",
   "license": "ISC",
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.0.14",
+    "@tailwindcss/postcss": "^4.0.17",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@types/jest": "^29.5.14",
-    "@types/node": "^22.13.11",
+    "@types/node": "^22.13.14",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@types/testing-library__jest-dom": "^6.0.0",

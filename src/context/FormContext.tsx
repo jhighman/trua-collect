@@ -254,25 +254,35 @@ export const FormProvider: React.FC<FormProviderProps> = ({
   }, [formManager]);
 
   const addTimelineEntry = useCallback((stepId: FormStepId, entry: TimelineEntry) => {
-    const currentEntries = (formManager.getState().steps[stepId]?.values.entries as TimelineEntry[]) || [];
-    setValue(stepId, 'entries', [...currentEntries, entry]);
+    const currentEntries = formManager.getState().steps[stepId]?.values.entries;
+    if (!Array.isArray(currentEntries)) {
+      setValue(stepId, 'entries', [entry]);
+    } else {
+      setValue(stepId, 'entries', [...currentEntries, entry]);
+    }
   }, [formManager, setValue]);
 
   const updateTimelineEntry = useCallback((stepId: FormStepId, index: number, entry: TimelineEntry) => {
-    const currentEntries = (formManager.getState().steps[stepId]?.values.entries as TimelineEntry[]) || [];
-    const newEntries = [...currentEntries];
-    newEntries[index] = entry;
-    setValue(stepId, 'entries', newEntries);
+    const currentEntries = formManager.getState().steps[stepId]?.values.entries;
+    if (!Array.isArray(currentEntries)) {
+      setValue(stepId, 'entries', [entry]);
+    } else {
+      const newEntries = [...currentEntries];
+      newEntries[index] = entry;
+      setValue(stepId, 'entries', newEntries);
+    }
   }, [formManager, setValue]);
 
   const removeTimelineEntry = useCallback((stepId: FormStepId, index: number) => {
-    const currentEntries = (formManager.getState().steps[stepId]?.values.entries as TimelineEntry[]) || [];
+    const currentEntries = formManager.getState().steps[stepId]?.values.entries;
+    if (!Array.isArray(currentEntries)) return;
     const newEntries = currentEntries.filter((_, i) => i !== index);
     setValue(stepId, 'entries', newEntries);
   }, [formManager, setValue]);
 
   const getTimelineEntries = useCallback((stepId: FormStepId): TimelineEntry[] => {
-    return (formManager.getState().steps[stepId]?.values.entries as TimelineEntry[]) || [];
+    const entries = formManager.getState().steps[stepId]?.values.entries;
+    return Array.isArray(entries) ? entries : [];
   }, [formManager]);
 
   const submitForm = useCallback(async () => {

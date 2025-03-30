@@ -5,21 +5,24 @@ describe('JsonDocumentGenerator', () => {
   // Mock form state for testing
   const mockFormState: FormState = {
     currentStep: 'signature',
+    values: {
+      'personal-info': {},
+      'residence-history': {},
+      'employment-history': {},
+      'education': {},
+      'professional-licenses': {},
+      'consents': {},
+      'signature': {}
+    },
     steps: {
       'personal-info': {
-        id: 'personal-info',
-        values: {
-          fullName: 'John Doe',
-          email: 'john.doe@example.com',
-          phone: '555-123-4567'
-        },
-        touched: new Set(['fullName', 'email', 'phone']),
+        values: {},
+        touched: new Set<string>(),
         errors: {},
-        isComplete: true,
+        isComplete: false,
         isValid: true
       },
       'consents': {
-        id: 'consents',
         values: {
           driverLicenseConsent: true,
           drugTestConsent: false,
@@ -32,7 +35,6 @@ describe('JsonDocumentGenerator', () => {
         isValid: true
       },
       'employment-history': {
-        id: 'employment-history',
         values: {
           entries: [
             {
@@ -67,7 +69,6 @@ describe('JsonDocumentGenerator', () => {
         isValid: true
       },
       'residence-history': {
-        id: 'residence-history',
         values: {
           entries: [
             {
@@ -96,26 +97,13 @@ describe('JsonDocumentGenerator', () => {
         isValid: true
       },
       'education': {
-        id: 'education',
-        values: {
-          entries: [
-            {
-              institution: 'State University',
-              degree: 'Bachelor of Science',
-              field: 'Computer Science',
-              startDate: '2015-09-01',
-              endDate: '2019-05-30',
-              isCurrent: false
-            }
-          ]
-        },
-        touched: new Set(['entries']),
+        values: {},
+        touched: new Set<string>(),
         errors: {},
-        isComplete: true,
+        isComplete: false,
         isValid: true
       },
       'professional-licenses': {
-        id: 'professional-licenses',
         values: {
           entries: [
             {
@@ -124,7 +112,10 @@ describe('JsonDocumentGenerator', () => {
               issuingAuthority: 'State Board',
               issueDate: '2020-06-15',
               expirationDate: '2025-06-14',
-              isActive: true
+              isActive: true,
+              startDate: '2020-06-15',  // Same as issueDate
+              endDate: '2025-06-14',    // Same as expirationDate
+              isCurrent: true           // Same as isActive
             }
           ]
         },
@@ -134,7 +125,6 @@ describe('JsonDocumentGenerator', () => {
         isValid: true
       },
       'signature': {
-        id: 'signature',
         values: {
           signature: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAA...'
         },
@@ -144,6 +134,7 @@ describe('JsonDocumentGenerator', () => {
         isValid: true
       }
     },
+    completedSteps: ['personal-info', 'consents', 'employment-history', 'residence-history', 'professional-licenses', 'signature'],
     isSubmitting: false,
     isComplete: true
   };
@@ -232,9 +223,17 @@ describe('JsonDocumentGenerator', () => {
     // Create a new form state with personal-info step but missing fullName
     const invalidFormState: FormState = {
       currentStep: 'personal-info',
+      values: {
+        'personal-info': {},
+        'residence-history': {},
+        'employment-history': {},
+        'education': {},
+        'professional-licenses': {},
+        'consents': {},
+        'signature': {}
+      },
       steps: {
         'personal-info': {
-          id: 'personal-info',
           values: {
             // Empty fullName to trigger validation error
             fullName: '',
@@ -246,7 +245,6 @@ describe('JsonDocumentGenerator', () => {
           isValid: true
         },
         'signature': {
-          id: 'signature',
           values: {
             signature: 'data:image/png;base64,test123'
           },
@@ -256,6 +254,7 @@ describe('JsonDocumentGenerator', () => {
           isValid: true
         }
       },
+      completedSteps: ['signature'],
       isSubmitting: false,
       isComplete: false
     };

@@ -243,13 +243,13 @@ export const EmploymentHistoryStep: React.FC = () => {
             <EmploymentEntry
               entry={entry}
               onUpdate={(updatedEntry) => handleUpdateEntry(index, updatedEntry)}
-              onRemove={() => handleRemoveEntry(index)}
-                employmentTypes={employmentTypes}
-                isCompanyRequired={isCompanyRequired}
-                isPositionRequired={isPositionRequired}
-                isContactRequired={isContactRequired}
-              />
-              </div>
+              onDelete={() => handleRemoveEntry(index)}
+              employmentTypes={employmentTypes}
+              isCompanyRequired={isCompanyRequired}
+              isPositionRequired={isPositionRequired}
+              isContactRequired={isContactRequired}
+            />
+            </div>
           </div>
         ))}
                   </div>

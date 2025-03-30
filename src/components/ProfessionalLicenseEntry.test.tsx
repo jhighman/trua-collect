@@ -15,7 +15,10 @@ describe('ProfessionalLicenseEntry Component', () => {
     isActive: true,
     state: 'California',
     country: 'USA',
-    description: 'Licensed to practice public accounting in California'
+    description: 'Licensed to practice public accounting in California',
+    startDate: '2020-01-15',
+    endDate: '2025-01-14',
+    isCurrent: true
   };
   
   const mockOnSave = jest.fn();
@@ -66,7 +69,10 @@ describe('ProfessionalLicenseEntry Component', () => {
       isActive: false,
       state: '',
       country: '',
-      description: ''
+      description: '',
+      startDate: '',
+      endDate: '',
+      isCurrent: false
     };
     
     renderComponent(emptyEntry);

@@ -1,16 +1,15 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import FormSubmissionHandler from './FormSubmissionHandler';
 import '@testing-library/jest-dom';
+import FormSubmissionHandler from './FormSubmissionHandler';
+import { useForm } from '../context/FormContext';
+import type { FormContextType } from '../context/FormContext';
 
 // Mock the FormContext
 jest.mock('../context/FormContext', () => ({
   ...jest.requireActual('../context/FormContext'),
   useForm: jest.fn()
 }));
-
-// Import the mocked useForm
-import { useForm } from '../context/FormContext';
 
 describe('FormSubmissionHandler', () => {
   // Add console.error mock
@@ -33,42 +32,103 @@ describe('FormSubmissionHandler', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     
-    // Default mock implementation
-    mockUseForm.mockReturnValue({
-      submitForm: mockSubmitForm,
-      formErrors: {},
+    const mockFormContext: FormContextType = {
       formState: {
-        currentStep: 'personal-info',
-        steps: {},
+        currentStep: 'signature',
+        steps: {
+          'personal-info': {
+            isValid: true,
+            isComplete: true,
+            touched: new Set(),
+            errors: {},
+            values: {}
+          },
+          'residence-history': {
+            isValid: true,
+            isComplete: true,
+            touched: new Set(),
+            errors: {},
+            values: {}
+          },
+          'employment-history': {
+            isValid: true,
+            isComplete: true,
+            touched: new Set(),
+            errors: {},
+            values: {}
+          },
+          'education': {
+            isValid: true,
+            isComplete: true,
+            touched: new Set(),
+            errors: {},
+            values: {}
+          },
+          'professional-licenses': {
+            isValid: true,
+            isComplete: true,
+            touched: new Set(),
+            errors: {},
+            values: {}
+          },
+          'consents': {
+            isValid: true,
+            isComplete: true,
+            touched: new Set(),
+            errors: {},
+            values: {}
+          },
+          'signature': {
+            isValid: true,
+            isComplete: true,
+            touched: new Set(),
+            errors: {},
+            values: {}
+          }
+        },
         isSubmitting: false,
-        isComplete: false
+        isComplete: true,
+        values: {
+          'personal-info': {},
+          'residence-history': {},
+          'employment-history': {},
+          'education': {},
+          'professional-licenses': {},
+          'consents': {},
+          'signature': {}
+        },
+        completedSteps: ['personal-info', 'education', 'signature']
       },
-      availableSteps: ['personal-info', 'employment-history', 'signature'],
-      isStepValid: mockIsStepValid,
-      moveToStep: mockMoveToStep,
-      currentStep: 'personal-info',
+      currentStep: 'signature',
       navigationState: {
         canMoveNext: true,
-        canMovePrevious: false,
+        canMovePrevious: true,
         availableSteps: ['personal-info', 'employment-history', 'signature'],
-        completedSteps: []
+        completedSteps: ['personal-info', 'education', 'signature']
       },
       canMoveNext: true,
-      canMovePrevious: false,
-      completedSteps: [],
+      canMovePrevious: true,
+      availableSteps: ['personal-info', 'employment-history', 'signature'],
+      completedSteps: ['personal-info', 'education', 'signature'],
       moveToNextStep: jest.fn(),
       moveToPreviousStep: jest.fn(),
+      moveToStep: mockMoveToStep,
+      forceNextStep: jest.fn(),
+      forceSetCurrentStep: jest.fn(),
       setValue: jest.fn(),
       getValue: jest.fn(),
       getStepErrors: jest.fn(),
+      isStepValid: mockIsStepValid,
       addTimelineEntry: jest.fn(),
       updateTimelineEntry: jest.fn(),
       removeTimelineEntry: jest.fn(),
       getTimelineEntries: jest.fn(),
-      currentContextStep: null,
-      forceNextStep: jest.fn(),
-      isSubmitting: false // Add missing required property
-    });
+      formErrors: {},
+      submitForm: mockSubmitForm,
+      isSubmitting: false
+    };
+    
+    mockUseForm.mockReturnValue(mockFormContext);
   });
 
   it('renders the submit button', () => {

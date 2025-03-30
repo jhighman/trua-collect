@@ -1,4 +1,4 @@
-import { format, parse } from 'date-fns';
+import { format, parse, Locale } from 'date-fns';
 import { enUS, es } from 'date-fns/locale';
 
 const locales: { [key: string]: Locale } = {
@@ -12,7 +12,7 @@ const locales: { [key: string]: Locale } = {
 export function formatDisplayDate(dateString: string | null, language: string = 'en'): string {
   if (!dateString) return '';
   try {
-    const date = parse(dateString, 'yyyy-MM', locales[language]);
+    const date = parse(dateString, 'yyyy-MM', new Date(), { locale: locales[language] });
     return format(date, 'MMMM yyyy', { locale: locales[language] });
   } catch (error) {
     console.error('Error formatting date:', error);

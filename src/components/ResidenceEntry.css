@@ -1,0 +1,47 @@
+.residence-entry {
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-medium);
+  margin-bottom: var(--spacing-md);
+}
+
+.residence-entry__summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+}
+
+.residence-entry__location {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.residence-entry__country {
+  font-weight: var(--font-weight-medium);
+  color: var(--text-color);
+}
+
+.residence-entry__address-text {
+  color: var(--text-color);
+}
+
+.residence-entry__city-state {
+  color: var(--light-text);
+  font-size: var(--font-size-small);
+}
+
+.residence-entry__dates-text {
+  color: var(--light-text);
+  font-size: var(--font-size-small);
+  white-space: nowrap;
+}
+
+.residence-entry__actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+/* Form styles are inherited from common.css */ 

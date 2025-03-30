@@ -79,7 +79,7 @@ export const generatePdfDocument = (formState: FormState, trackingId: string): j
     doc.text('Signature', 14, yPos);
     
     // Add signature image if it's a data URL
-    if (signatureData.startsWith('data:image')) {
+    if (typeof signatureData === 'string' && signatureData.startsWith('data:image')) {
       doc.addImage(signatureData, 'PNG', 14, yPos + 5, 80, 40);
       doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, yPos + 50);
     }

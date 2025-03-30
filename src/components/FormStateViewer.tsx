@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FormLogger } from '../utils/FormLogger';
-import { parseCollectionKey, getRequirements, getTimelineYears } from '../utils/collectionKeyParser';
+import { parseCollectionKey, getRequirements, getTimelineYears, getEmployerCount } from '../utils/collectionKeyParser';
 import './FormStateViewer.css';
 
 // Icons for collapse/expand
@@ -21,36 +21,42 @@ const ChevronRight = () => (
  */
 function interpretCollectionKey(key: string): string {
   try {
-    const { language, bits } = parseCollectionKey(key);
+    const { language, facets } = parseCollectionKey(key);
+    const [personal, consents, residence, employment, education, proLicense, signature] = facets;
     
-    // Log the bits for debugging
+    // Log the facets for debugging
     console.log('Interpreting key:', key);
-    console.log('Bits:', bits);
+    console.log('Facets:', facets);
     
-    // Parse consents (first 3 bits after language)
-    const consents = [];
-    if (bits.charAt(0) === '1') consents.push('Driver License');
-    if (bits.charAt(1) === '1') consents.push('Drug Test');
-    if (bits.charAt(2) === '1') consents.push('Biometric');
-    const consentsText = consents.length > 0
-      ? `Consents: ${consents.join(', ')}`
+    // Parse consents
+    const consentsList = [];
+    if (consents.includes('D')) consentsList.push('Driver License');
+    if (consents.includes('T')) consentsList.push('Drug Test');
+    if (consents.includes('B')) consentsList.push('Biometric');
+    const consentsText = consentsList.length > 0
+      ? `Consents: ${consentsList.join(', ')}`
       : 'No consents required';
     
     // Parse verification steps
     const steps = [];
-    if (bits.charAt(3) === '1') steps.push('Education');
-    if (bits.charAt(4) === '1') steps.push('Professional Licenses');
+    if (education === 'E') steps.push('Education');
+    if (proLicense === 'P') steps.push('Professional Licenses');
     
     // Residence history
-    if (bits.charAt(5) === '1') {
-      const residenceYears = getTimelineYears(bits, 6);
+    if (residence !== 'N') {
+      const residenceYears = getTimelineYears(residence);
       steps.push(`Residence History (${residenceYears} years)`);
     }
     
     // Employment history
-    if (bits.charAt(9) === '1') {
-      const employmentYears = getTimelineYears(bits, 10);
-      steps.push(`Employment History (${employmentYears} years)`);
+    if (employment !== 'N') {
+      if (employment.startsWith('EN')) {
+        const employerCount = getEmployerCount(employment);
+        steps.push(`Employment History (${employerCount} employers)`);
+      } else {
+        const employmentYears = getTimelineYears(employment);
+        steps.push(`Employment History (${employmentYears} years)`);
+      }
     }
     
     const stepsText = steps.length > 0

@@ -36,18 +36,60 @@ describe('ConfirmationPage', () => {
     // Setup mocks
     mockUseForm.mockReturnValue({
       formState: {
-        currentStep: 'signature',
+        currentStep: 'personal-info',
+        values: {
+          'personal-info': {},
+          'residence-history': {},
+          'employment-history': {},
+          'education': {},
+          'professional-licenses': {},
+          'consents': {},
+          'signature': { signature: 'data:image/png;base64,test123', confirmation: true, trackingId: 'ABC123' }
+        },
         steps: {
           'personal-info': {
-            id: 'personal-info',
-            values: { fullName: 'John Doe', email: 'john@example.com' },
-            touched: new Set(),
+            values: {},
+            touched: new Set<string>(),
             errors: {},
-            isComplete: true,
+            isComplete: false,
             isValid: true
           },
-          signature: {
-            id: 'signature',
+          'residence-history': {
+            values: {},
+            touched: new Set<string>(),
+            errors: {},
+            isComplete: false,
+            isValid: true
+          },
+          'employment-history': {
+            values: {},
+            touched: new Set<string>(),
+            errors: {},
+            isComplete: false,
+            isValid: true
+          },
+          'education': {
+            values: {},
+            touched: new Set<string>(),
+            errors: {},
+            isComplete: false,
+            isValid: true
+          },
+          'professional-licenses': {
+            values: {},
+            touched: new Set<string>(),
+            errors: {},
+            isComplete: false,
+            isValid: true
+          },
+          'consents': {
+            values: {},
+            touched: new Set<string>(),
+            errors: {},
+            isComplete: false,
+            isValid: true
+          },
+          'signature': {
             values: { signature: 'data:image/png;base64,test123', confirmation: true, trackingId: 'ABC123' },
             touched: new Set(['signature', 'confirmation', 'trackingId']),
             errors: {},
@@ -55,12 +97,12 @@ describe('ConfirmationPage', () => {
             isValid: true
           }
         },
+        completedSteps: ['personal-info', 'signature'],
         isSubmitting: false,
         isComplete: true
       },
       // Add other required properties from FormContextType
-      currentStep: 'signature',
-      currentContextStep: 'signature',
+      currentStep: 'personal-info',
       navigationState: {
         canMoveNext: false,
         canMovePrevious: true,
@@ -75,6 +117,7 @@ describe('ConfirmationPage', () => {
       moveToPreviousStep: jest.fn(),
       moveToStep: jest.fn(),
       forceNextStep: jest.fn(),
+      forceSetCurrentStep: jest.fn(),
       setValue: jest.fn(),
       getValue: jest.fn(),
       getStepErrors: jest.fn(),
