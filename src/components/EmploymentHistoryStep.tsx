@@ -255,86 +255,38 @@ export const EmploymentHistoryStep: React.FC = () => {
                   </div>
                   
       <div className="add-entry-container">
-        {!showAddForm && (
-          <button
-            className="add-button"
-            onClick={() => setShowAddForm(true)}
-            aria-label={t('employment.add_entry')}
-          >
-            {t('employment.add_entry')}
+        {showAddForm ? (
+          <EmploymentEntry
+            entry={newEntry}
+            onUpdate={handleSaveEntry}
+            onDelete={handleCancelAdd}
+            isEditing={true}
+            employmentTypes={employmentTypes}
+            isCompanyRequired={isCompanyRequired}
+            isPositionRequired={isPositionRequired}
+            isContactRequired={isContactRequired}
+          />
+        ) : (
+          <button onClick={() => setShowAddForm(true)} className="btn btn-primary btn-lg btn-block">
+            {t('employment.add_employment') || 'Add Employment'}
           </button>
-        )}
-
-        {showAddForm && (
-          <div className="add-entry-form">
-            <h3>{t('employment.new_entry')}</h3>
-            <EmploymentEntry
-              entry={newEntry}
-              onUpdate={(entry) => {
-                // Calculate duration
-                const startDate = new Date(entry.start_date);
-                const endDate = entry.is_current ? new Date() : new Date(entry.end_date || '');
-                const durationMs = endDate.getTime() - startDate.getTime();
-                const durationYears = durationMs / (1000 * 60 * 60 * 24 * 365.25);
-                
-                const entryWithDuration = {
-                  ...entry,
-                  duration_years: parseFloat(durationYears.toFixed(2))
-                };
-                
-                const newEntries = [...entries, entryWithDuration];
-                setEntries(newEntries);
-                setValue('employment-history', 'entries', newEntries as unknown as TimelineEntry[]);
-                
-                // Calculate total years and update form state
-                const total = newEntries.reduce((sum, e) => sum + (e.duration_years || 0), 0);
-                setValue('employment-history', 'total_years', total as unknown as FormValue);
-                
-                // Update step validation based on total years
-                setValue('employment-history', 'isValid', total >= requiredYears as unknown as FormValue);
-                setValue('employment-history', 'isComplete', total >= requiredYears as unknown as FormValue);
-                
-                setShowAddForm(false);
-                setNewEntry({
-            type: '',
-            company: '',
-            position: '',
-            city: '',
-            state_province: '',
-                  start_date: '',
-                  end_date: null,
-                  is_current: false,
-            description: '',
-            contact_name: '',
-                  contact_info: ''
-                });
-              }}
-              onRemove={() => {}}
-              onCancel={handleCancelAdd}
-              employmentTypes={employmentTypes}
-              isCompanyRequired={isCompanyRequired}
-              isPositionRequired={isPositionRequired}
-              isContactRequired={isContactRequired}
-              isNew
-            />
-          </div>
         )}
       </div>
 
       <div className="form-navigation">
         <button
-          className="button secondary"
           onClick={moveToPreviousStep}
           disabled={!canMovePrevious}
+          className="btn btn-secondary"
         >
-          {t('common.previous')}
+          {t('common.previous') || 'Previous'}
         </button>
         <button
-          className="button primary"
           onClick={moveToNextStep}
-          disabled={!canMoveNext}
+          disabled={!canMoveNext || totalYears < requiredYears}
+          className="btn btn-primary"
         >
-          {t('common.next')}
+          {t('common.next') || 'Next'}
         </button>
       </div>
     </div>

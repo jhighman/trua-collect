@@ -228,7 +228,7 @@ export const ResidenceHistoryStep: React.FC = () => {
           isEditing={true}
         />
       ) : (
-        <button onClick={handleAddEntry} className="add-entry-button">
+        <button onClick={handleAddEntry} className="btn btn-primary btn-lg btn-block">
           {t('residence.add_address') || 'Add Address'}
         </button>
       )}
@@ -237,14 +237,14 @@ export const ResidenceHistoryStep: React.FC = () => {
         <button
           onClick={moveToPreviousStep}
           disabled={!canMovePrevious}
-          className="previous-button"
+          className="btn btn-secondary"
         >
           {t('common.previous') || 'Previous'}
         </button>
         <button
           onClick={moveToNextStep}
           disabled={!canMoveNext || totalYears < yearsRequired}
-          className="next-button"
+          className="btn btn-primary"
         >
           {t('common.next') || 'Next'}
         </button>

@@ -86,12 +86,14 @@ const FormSubmissionHandler: React.FC<FormSubmissionHandlerProps> = ({ onSuccess
         <ul>
           {Object.entries(validationErrors).map(([stepId, error]) => (
             <li key={stepId}>
-              <button
-                onClick={() => forceSetCurrentStep(stepId as FormStepId)}
-                className="error-navigation-button"
-              >
-                {stepId}: {error}
-              </button>
+              <div className="form-navigation">
+                <button
+                  onClick={() => forceSetCurrentStep(stepId as FormStepId)}
+                  className="btn btn-secondary"
+                >
+                  {stepId}: {error}
+                </button>
+              </div>
             </li>
           ))}
           {Object.entries(formErrors).map(([key, error]) => (

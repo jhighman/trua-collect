@@ -90,11 +90,12 @@ export const FormStep: React.FC<FormStepProps> = ({ stepId }) => {
     <div>
       {renderStepContent()}
       
-      <div>
+      <div className="form-navigation">
         <button
           type="button"
           onClick={handlePreviousStep}
           disabled={navigationState.availableSteps.indexOf(currentStep) <= 0}
+          className="btn btn-secondary"
         >
           Previous
         </button>
@@ -102,6 +103,7 @@ export const FormStep: React.FC<FormStepProps> = ({ stepId }) => {
           type="button"
           onClick={handleNextStep}
           disabled={navigationState.availableSteps.indexOf(currentStep) >= navigationState.availableSteps.length - 1}
+          className="btn btn-primary"
         >
           Next
         </button>

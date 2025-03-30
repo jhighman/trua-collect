@@ -327,7 +327,7 @@ export const EducationStep: React.FC = () => {
       <div className="form-navigation">
         <button
           type="button"
-          className="button secondary"
+          className="btn btn-secondary"
           onClick={moveToPreviousStep}
           disabled={!canMovePrevious}
         >
@@ -335,7 +335,7 @@ export const EducationStep: React.FC = () => {
         </button>
         <button
           type="button"
-          className="button primary"
+          className="btn btn-primary"
           onClick={() => {
             const isEducationComplete = highestEducationLevel &&
               (!isCollegeOrHigher(highestEducationLevel) || entries.length > 0);

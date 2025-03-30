@@ -141,7 +141,7 @@ export const PersonalInfoStep: React.FC = () => {
         </div>
         
         {/* Navigation buttons */}
-        <div className="navigation-buttons mt-6 flex justify-end">
+        <div className="form-navigation">
           <button
             type="button"
             onClick={() => {
@@ -150,14 +150,10 @@ export const PersonalInfoStep: React.FC = () => {
               }
             }}
             disabled={!isValid}
-            className={`px-4 py-2 rounded ${
-              isValid
-                ? 'bg-blue-500 text-white hover:bg-blue-600'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
+            className="btn btn-primary"
             aria-label="Next step"
           >
-            Next
+            {t('common.next') || 'Next'}
           </button>
         </div>
       </div>

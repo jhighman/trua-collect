@@ -183,7 +183,7 @@ export const ProfessionalLicensesStep: React.FC = () => {
         <div className="add-entry-container">
           <button
             type="button"
-            className="add-button"
+            className="btn btn-primary btn-lg btn-block"
             onClick={handleAddEntry}
           >
             {t('licenses.add_button') || 'Add Professional License'}
@@ -208,7 +208,7 @@ export const ProfessionalLicensesStep: React.FC = () => {
       <div className="form-navigation">
         <button
           type="button"
-          className="button secondary"
+          className="btn btn-secondary"
           onClick={moveToPreviousStep}
           disabled={!canMovePrevious}
         >
@@ -216,7 +216,7 @@ export const ProfessionalLicensesStep: React.FC = () => {
         </button>
         <button
           type="button"
-          className="button primary"
+          className="btn btn-primary"
           onClick={() => {
             console.log('Next button clicked');
             console.log('Can move next:', canMoveNext);

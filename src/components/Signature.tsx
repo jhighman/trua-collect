@@ -158,7 +158,7 @@ export const Signature: React.FC<SignatureProps> = ({ onSignatureChange }) => {
       <div className="signature-actions">
         <button
           type="button"
-          className="clear-button"
+          className="btn btn-secondary"
           onClick={handleClear}
           aria-label={t('signature.clear_button_label') || 'Clear signature'}
         >
@@ -187,7 +187,7 @@ export const Signature: React.FC<SignatureProps> = ({ onSignatureChange }) => {
       <div className="submit-section">
         <button
           type="button"
-          className="submit-button"
+          className="btn btn-primary btn-lg"
           onClick={handleSubmit}
           disabled={isSubmitting}
           aria-label={t('signature.submit_button_label') || 'Submit verification'}
