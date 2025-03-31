@@ -6,7 +6,7 @@ import type { FormState, TimelineEntry, NavigationState, FormValue } from '../ut
 import type { Requirements } from '../utils/collectionKeyParser';
 import { getConfig } from '../utils/EnvironmentConfig';
 
-// Helper function to check if a step is enabled
+// Helper function to check if a step is enabled (unchanged)
 const isStepEnabled = (stepId: FormStepId, reqs: Requirements): boolean => {
   let hasRequiredConsents = false;
 
@@ -69,7 +69,16 @@ const FormContext = createContext<FormContextType | undefined>(undefined);
 
 let formManagerInstance: FormStateManager | null = null;
 
-// Renamed to indicate it’s intentionally unused
+const _stepIdToRequirementKey = (stepId: FormStepId): keyof Requirements['verificationSteps'] | null => {
+  switch (stepId) {
+    case 'personal-info': return 'personalInfo';
+    case 'residence-history': return 'residenceHistory';
+    case 'employment-history': return 'employmentHistory';
+    case 'education': return 'education';
+    case 'professional-licenses': return 'professionalLicense';
+    default: return null;
+  }
+};
 
 export interface FormProviderProps {
   children: React.ReactNode;
@@ -92,10 +101,20 @@ export const FormProvider: React.FC<FormProviderProps> = ({
 }) => {
   console.log('FormContext: Rendering with props:', { initialStep, isDefaultKey, collectionKey });
 
+  const safeRequirements: Requirements = {
+    ...requirements,
+    consentsRequired: requirements.consentsRequired || {
+      driverLicense: false,
+      drugTest: false,
+      biometric: false,
+    },
+  };
+  console.log('FormProvider safeRequirements.consentsRequired:', safeRequirements.consentsRequired);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const initializedRef = useRef(false);
-  const [, setStateVersion] = useState(0);
+  const [stateVersion, setStateVersion] = useState(0);
 
   const formLogger = useCallback((message: string) => {
     if (process.env.NODE_ENV === 'development') {
@@ -127,7 +146,7 @@ export const FormProvider: React.FC<FormProviderProps> = ({
       ];
 
       stepOrder.forEach(stepId => {
-        if (isStepEnabled(stepId, requirements)) {
+        if (isStepEnabled(stepId, safeRequirements)) {
           console.log(`FormContext: Initializing step ${stepId}`);
           formManagerInstance!.setValue(stepId, '_initialized', true);
           formManagerInstance!.setValue(stepId, '_complete', false);
@@ -146,7 +165,7 @@ export const FormProvider: React.FC<FormProviderProps> = ({
               formManagerInstance!.setValue(stepId, 'entries', []);
               break;
             case 'consents':
-              formManagerInstance!.setValue(stepId, '_config', { consentsRequired: requirements.consentsRequired });
+              formManagerInstance!.setValue(stepId, '_config', { consentsRequired: safeRequirements.consentsRequired });
               formManagerInstance!.setValue(stepId, 'driverLicenseConsent', false);
               formManagerInstance!.setValue(stepId, 'drugTestConsent', false);
               formManagerInstance!.setValue(stepId, 'biometricConsent', false);
@@ -155,32 +174,32 @@ export const FormProvider: React.FC<FormProviderProps> = ({
         }
       });
 
-      const firstEnabledStep = initialStep || stepOrder.find(stepId => isStepEnabled(stepId, requirements)) || 'personal-info';
+      const firstEnabledStep = initialStep || stepOrder.find(stepId => isStepEnabled(stepId, safeRequirements)) || 'personal-info';
       formManagerInstance!.forceSetCurrentStep(firstEnabledStep);
       initializedRef.current = true;
     }
 
     return formManagerInstance!;
-  }, [collectionKey, isDefaultKey, requirements, initialStep, formLogger]);
+  }, [collectionKey, isDefaultKey, safeRequirements, initialStep, formLogger]);
 
   useEffect(() => {
-    if (isStepEnabled('consents', requirements)) {
-      console.log('Reinitializing consents step with new requirements');
-      formManager.setValue('consents', '_config', { consentsRequired: requirements.consentsRequired });
+    if (isStepEnabled('consents', safeRequirements)) {
+      console.log('Reinitializing consents step with new requirements:', safeRequirements.consentsRequired);
+      formManager.setValue('consents', '_config', { consentsRequired: safeRequirements.consentsRequired });
     }
-  }, [formManager, requirements]);
+  }, [formManager, safeRequirements]);
 
   const formState = useMemo(() => {
     const state = formManager.getState();
     console.log('FormContext: Computed formState:', state);
     return state;
-  }, [formManager]); // stateVersion included to reflect updates
+  }, [formManager, stateVersion]);
 
   const navigationState = useMemo(() => {
     const navState = formManager.getNavigationState();
     console.log('FormContext: Computed navigationState:', navState);
     return navState;
-  }, [formManager]); // stateVersion included to reflect updates
+  }, [formManager, stateVersion]);
 
   const moveToNextStep = useCallback(() => {
     const currentIndex = navigationState.availableSteps.indexOf(formState.currentStepId);
@@ -188,7 +207,7 @@ export const FormProvider: React.FC<FormProviderProps> = ({
       let nextIndex = currentIndex + 1;
       while (nextIndex < navigationState.availableSteps.length) {
         const nextStep = navigationState.availableSteps[nextIndex];
-        if (isStepEnabled(nextStep, requirements)) {
+        if (isStepEnabled(nextStep, safeRequirements)) {
           formManager.forceSetCurrentStep(nextStep);
           if (onStepChange) onStepChange(nextStep, formManager.getState());
           setStateVersion(v => v + 1);
@@ -197,7 +216,7 @@ export const FormProvider: React.FC<FormProviderProps> = ({
         nextIndex++;
       }
     }
-  }, [formManager, navigationState, formState.currentStepId, onStepChange, requirements]);
+  }, [formManager, navigationState, formState.currentStepId, onStepChange, safeRequirements]);
 
   const moveToPreviousStep = useCallback(() => {
     const currentIndex = navigationState.availableSteps.indexOf(formState.currentStepId);
@@ -236,10 +255,18 @@ export const FormProvider: React.FC<FormProviderProps> = ({
     setStateVersion(v => v + 1);
   }, [formManager]);
 
+  // Fixed getValue to handle _config correctly
   const getValue = useCallback((stepId: FormStepId, fieldId: string): FormValue => {
-    const value = formManager.getState().steps[stepId]?.values?.[fieldId];
+    const step = formManager.getState().steps[stepId];
+    if (!step) return null;
+    let value: FormValue;
+    if (fieldId === '_config') {
+      value = step._config ?? null;
+    } else {
+      value = step.values[fieldId] ?? null;
+    }
     console.log(`Getting value for ${stepId}.${fieldId}:`, value);
-    return value ?? null; // Return null if undefined
+    return value;
   }, [formManager]);
 
   const getStepErrors = useCallback((stepId: FormStepId) => {

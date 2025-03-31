@@ -3,12 +3,12 @@ import type { ValidationRule } from './FormConfigGenerator';
 import { EducationLevel, isCollegeOrHigher } from '../types/EducationLevel';
 import { FormState, StepState } from '../types/form';
 
-// Types
+// Types (unchanged)
 export interface TimelineEntry {
   startDate: string;
   endDate: string | null;
   isCurrent: boolean;
-  [key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  [key: string]: unknown;
 }
 
 export interface ProfessionalLicenseEntry extends TimelineEntry {
@@ -71,7 +71,7 @@ export interface NavigationState {
   completedSteps: FormStepId[];
 }
 
-// Type guards
+// Type guards (unchanged)
 function isString(value: unknown): value is string {
   return typeof value === 'string';
 }
@@ -96,7 +96,7 @@ function isFormValue(value: unknown): value is FormValue {
   return false;
 }
 
-// FormStateManager Class
+// FormStateManager Class with Updated validateStep
 export class FormStateManager {
   private config: FormConfig;
   private state: FormState;
@@ -108,11 +108,7 @@ export class FormStateManager {
     this.config = config;
     this.listeners = [];
     this.isInitialized = false;
-    
-    // Initialize logger first, before any other operations that might use it
     this.logger = typeof logger === 'function' ? logger : () => {};
-    
-    // Now initialize state
     this.state = this.initializeState();
     this.isInitialized = true;
   }
@@ -150,6 +146,15 @@ export class FormStateManager {
     newState.currentStepId = currentState?.currentStepId || config.initialStep;
     this.logger('FormStateManager: Setting current step to: ' + newState.currentStepId);
     this.state = newState;
+    this.notifyListeners();
+  }
+
+  public updateStepConfig(stepId: FormStepId, configUpdate: Partial<ConsentsConfig>): void {
+    const step = this.initializeStepState(stepId);
+    step._config = {
+      ...step._config,
+      ...configUpdate,
+    };
     this.notifyListeners();
   }
 
@@ -265,12 +270,11 @@ export class FormStateManager {
     return true;
   }
 
-  // Overloaded validateStep
+  // Updated validateStep to set isComplete for consents
   public validateStep(stepId: FormStepId, values: FormStepValues): ValidationResult;
   public validateStep(stepId: FormStepId): boolean;
   public validateStep(stepId: FormStepId, values?: FormStepValues): ValidationResult | boolean {
     if (values) {
-      // Logic from the original private validateStep
       const stepConfig = this.config.steps.find(step => step.id === stepId);
       if (!stepConfig) {
         return { isValid: false, errors: {} };
@@ -280,7 +284,8 @@ export class FormStateManager {
       let isValid = true;
 
       if (stepId === 'consents') {
-        const config = values._config as ConsentsConfig | undefined;
+        const step = this.state.steps[stepId];
+        const config = step._config as ConsentsConfig | undefined;
         if (config?.consentsRequired) {
           const hasAllRequiredConsents = Object.entries(config.consentsRequired).every(([key, required]) => {
             if (!required) return true;
@@ -291,6 +296,8 @@ export class FormStateManager {
           if (!hasAllRequiredConsents) {
             errors['consents'] = 'All required consents must be provided';
           }
+          // Update isComplete based on validation result
+          this.updateStepState(stepId, { isComplete: hasAllRequiredConsents });
         }
       }
 
@@ -316,10 +323,9 @@ export class FormStateManager {
 
       return { isValid, errors };
     } else {
-      // Logic from the original public validateStep
       const step = this.state.steps[stepId];
       if (!step) return false;
-      const result = this.validateStep(stepId, step.values as FormStepValues); // Recursive call with values
+      const result = this.validateStep(stepId, step.values as FormStepValues);
       step.isValid = result.isValid;
       step.errors = result.errors;
       step._initialized = true;
@@ -475,6 +481,9 @@ export class FormStateManager {
   getStepValue(stepId: FormStepId, fieldId: string): unknown {
     const step = this.state.steps[stepId];
     if (!step) return undefined;
+    if (fieldId === '_config') {
+      return step._config;
+    }
     return (step.values as Record<string, unknown>)[fieldId];
   }
 
@@ -543,3 +552,5 @@ export class FormStateManager {
     };
   }
 }
+
+export type { FormState };

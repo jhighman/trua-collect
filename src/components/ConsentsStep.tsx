@@ -1,55 +1,52 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useForm } from '../context/FormContext';
 import { useTranslation } from '../context/TranslationContext';
-import type { FormValue } from '../utils/FormStateManager';
+import type { ConsentsStepValues } from '../utils/FormStateManager';
 import './ConsentsStep.css';
 
 export const ConsentsStep: React.FC = () => {
   const { t } = useTranslation();
-  const { 
-    setValue, 
-    getValue, 
-    getStepErrors, 
+  const {
+    setValue,
+    getValue,
+    getStepErrors,
     isStepValid,
     moveToNextStep,
     moveToPreviousStep,
     canMoveNext,
-    canMovePrevious
+    canMovePrevious,
   } = useForm();
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  
-  // Get form values and ensure they are booleans
-  const driverLicenseConsent = Boolean(getValue('consents', 'driverLicenseConsent'));
-  const drugTestConsent = Boolean(getValue('consents', 'drugTestConsent'));
-  const biometricConsent = Boolean(getValue('consents', 'biometricConsent'));
-  
-  // Get errors from form context
-  useEffect(() => {
-    const formErrors = getStepErrors('consents');
-    setErrors(formErrors);
-  }, [getStepErrors]);
-  
+
+  // Type-safe boolean getter
+  const getBooleanValue = (field: string) => {
+    const value = getValue('consents', field);
+    return typeof value === 'boolean' ? value : false;
+  };
+
+  const driverLicenseConsent = getBooleanValue('driverLicenseConsent');
+  const drugTestConsent = getBooleanValue('drugTestConsent');
+  const biometricConsent = getBooleanValue('biometricConsent');
+
+  // Use errors directly from context
+  const errors = getStepErrors('consents');
+
   // Handle checkbox changes
   const handleConsentChange = (field: string, checked: boolean) => {
     console.log('Setting consent value:', field, checked);
-    setValue('consents', field, checked as unknown as FormValue);
+    setValue('consents', field, checked);
   };
-  
-  // Get required consents from form state
-  const consentsConfig = getValue('consents', '_config') as { consentsRequired: { driverLicense: boolean; drugTest: boolean; biometric: boolean } } | undefined;
+
+  // Type-safe consents config
+  const consentsConfig = getValue('consents', '_config') as ConsentsStepValues['_config'] | undefined;
   const requiredConsents = consentsConfig?.consentsRequired || {
     driverLicense: false,
     drugTest: false,
-    biometric: false
+    biometric: false,
   };
-  
+
   console.log('Required consents:', requiredConsents);
-  console.log('Current consent values:', {
-    driverLicenseConsent,
-    drugTestConsent,
-    biometricConsent
-  });
-  
+  console.log('Current consent values:', { driverLicenseConsent, drugTestConsent, biometricConsent });
+
   return (
     <div className="consents-step">
       <div className="step-header">
@@ -58,16 +55,15 @@ export const ConsentsStep: React.FC = () => {
           {t('consents.description') || 'Please review and provide the following required consents to proceed.'}
         </p>
       </div>
-      
+
       <div className="form-container">
         {requiredConsents.driverLicense && (
           <div className="consent-group">
             <h3>{t('consents.driver_license.title') || 'Driver License Verification Consent'}</h3>
             <p className="consent-text">
-              {t('consents.driver_license.text') || 
-                'I consent to the verification of my driver license information as part of this background check process. I understand that this may include confirming the validity, status, and history of my driver license with relevant authorities.'}
+              {t('consents.driver_license.text') ||
+                'I consent to the verification of my driver license information as part of this background check process.'}
             </p>
-            
             <div className="checkbox-container">
               <input
                 type="checkbox"
@@ -81,7 +77,6 @@ export const ConsentsStep: React.FC = () => {
                 {t('consents.driver_license.checkbox') || 'I consent to driver license verification'}
               </label>
             </div>
-            
             {errors.driverLicenseConsent && (
               <div className="error-message" id="driverLicenseConsent-error">
                 {errors.driverLicenseConsent}
@@ -89,15 +84,14 @@ export const ConsentsStep: React.FC = () => {
             )}
           </div>
         )}
-        
+
         {requiredConsents.drugTest && (
           <div className="consent-group">
             <h3>{t('consents.drug_test.title') || 'Drug Test Consent'}</h3>
             <p className="consent-text">
-              {t('consents.drug_test.text') || 
-                'I consent to undergo drug testing as part of this employment screening process. I understand that test results will be shared with the requesting organization and may affect my eligibility for employment.'}
+              {t('consents.drug_test.text') ||
+                'I consent to undergo drug testing as part of this employment screening process.'}
             </p>
-            
             <div className="checkbox-container">
               <input
                 type="checkbox"
@@ -111,7 +105,6 @@ export const ConsentsStep: React.FC = () => {
                 {t('consents.drug_test.checkbox') || 'I consent to drug testing'}
               </label>
             </div>
-            
             {errors.drugTestConsent && (
               <div className="error-message" id="drugTestConsent-error">
                 {errors.drugTestConsent}
@@ -119,15 +112,14 @@ export const ConsentsStep: React.FC = () => {
             )}
           </div>
         )}
-        
+
         {requiredConsents.biometric && (
           <div className="consent-group">
             <h3>{t('consents.biometric.title') || 'Biometric Data Consent'}</h3>
             <p className="consent-text">
-              {t('consents.biometric.text') || 
-                'I consent to the collection, storage, and use of my biometric data (including but not limited to fingerprints, facial recognition, or other unique physical characteristics) for identity verification purposes.'}
+              {t('consents.biometric.text') ||
+                'I consent to the collection, storage, and use of my biometric data for identity verification purposes.'}
             </p>
-            
             <div className="checkbox-container">
               <input
                 type="checkbox"
@@ -141,7 +133,6 @@ export const ConsentsStep: React.FC = () => {
                 {t('consents.biometric.checkbox') || 'I consent to biometric data collection and use'}
               </label>
             </div>
-            
             {errors.biometricConsent && (
               <div className="error-message" id="biometricConsent-error">
                 {errors.biometricConsent}
@@ -149,13 +140,13 @@ export const ConsentsStep: React.FC = () => {
             )}
           </div>
         )}
-        
+
         {!requiredConsents.driverLicense && !requiredConsents.drugTest && !requiredConsents.biometric && (
           <div className="no-consents-message">
             {t('consents.none_required') || 'No consents are required for this verification process.'}
           </div>
         )}
-        
+
         <div className="form-status">
           {isStepValid('consents') ? (
             <div className="valid-status">
@@ -170,15 +161,10 @@ export const ConsentsStep: React.FC = () => {
 
         <div className="navigation-buttons">
           {canMovePrevious && (
-            <button
-              type="button"
-              onClick={moveToPreviousStep}
-              className="btn btn-secondary"
-            >
+            <button type="button" onClick={moveToPreviousStep} className="btn btn-secondary">
               {t('common.previous') || 'Previous'}
             </button>
           )}
-          
           {canMoveNext && (
             <button
               type="button"

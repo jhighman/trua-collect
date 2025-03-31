@@ -7,7 +7,6 @@ import { FormConfigGenerator } from '../utils/FormConfigGenerator';
 import type { Requirements } from '../utils/collectionKeyParser';
 
 // Create mock touched set
-const mockTouched = new Set<string>();
 
 // Define mock states
 const mockFormState: FormState = {
