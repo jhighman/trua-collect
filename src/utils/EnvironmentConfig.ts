@@ -39,10 +39,37 @@ const defaultConfig: EnvironmentConfig = {
  * @returns Environment configuration
  */
 export function getConfig(): EnvironmentConfig {
-  // In browser environment, just return the default config
-  // This avoids issues with accessing process.env in the browser
+  // In browser environment, use import.meta.env (Vite) if available
   if (typeof window !== 'undefined') {
-    console.log('Browser environment detected, using default configuration');
+    console.log('Browser environment detected, checking for environment variables');
+    
+    // Check if we're in a Vite environment with import.meta.env
+    if (typeof import.meta !== 'undefined' && import.meta.env) {
+      console.log('Vite environment detected, loading from import.meta.env');
+      console.log('import.meta.env contents:', {
+        VITE_DEFAULT_COLLECTION_KEY: import.meta.env.VITE_DEFAULT_COLLECTION_KEY,
+        VITE_PORT: import.meta.env.VITE_PORT,
+        VITE_DEV_MODE: import.meta.env.VITE_DEV_MODE,
+        VITE_LOG_LEVEL: import.meta.env.VITE_LOG_LEVEL,
+        VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
+        VITE_DOCUMENT_STORAGE_PATH: import.meta.env.VITE_DOCUMENT_STORAGE_PATH,
+      });
+      
+      const devMode = import.meta.env.VITE_DEV_MODE ? import.meta.env.VITE_DEV_MODE.toLowerCase() === 'true' : defaultConfig.devMode;
+      console.log('Parsed devMode value:', devMode, 'from raw value:', import.meta.env.VITE_DEV_MODE);
+      
+      return {
+        defaultCollectionKey: import.meta.env.VITE_DEFAULT_COLLECTION_KEY || defaultConfig.defaultCollectionKey,
+        port: import.meta.env.VITE_PORT ? Number(import.meta.env.VITE_PORT) : defaultConfig.port,
+        devMode: devMode,
+        logLevel: (import.meta.env.VITE_LOG_LEVEL || defaultConfig.logLevel) as 'debug' | 'info' | 'warn' | 'error',
+        apiBaseUrl: import.meta.env.VITE_API_BASE_URL || defaultConfig.apiBaseUrl,
+        documentStoragePath: import.meta.env.VITE_DOCUMENT_STORAGE_PATH || defaultConfig.documentStoragePath,
+      };
+    }
+    
+    // Fallback to default config for browser
+    console.log('No environment variables found in browser, using default configuration');
     return defaultConfig;
   }
   

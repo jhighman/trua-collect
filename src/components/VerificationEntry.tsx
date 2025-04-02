@@ -128,7 +128,19 @@ const VerificationEntry: React.FC<VerificationEntryProps> = ({ onSubmit, urlKey,
     return null;
   }
 
-  const isDevelopmentMode = !directUrlParams.get('token') || !directKeyParam;
+  // Get environment configuration to check if dev mode is enabled
+  const config = getConfig();
+  console.log('VerificationEntry - Environment config:', {
+    devMode: config.devMode,
+    defaultCollectionKey: config.defaultCollectionKey,
+    logLevel: config.logLevel
+  });
+  
+  // Only use config.devMode to determine if development mode is enabled
+  // This ensures the development mode banner is only shown when DEV_MODE=true in .env
+  const isDevelopmentMode = config.devMode;
+  
+  console.log('VerificationEntry - isDevelopmentMode:', isDevelopmentMode, 'config.devMode:', config.devMode);
   const anyConsentsRequired =
     requirements.consentsRequired.driverLicense ||
     requirements.consentsRequired.drugTest ||
