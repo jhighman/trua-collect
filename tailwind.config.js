@@ -6,6 +6,8 @@ module.exports = {
     './components/**/*.{ts,tsx}',
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx,css}',
+    "./src/**/*.{js,jsx,ts,tsx}",
+    "./index.html",
   ],
   prefix: "",
   theme: {
@@ -83,5 +85,9 @@ module.exports = {
     },
   },
   plugins: [require("tailwindcss-animate")],
+  safelist: [
+    'text-white',
+    'bg-white',
+  ]
 }
 

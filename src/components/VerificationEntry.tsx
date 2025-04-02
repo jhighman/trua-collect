@@ -8,6 +8,9 @@ import { FormStepId } from '../utils/FormConfigGenerator';
 import FormStepRenderer from './FormStepRenderer';
 import { FormLogger } from '../utils/FormLogger';
 import { getConfig } from '../utils/EnvironmentConfig';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card'; // shadcn Card component
+import { AlertTriangle } from 'lucide-react'; // Lucide icon for warning
+import './VerificationEntry.css';
 
 interface VerificationEntryProps {
   onSubmit: (formData: FormState & { referenceToken?: string }) => Promise<void>;
@@ -15,40 +18,18 @@ interface VerificationEntryProps {
   urlToken?: string;
 }
 
-/**
- * Generates a default collection key with maximum scope
- * This includes all verification steps and maximum years for history
- */
 const generateDefaultCollectionKey = (): string => {
-  // Get the default collection key from environment configuration
   const config = getConfig();
   const defaultKey = config.defaultCollectionKey;
-  
   console.log('VerificationEntry - Using default collection key from environment:', defaultKey);
-  
-  // Format: en000111100100100
-  // Language: en
-  // Bits 0-2: No consents enabled (000) - for testing skipping consents
-  // Bit 3: Education enabled (1)
-  // Bit 4: Professional licenses enabled (1)
-  // Bit 5: Residence history enabled (1)
-  // Bits 6-8: Residence history years (100 = 10 years)
-  // Bit 9: Employment history enabled (1)
-  // Bits 10-12: Employment history years (00 = 1 year)
-  // Bit 13: Personal info enabled (1)
-  // Bits 14-15: Personal info mode (00 = email)
   return defaultKey;
 };
 
-/**
- * Generates a random reference token for development/testing
- */
 const generateReferenceToken = (): string => {
   return uuidv4();
 };
 
 const VerificationEntry: React.FC<VerificationEntryProps> = ({ onSubmit, urlKey, urlToken }) => {
-  // Log URL parameters from props
   console.log('VerificationEntry - URL parameters from props:', { urlKey, urlToken });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,38 +37,33 @@ const VerificationEntry: React.FC<VerificationEntryProps> = ({ onSubmit, urlKey,
   const [collectionKey, setCollectionKey] = useState<string | null>(null);
   const [isDefaultKey, setIsDefaultKey] = useState<boolean>(true);
   const [currentStep, setCurrentStep] = useState<FormStepId>('personal-info');
-  
+
   const navigate = useNavigate();
 
-  // Memoize URL parameters
   const directUrlSearch = useMemo(() => window.location.search, []);
   const directUrlParams = useMemo(() => new URLSearchParams(directUrlSearch), [directUrlSearch]);
   const directKeyParam = useMemo(() => directUrlParams.get('key'), [directUrlParams]);
-  
-  // Log the raw URL at the component level
+
   console.log('VerificationEntry - Direct window.location.href:', window.location.href);
   console.log('VerificationEntry - Direct window.location.search:', directUrlSearch);
   console.log('VerificationEntry - Direct key param:', directKeyParam);
 
   useEffect(() => {
     console.log('VerificationEntry - Using URL parameters from props in effect');
-    
     const token = urlToken || directUrlParams.get('token');
     const key = urlKey || directKeyParam;
-
     console.log('VerificationEntry - URL parameters from props or direct access:', { token, key });
-    
+
     const defaultToken = token || generateReferenceToken();
     const collectionKeyToUse = key || generateDefaultCollectionKey();
     const keyIsDefault = !key;
-    
+
     try {
       parseCollectionKey(collectionKeyToUse);
       setReferenceToken(defaultToken);
       setCollectionKey(collectionKeyToUse);
       setIsDefaultKey(keyIsDefault);
       setLoading(false);
-      
       console.log('VerificationEntry - Using collection key:', collectionKeyToUse);
       console.log('VerificationEntry - Key from URL:', !!key);
       console.log('VerificationEntry - Is default key:', keyIsDefault);
@@ -95,33 +71,27 @@ const VerificationEntry: React.FC<VerificationEntryProps> = ({ onSubmit, urlKey,
       setError('Invalid collection key format.');
       setLoading(false);
     }
-  }, [urlKey, urlToken, directKeyParam]); // Removed directUrlParams from dependencies
+  }, [urlKey, urlToken, directKeyParam]);
 
-  // Memoize requirements to prevent unnecessary recalculations
   const requirements = useMemo(() => {
     if (!collectionKey) return null;
     return getRequirements(collectionKey);
   }, [collectionKey]);
 
-  // Handle form submission with reference token
+  // Set the current step to the initial step when requirements change
+  useEffect(() => {
+    if (requirements) {
+      const initialStep = determineInitialStep();
+      console.log('VerificationEntry - Setting current step to initial step:', initialStep);
+      setCurrentStep(initialStep);
+    }
+  }, [requirements]);
+
   const handleSubmit = useCallback(async (formData: FormState) => {
     try {
-      // Add reference token to form data
-      const formDataWithToken = {
-        ...formData,
-        referenceToken: referenceToken || undefined,
-      };
-      
-      // Log the final form state
-      FormLogger.logFormState(
-        formData,
-        collectionKey || 'unknown',
-        { event: 'form_submission' },
-      );
-      
+      const formDataWithToken = { ...formData, referenceToken: referenceToken || undefined };
+      FormLogger.logFormState(formData, collectionKey || 'unknown', { event: 'form_submission' });
       await onSubmit(formDataWithToken);
-      
-      // Navigate to confirmation page
       navigate('/confirmation');
     } catch (error) {
       console.error('Form submission error:', error);
@@ -129,31 +99,27 @@ const VerificationEntry: React.FC<VerificationEntryProps> = ({ onSubmit, urlKey,
     }
   }, [onSubmit, referenceToken, collectionKey, navigate]);
 
-  // Memoize step change handler
   const handleStepChange = useCallback((step: FormStepId, formState: FormState) => {
     console.log('VerificationEntry: onStepChange called with step:', step, 'Previous step:', currentStep);
     console.log('VerificationEntry: Form state to log:', formState);
-    
     setCurrentStep(step);
-    
-    FormLogger.logFormState(
-      formState,
-      collectionKey || 'unknown',
-      { event: 'step_change', previousStep: currentStep, newStep: step },
-    );
-    
+    FormLogger.logFormState(formState, collectionKey || 'unknown', {
+      event: 'step_change',
+      previousStep: currentStep,
+      newStep: step,
+    });
     console.log('VerificationEntry: After handleStepChange, current step is now:', step);
   }, [currentStep, collectionKey]);
 
   if (loading) {
-    return <div className="text-center p-8">Loading verification form...</div>;
+    return <div className="loading">Loading verification form...</div>;
   }
 
   if (error) {
     return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-        <strong className="font-bold">Error: </strong>
-        <span className="block sm:inline">{error}</span>
+      <div className="alert alert-error" role="alert">
+        <strong>Error: </strong>
+        <span>{error}</span>
       </div>
     );
   }
@@ -162,82 +128,108 @@ const VerificationEntry: React.FC<VerificationEntryProps> = ({ onSubmit, urlKey,
     return null;
   }
 
-  // Check if we're using default values (development mode)
   const isDevelopmentMode = !directUrlParams.get('token') || !directKeyParam;
-
-  // Fix the consentsRequired access using camelCase
   const anyConsentsRequired =
     requirements.consentsRequired.driverLicense ||
     requirements.consentsRequired.drugTest ||
     requirements.consentsRequired.biometric;
 
-  // Render the form with the appropriate requirements
+  // Determine the initial step based on requirements
+  const determineInitialStep = (): FormStepId => {
+    const stepOrder: FormStepId[] = [
+      'personal-info',
+      'consents',
+      'residence-history',
+      'employment-history',
+      'education',
+      'professional-licenses',
+      'signature',
+    ];
+
+    // Find the first enabled step
+    for (const step of stepOrder) {
+      switch (step) {
+        case 'personal-info':
+          if (requirements.verificationSteps.personalInfo?.enabled) return step;
+          break;
+        case 'consents':
+          if (anyConsentsRequired) return step;
+          break;
+        case 'residence-history':
+          if (requirements.verificationSteps.residenceHistory?.enabled) return step;
+          break;
+        case 'employment-history':
+          if (requirements.verificationSteps.employmentHistory?.enabled) return step;
+          break;
+        case 'education':
+          if (requirements.verificationSteps.education?.enabled) return step;
+          break;
+        case 'professional-licenses':
+          if (requirements.verificationSteps.professionalLicense?.enabled) return step;
+          break;
+        case 'signature':
+          if (requirements.signature?.required) return step;
+          break;
+      }
+    }
+
+    // Default to signature if no steps are enabled
+    return 'signature';
+  };
+const initialStep = determineInitialStep();
+console.log('VerificationEntry - Determined initial step:', initialStep);
+
   return (
     <FormProvider
       requirements={requirements || {
         language: 'en',
-        consentsRequired: {
-          driverLicense: false,
-          drugTest: false,
-          biometric: false
-        },
+        consentsRequired: { driverLicense: false, drugTest: false, biometric: false },
         verificationSteps: {
           personalInfo: { enabled: true },
-          residenceHistory: { enabled: false },
-          employmentHistory: { enabled: false },
+          residenceHistory: { enabled: true, years: 3 },
+          employmentHistory: { enabled: false, mode: 'years', modes: { years: 0 } },
           education: { enabled: false },
-          professionalLicense: { enabled: false }
+          professionalLicense: { enabled: false },
         },
-        signature: { required: false }
+        signature: { required: false, mode: 'wet' },
       }}
       onSubmit={handleSubmit}
-      initialStep="personal-info"
+      initialStep={initialStep}
       isDefaultKey={isDefaultKey}
       collectionKey={collectionKey || undefined}
       onStepChange={handleStepChange}
     >
-      <div className="max-w-4xl mx-auto p-4">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Trua Verify</h1>
-          <a
-            href="/logs"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          >
-            View Logs
-          </a>
+      <div className="verification-entry">
+        <div className="page-header">
+          <h1>Trua Verify</h1>
         </div>
-        
-        {loading && (
-          <div className="text-center p-8">Loading verification form...</div>
+
+        {isDevelopmentMode && (
+          <Card className="dev-mode-card">
+            <CardHeader className="flex flex-row items-center gap-2 p-2">
+              <AlertTriangle className="h-4 w-4 text-[var(--warning-color)]" />
+              <CardTitle className="text-[var(--font-size-small)] font-[var(--font-weight-medium)] text-[var(--warning-color)]">
+                Development Mode
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-2 pt-0">
+              <p className="text-[var(--font-size-small)] text-[var(--warning-color)]">
+                Using {!directUrlParams.get('token') ? 'generated reference token' : 'provided token'} and
+                {!directKeyParam ? ' default collection key with maximum scope' : ' provided collection key'}.{' '}
+                <a
+                  href="/logs"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="header-link"
+                >
+                  View Logs
+                </a>
+              </p>
+            </CardContent>
+          </Card>
         )}
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-            <strong className="font-bold">Error: </strong>
-            <span className="block sm:inline">{error}</span>
-          </div>
-        )}
-        
-        {!loading && !error && requirements && (
-          <>
-            {isDevelopmentMode && (
-              <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative mb-4" role="alert">
-                <strong className="font-bold">Development Mode: </strong>
-                <span className="block sm:inline">
-                  Using {!directUrlParams.get('token') ? 'generated reference token' : 'provided token'} and
-                  {!directKeyParam ? ' default collection key with maximum scope' : ' provided collection key'}.
-                </span>
-              </div>
-            )}
-            
-            <FormStepRenderer
-              currentStep={currentStep}
-              consentsRequired={anyConsentsRequired}
-            />
-          </>
-        )}
+        <FormStepRenderer currentStep={currentStep} consentsRequired={anyConsentsRequired} />
       </div>
     </FormProvider>
   );

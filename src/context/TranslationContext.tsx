@@ -35,10 +35,13 @@ export const TranslationProvider: React.FC<TranslationProviderProps> = ({
 
   const t = (key: string, params?: Record<string, string>): string => {
     // Use the typed translations object
-    const translatedText = 
-      typedTranslations[language]?.[key] ?? 
-      typedTranslations['en'][key] ?? 
+    const translatedText =
+      typedTranslations[language]?.[key] ??
+      typedTranslations['en']?.[key] ??
       key;
+    
+    // Log translation lookup for debugging
+    console.log(`Translation lookup - Key: ${key}, Language: ${language}, Result:`, translatedText);
     
     if (params) {
       return Object.entries(params).reduce(
@@ -51,8 +54,12 @@ export const TranslationProvider: React.FC<TranslationProviderProps> = ({
   };
 
   const changeLanguage = (lang: string) => {
+    console.log(`Changing language to: ${lang}`);
     if (typedTranslations[lang]) {
       setLanguage(lang);
+      console.log(`Language changed to: ${lang}`);
+    } else {
+      console.warn(`Language ${lang} not available, staying with ${language}`);
     }
   };
 

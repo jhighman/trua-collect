@@ -416,6 +416,22 @@ export class FormStateManager {
     const currentStep = this.getCurrentStep();
     if (!currentStep) return false;
 
+    // Special case for residence-history
+    if (this.state.currentStepId === 'residence-history') {
+      // Check if total_years is sufficient
+      const totalYears = parseFloat(currentStep.values.total_years as string || '0');
+      // Get the years required from the residence-history step
+      // We'll use a hardcoded value of 3 years as a fallback
+      const yearsRequired = 3;
+      
+      this.logger(`Checking if residence-history can move next: total years ${totalYears}, required years ${yearsRequired}`);
+      
+      // Allow moving next if total years is sufficient
+      if (totalYears >= yearsRequired) {
+        return true;
+      }
+    }
+
     if (this.state.currentStepId === 'education') {
       const educationValues = currentStep.values as EducationStepValues;
       if (!educationValues.highestLevel) {

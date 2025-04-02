@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from '../context/FormContext';
 import { useTranslation } from '../context/TranslationContext';
 import { EducationEntry, EducationEntryData } from './EducationEntry';
+import StepNavigation from './StepNavigation';
 import './EducationStep.css';
 import { EducationLevel, isCollegeOrHigher } from '../types/EducationLevel';
 
@@ -324,41 +325,29 @@ export const EducationStep: React.FC = () => {
       </div>
       
       {/* Navigation buttons */}
-      <div className="form-navigation">
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={moveToPreviousStep}
-          disabled={!canMovePrevious}
-        >
-          {t('common.previous') || 'Previous'}
-        </button>
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => {
-            const isEducationComplete = highestEducationLevel &&
-              (!isCollegeOrHigher(highestEducationLevel) || entries.length > 0);
+      <StepNavigation
+        onPrevious={moveToPreviousStep}
+        onNext={() => {
+          const isEducationComplete = highestEducationLevel &&
+            (!isCollegeOrHigher(highestEducationLevel) || entries.length > 0);
+          
+          if (isEducationComplete) {
+            setValue('education', 'highestLevel', highestEducationLevel);
+            setValue('education', 'timelineEntries', entries.length > 0 ? entries : []);
             
-            if (isEducationComplete) {
-              setValue('education', 'highestLevel', highestEducationLevel);
-              setValue('education', 'timelineEntries', entries.length > 0 ? entries : []);
-              
-              setValue('education', '_touched_highestLevel', true);
-              setValue('education', '_touched_timelineEntries', true);
-              
-              setValue('education', '_forceUpdate', Date.now());
-              
-              setTimeout(() => {
-                moveToNextStep();
-              }, 50);
-            }
-          }}
-          disabled={!highestEducationLevel || (isCollegeOrHigher(highestEducationLevel) && entries.length === 0)}
-        >
-          {t('common.next') || 'Next'}
-        </button>
-      </div>
+            setValue('education', '_touched_highestLevel', true);
+            setValue('education', '_touched_timelineEntries', true);
+            
+            setValue('education', '_forceUpdate', Date.now());
+            
+            setTimeout(() => {
+              moveToNextStep();
+            }, 50);
+          }
+        }}
+        canMovePrevious={canMovePrevious}
+        canMoveNext={!!highestEducationLevel && (!isCollegeOrHigher(highestEducationLevel) || entries.length > 0)}
+      />
     </div>
   );
 };

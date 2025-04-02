@@ -22,6 +22,8 @@ export const translations = {
     // Personal Information
     "personal_info.title": "Personal Information",
     "personal_info.description": "Please provide your personal information below.",
+    "personal_info.form_title": "Your Details",
+    "personal_info.form_description": "Please enter your full name and email address",
     "personal_info.full_name": "Full Name",
     "personal_info.email": "Email Address",
     "personal_info.valid": "All information is valid",
@@ -109,6 +111,10 @@ export const translations = {
     "residence.country": "Country",
     "residence.start_date": "Start Date",
     "residence.end_date": "End Date",
+    "residence.from_date": "From",
+    "residence.to_date": "To",
+    "residence.from_date_help": "When did you start living at this address?",
+    "residence.to_date_help": "When did you move out of this address?",
     "residence.is_current": "I currently live at this address",
     "residence.save_button": "Save Residence",
     
@@ -156,12 +162,23 @@ export const translations = {
     "validation.min_years": "Please provide at least {{required}} years of history. Currently: {{current}} years.",
     "validation.date_order": "End date must be after start date",
     "validation.date_overlap": "Dates cannot overlap with other entries",
+    "validation.email_format": "Invalid email format",
+    "validation.name_min_length": "Name must be at least 2 characters",
+    "residence.country_required": "Please select a country",
+    "residence.address_required": "Please enter an address",
+    "residence.city_required": "Please enter a city",
+    "residence.state_required": "Please select a state/province",
+    "residence.zip_required": "Please enter a ZIP/postal code",
+    "residence.select_state": "Select state/province",
+    "common.start_date_required": "Please enter a start date",
+    "common.end_date_required": "Please enter an end date",
     
     // Timeline
     "timeline.progress": "{{current}} / {{required}} years",
     "timeline.progress_label": "Years accounted for",
     "timeline.gap": "Gap in history",
     "timeline.gap_description": "Gap in history ({{percentage}}% of timeline)",
+    "timeline.validation_message": "Please add {{remaining}} more years of history",
     "common.present": "Present"
   },
   
@@ -188,6 +205,8 @@ export const translations = {
     // Personal Information
     "personal_info.title": "Información Personal",
     "personal_info.description": "Por favor proporcione su información personal a continuación.",
+    "personal_info.form_title": "Sus Detalles",
+    "personal_info.form_description": "Por favor ingrese su nombre completo y dirección de correo electrónico",
     "personal_info.full_name": "Nombre Completo",
     "personal_info.email": "Correo Electrónico",
     "personal_info.valid": "Toda la información es válida",
@@ -253,6 +272,10 @@ export const translations = {
     "residence.country": "País",
     "residence.start_date": "Fecha de Inicio",
     "residence.end_date": "Fecha de Finalización",
+    "residence.from_date": "Desde",
+    "residence.to_date": "Hasta",
+    "residence.from_date_help": "¿Cuándo comenzó a vivir en esta dirección?",
+    "residence.to_date_help": "¿Cuándo se mudó de esta dirección?",
     "residence.is_current": "Actualmente vivo en esta dirección",
     "residence.save_button": "Guardar Residencia",
     
@@ -300,6 +323,16 @@ export const translations = {
     "validation.min_years": "Por favor proporcione al menos {{required}} años de historial. Actualmente: {{current}} años.",
     "validation.date_order": "La fecha de finalización debe ser posterior a la fecha de inicio",
     "validation.date_overlap": "Las fechas no pueden superponerse con otras entradas",
+    "residence.country_required": "Por favor seleccione un país",
+    "residence.address_required": "Por favor ingrese una dirección",
+    "residence.city_required": "Por favor ingrese una ciudad",
+    "residence.state_required": "Por favor seleccione un estado/provincia",
+    "residence.zip_required": "Por favor ingrese un código postal",
+    "residence.select_state": "Seleccione estado/provincia",
+    "common.start_date_required": "Por favor ingrese una fecha de inicio",
+    "common.end_date_required": "Por favor ingrese una fecha de finalización",
+    "validation.email_format": "Formato de correo electrónico inválido",
+    "validation.name_min_length": "El nombre debe tener al menos 2 caracteres",
     
     // Timeline
     "timeline.progress": "{{current}} / {{required}} años",
@@ -332,6 +365,8 @@ export const translations = {
     // Personal Information
     "personal_info.title": "Informations Personnelles",
     "personal_info.description": "Veuillez fournir vos informations personnelles ci-dessous.",
+    "personal_info.form_title": "Vos Détails",
+    "personal_info.form_description": "Veuillez entrer votre nom complet et adresse email",
     "personal_info.full_name": "Nom Complet",
     "personal_info.email": "Adresse Email",
     "personal_info.valid": "Toutes les informations sont valides",
@@ -397,6 +432,10 @@ export const translations = {
     "residence.country": "Pays",
     "residence.start_date": "Date de Début",
     "residence.end_date": "Date de Fin",
+    "residence.from_date": "De",
+    "residence.to_date": "À",
+    "residence.from_date_help": "Quand avez-vous commencé à vivre à cette adresse?",
+    "residence.to_date_help": "Quand avez-vous déménagé de cette adresse?",
     "residence.is_current": "J'habite actuellement à cette adresse",
     "residence.save_button": "Enregistrer la Résidence",
     
@@ -439,6 +478,16 @@ export const translations = {
     "validation.min_years": "Veuillez fournir au moins {{required}} ans d'historique. Actuellement: {{current}} ans.",
     "validation.date_order": "La date de fin doit être postérieure à la date de début",
     "validation.date_overlap": "Les dates ne peuvent pas se chevaucher avec d'autres entrées",
+    "residence.country_required": "Veuillez sélectionner un pays",
+    "residence.address_required": "Veuillez entrer une adresse",
+    "residence.city_required": "Veuillez entrer une ville",
+    "residence.state_required": "Veuillez sélectionner un état/province",
+    "residence.zip_required": "Veuillez entrer un code postal",
+    "residence.select_state": "Sélectionnez un état/province",
+    "common.start_date_required": "Veuillez entrer une date de début",
+    "common.end_date_required": "Veuillez entrer une date de fin",
+    "validation.email_format": "Format d'email invalide",
+    "validation.name_min_length": "Le nom doit comporter au moins 2 caractères",
     
     // Timeline
     "timeline.progress": "{{current}} / {{required}} ans",
@@ -471,6 +520,8 @@ export const translations = {
     // Personal Information
     "personal_info.title": "Informazioni Personali",
     "personal_info.description": "Si prega di fornire le proprie informazioni personali qui sotto.",
+    "personal_info.form_title": "I Tuoi Dettagli",
+    "personal_info.form_description": "Si prega di inserire il nome completo e l'indirizzo email",
     "personal_info.full_name": "Nome Completo",
     "personal_info.email": "Indirizzo Email",
     "personal_info.valid": "Tutte le informazioni sono valide",

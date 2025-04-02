@@ -1,0 +1,14 @@
+.verification-entry {
+  @apply flex flex-col items-center max-w-[600px] mx-auto p-[var(--spacing-md)];
+}
+
+.dev-mode-card {
+  @apply w-full max-w-[600px] mx-auto mb-[var(--spacing-md)] border-[var(--warning-color)] border-dashed bg-transparent shadow-none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .verification-entry {
+    @apply p-[var(--spacing-sm)];
+  }
+}

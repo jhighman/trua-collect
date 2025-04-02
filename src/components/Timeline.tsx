@@ -156,9 +156,43 @@ export const Timeline: React.FC<TimelineProps> = ({
     return gapSegments;
   }, [timelineData.segments]);
 
-  // Don't render if no entries
+  // Render a placeholder if no entries
   if (entries.length === 0) {
-    return null;
+    return (
+      <div className="timeline-visualization">
+        <div className="time-accounted" role="region" aria-label={t('timeline.progress_label', { required: requiredYears.toString() })}>
+          <div className="progress">
+            <div
+              className="progress-bar"
+              style={{ width: '0%' }}
+              role="progressbar"
+              aria-valuenow={0}
+              aria-valuemin={0}
+              aria-valuemax={requiredYears}
+            />
+          </div>
+          <div className="time-text">
+            {t('timeline.progress', {
+              current: '0',
+              required: requiredYears.toString()
+            })}
+            <div className="validation-message">
+              {t('timeline.validation_message', {
+                remaining: requiredYears.toString()
+              })}
+            </div>
+          </div>
+        </div>
+        <div className="timeline-container">
+          <div className="timeline-ruler" />
+          <div className="timeline-labels">
+            <div className="year-label" style={{ left: '50%' }}>
+              {new Date().getFullYear()}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

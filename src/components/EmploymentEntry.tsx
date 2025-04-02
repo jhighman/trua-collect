@@ -63,7 +63,22 @@ export function EmploymentEntry({
   };
 
   const handleSave = () => {
-    onUpdate(editedEntry);
+    console.log('EmploymentEntry - handleSave called with entry:', editedEntry);
+    
+    // Validate required fields
+    if (!editedEntry.company || !editedEntry.position || !editedEntry.start_date) {
+      console.error('Required fields missing');
+      return;
+    }
+
+    // If current job, end date should be null
+    const updatedEntry = {
+      ...editedEntry,
+      end_date: editedEntry.is_current ? null : editedEntry.end_date
+    };
+    
+    console.log('EmploymentEntry - Calling onUpdate with:', updatedEntry);
+    onUpdate(updatedEntry);
     setIsEditable(false);
   };
 
@@ -173,18 +188,21 @@ export function EmploymentEntry({
               <input
                 type="checkbox"
                 checked={editedEntry.is_current}
-                onChange={(e) => setEditedEntry({
-                  ...editedEntry,
-                  is_current: e.target.checked,
-                  end_date: e.target.checked ? null : editedEntry.end_date,
-                })}
+                onChange={(e) => {
+                  console.log('Current checkbox changed:', e.target.checked);
+                  setEditedEntry({
+                    ...editedEntry,
+                    is_current: e.target.checked,
+                    end_date: e.target.checked ? null : editedEntry.end_date,
+                  });
+                }}
                 className="checkbox-control"
               />
               {t('common.current')}
             </label>
           </div>
 
-          <div className="form-group">
+          <div className="form-group" style={{ display: editedEntry.is_current ? 'none' : 'block' }}>
             <label className="form-label" htmlFor="end_date">{t('common.end_date')}</label>
             <input
               type="month"
@@ -229,10 +247,9 @@ export function EmploymentEntry({
             !editedEntry.city ||
             !editedEntry.state_province ||
             !editedEntry.start_date ||
-            (!editedEntry.is_current && !editedEntry.end_date) ||
-            !editedEntry.description ||
-            !editedEntry.contact_name ||
-            !editedEntry.contact_info
+            (!editedEntry.is_current && !editedEntry.end_date)
+            // Removed validation for description, contact_name, and contact_info
+            // as they might not be required
           }
           className="btn btn-primary"
         >

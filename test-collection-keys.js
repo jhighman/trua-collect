@@ -23,6 +23,10 @@ const testKeys = [
   {
     key: 'en-EP-N-R3-E3-N-N-C',
     description: 'Education & Professional Licenses Disabled'
+  },
+  {
+    key: 'en-N-N-R3-E3-E-P-C',
+    description: 'Personal Info Disabled'
   }
 ];
 

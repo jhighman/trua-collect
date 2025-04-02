@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useCallback } from 'react';
 import { FormStepId } from '../utils/FormConfigGenerator';
 import PersonalInfoStep from './PersonalInfoStep';
 import { ResidenceHistoryStep } from './ResidenceHistoryStep';
@@ -36,19 +36,33 @@ export const FormStepRenderer: React.FC<FormStepRendererProps> = ({
     'signature',
   ], []);
 
+  // Helper function to check if a step is enabled
+  const isStepEnabled = useCallback((stepId: FormStepId) => {
+    return formState.steps[stepId] && formState.steps[stepId]._initialized;
+  }, [formState.steps]);
+
+  // Find the first enabled step
+  const findFirstEnabledStep = useCallback(() => {
+    return stepOrder.find(step => isStepEnabled(step)) || 'signature' as FormStepId;
+  }, [isStepEnabled, stepOrder]);
   useEffect(() => {
     // Only set the step if it differs from the context's current step
     const isCurrentStepAvailable = stepOrder.includes(currentStep);
-    const shouldUpdateStep = !isCurrentStepAvailable || contextCurrentStep !== currentStep;
+    const isCurrentStepEnabled = isStepEnabled(currentStep);
+    const shouldUpdateStep = !isCurrentStepAvailable || !isCurrentStepEnabled || contextCurrentStep !== currentStep;
     
     if (shouldUpdateStep) {
-      const firstAvailableStep = stepOrder.find(step => formState.steps[step]) || 'personal-info' as FormStepId;
-      const targetStep = isCurrentStepAvailable ? currentStep : firstAvailableStep;
-      
-      console.log('FormStepRenderer: Adjusting current step to:', targetStep);
+      const firstAvailableStep = findFirstEnabledStep();
+      const targetStep = (isCurrentStepAvailable && isCurrentStepEnabled) ? currentStep : firstAvailableStep;
+      console.log('FormStepRenderer - Adjusting current step to:', targetStep);
       forceSetCurrentStep(targetStep);
     }
-  }, [currentStep, contextCurrentStep, formState.steps, forceSetCurrentStep, stepOrder]);
+  }, [currentStep, contextCurrentStep, formState.steps, forceSetCurrentStep, stepOrder, isStepEnabled, findFirstEnabledStep]);
+
+  // Add a new effect to log when the context's current step changes
+  useEffect(() => {
+    console.log('FormStepRenderer - Context current step changed to:', contextCurrentStep);
+  }, [contextCurrentStep]);
 
   // If we're on the consents step but no consents are required, automatically move to the next step
   useEffect(() => {
@@ -62,26 +76,36 @@ export const FormStepRenderer: React.FC<FormStepRendererProps> = ({
   const StepComponent = useMemo(() => {
     switch (currentStep) {
       case 'personal-info':
-        return <PersonalInfoStep />;
-      case 'residence-history':
-        return <ResidenceHistoryStep />;
+        return isStepEnabled('personal-info') ? <PersonalInfoStep /> : null;
+      case 'residence-history': {
+        const isResidenceEnabled = isStepEnabled('residence-history');
+        if (isResidenceEnabled) {
+          return <ResidenceHistoryStep />;
+        } else {
+          return null;
+        }
+      }
       case 'employment-history':
-        return <EmploymentHistoryStep />;
+        return isStepEnabled('employment-history') ? <EmploymentHistoryStep /> : null;
       case 'education':
-        return <EducationStep />;
+        return isStepEnabled('education') ? <EducationStep /> : null;
       case 'professional-licenses':
-        return <ProfessionalLicensesStep />;
+        return isStepEnabled('professional-licenses') ? <ProfessionalLicensesStep /> : null;
       case 'consents':
-        // Only render the ConsentsStep if there are required consents
-        return consentsRequired ? <ConsentsStep /> : null;
+        // Only render the ConsentsStep if there are required consents and the step is enabled
+        return isStepEnabled('consents') && consentsRequired ? <ConsentsStep /> : null;
       case 'signature':
-        return <Signature />;
+        return isStepEnabled('signature') ? <Signature /> : null;
       default:
         return null;
     }
-  }, [currentStep, consentsRequired]);
+  }, [currentStep, consentsRequired, isStepEnabled]);
 
-  return StepComponent;
+  return (
+    <div className="form-step-renderer">
+      {StepComponent}
+    </div>
+  );
 };
 
 export default FormStepRenderer;

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Personal Info Disabled</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      color: #1a2b5a;
+    }
+    .test-case {
+      margin-bottom: 20px;
+      padding: 15px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+    .test-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .success {
+      color: #10b981;
+    }
+    .error {
+      color: #ef4444;
+    }
+  </style>
+</head>
+<body>
+  <h1>Test Personal Info Disabled</h1>
+  
+  <div class="test-case">
+    <div class="test-title">Testing Collection Key with Personal Info Disabled</div>
+    <p>Key: <code>en-N-N-R3-E3-E-P-C</code></p>
+    <p>Click the button below to test this collection key:</p>
+    <button id="testButton">Test Collection Key</button>
+    <div id="result"></div>
+  </div>
+
+  <script type="module">
+    import { getRequirements } from './src/utils/collectionKeyParser.ts';
+    
+    document.getElementById('testButton').addEventListener('click', async () => {
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = '<p>Testing...</p>';
+      
+      try {
+        // Test collection key with personal info disabled
+        const testKey = 'en-N-N-R3-E3-E-P-C';
+        
+        // Get requirements from the collection key
+        const requirements = getRequirements(testKey);
+        
+        // Check if personal info is disabled
+        const personalInfoEnabled = requirements.verificationSteps.personalInfo.enabled;
+        
+        // Check if isStepEnabled would return false for personal-info
+        const isStepEnabled = (stepId, reqs) => {
+          if (stepId === 'personal-info') {
+            return reqs.verificationSteps.personalInfo?.enabled || false;
+          }
+          return true;
+        };
+        
+        const stepEnabled = isStepEnabled('personal-info', requirements);
+        
+        // Display results
+        resultDiv.innerHTML = `
+          <p>Personal Info Enabled: <strong>${personalInfoEnabled ? 'Yes' : 'No'}</strong></p>
+          <p>isStepEnabled for personal-info: <strong>${stepEnabled ? 'Yes' : 'No'}</strong></p>
+          <p class="${!personalInfoEnabled && !stepEnabled ? 'success' : 'error'}">
+            ${!personalInfoEnabled && !stepEnabled ? 'Test Passed! Personal Info step is correctly disabled.' : 'Test Failed! Personal Info step is not disabled.'}
+          </p>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+      }
+    });
+  </script>
+</body>
+</html>

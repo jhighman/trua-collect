@@ -18,8 +18,11 @@ const isStepEnabled = (stepId: FormStepId, reqs: Requirements): boolean => {
     case 'signature':
       return reqs.signature.required;
     case 'personal-info':
-      return true;
+      console.log('isStepEnabled - personal-info:', reqs.verificationSteps.personalInfo?.enabled || false);
+      return reqs.verificationSteps.personalInfo?.enabled || false;
     case 'residence-history':
+      console.log('isStepEnabled - residence-history:', reqs.verificationSteps.residenceHistory?.enabled || false);
+      console.log('isStepEnabled - residence-history requirements:', reqs.verificationSteps.residenceHistory);
       return reqs.verificationSteps.residenceHistory?.enabled || false;
     case 'employment-history':
       return reqs.verificationSteps.employmentHistory?.enabled || false;
@@ -159,6 +162,9 @@ export const FormProvider: React.FC<FormProviderProps> = ({
               formManagerInstance!.setValue(stepId, 'email', '');
               break;
             case 'residence-history':
+              formManagerInstance!.setValue(stepId, 'entries', []);
+              formManagerInstance!.setValue(stepId, 'total_years', '0');
+              break;
             case 'employment-history':
             case 'education':
             case 'professional-licenses':
@@ -202,21 +208,17 @@ export const FormProvider: React.FC<FormProviderProps> = ({
   }, [formManager, stateVersion]);
 
   const moveToNextStep = useCallback(() => {
+    // Force move to the next step without checking if it's enabled
+    // This is needed because the canMoveNext flag in the navigation state
+    // might not be updated correctly
     const currentIndex = navigationState.availableSteps.indexOf(formState.currentStepId);
     if (currentIndex < navigationState.availableSteps.length - 1) {
-      let nextIndex = currentIndex + 1;
-      while (nextIndex < navigationState.availableSteps.length) {
-        const nextStep = navigationState.availableSteps[nextIndex];
-        if (isStepEnabled(nextStep, safeRequirements)) {
-          formManager.forceSetCurrentStep(nextStep);
-          if (onStepChange) onStepChange(nextStep, formManager.getState());
-          setStateVersion(v => v + 1);
-          break;
-        }
-        nextIndex++;
-      }
+      const nextStep = navigationState.availableSteps[currentIndex + 1];
+      formManager.forceSetCurrentStep(nextStep);
+      if (onStepChange) onStepChange(nextStep, formManager.getState());
+      setStateVersion(v => v + 1);
     }
-  }, [formManager, navigationState, formState.currentStepId, onStepChange, safeRequirements]);
+  }, [formManager, navigationState, formState.currentStepId, onStepChange]);
 
   const moveToPreviousStep = useCallback(() => {
     const currentIndex = navigationState.availableSteps.indexOf(formState.currentStepId);

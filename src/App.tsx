@@ -44,6 +44,9 @@ const App: React.FC = () => {
     });
   };
 
+  // Ensure English language is used
+  console.log('Initializing TranslationProvider with language: en');
+  
   return (
     <TranslationProvider initialLanguage="en">
       <Router>

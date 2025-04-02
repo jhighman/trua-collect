@@ -1,15 +1,74 @@
 /* Common Component Styles for Trua Collect */
 
+/* Page Header */
+.page-header {
+    @apply mb-[var(--spacing-lg)] w-full max-w-[600px] mx-auto text-center;
+}
+
+.page-header h1 {
+    @apply text-[var(--font-size-xxlarge)] font-[var(--font-weight-bold)] text-[var(--text-color)];
+}
+
+/* Inline Link */
+.header-link {
+    @apply text-[var(--primary-color)] hover:text-[var(--primary-hover)] underline text-[var(--font-size-small)];
+}
+
+/* Alerts */
+.alert {
+    @apply p-[var(--spacing-sm)] rounded-[var(--border-radius-sm)] border w-full max-w-[600px] mx-auto mb-[var(--spacing-md)];
+}
+
+.alert-error {
+    @apply bg-[rgba(239,68,68,0.1)] border-[var(--error-color)] text-[var(--error-color)];
+}
+
+.alert-warning {
+    @apply bg-transparent border-[var(--warning-color)] border-dashed text-[var(--warning-color)] text-[var(--font-size-small)];
+}
+
+.alert-success {
+    @apply bg-[rgba(16,185,129,0.1)] border-[var(--success-color)] text-[var(--success-color)];
+}
+
+.alert strong {
+    @apply font-[var(--font-weight-medium)];
+}
+
+/* Loading State */
+.loading {
+    @apply text-center p-[var(--spacing-xl)] text-[var(--text-color)] text-[var(--font-size-base)] w-full max-w-[600px] mx-auto;
+}
+
+/* Button */
+.btn {
+    @apply px-[var(--spacing-lg)] py-[var(--spacing-md)] rounded-[var(--border-radius-sm)] font-[var(--font-weight-medium)] transition duration-200;
+}
+
+.btn-primary {
+    @apply bg-[var(--primary-color)] text-[#FFFFFF] border-none hover:bg-[var(--primary-hover)];
+}
+
+.btn:disabled {
+    @apply bg-[var(--color-gray-300)] text-[var(--color-gray-500)] cursor-not-allowed;
+}
+
+/* Step Header */
+.step-header {
+    @apply mb-[var(--spacing-xl)] w-full max-w-[600px] mx-auto text-center;
+}
+
+.step-header h2 {
+    @apply text-[var(--font-size-xlarge)] text-[var(--text-color)] mb-[var(--spacing-sm)];
+}
+
+.step-header .step-description {
+    @apply text-[var(--light-text)] leading-[var(--line-height-default)];
+}
 
 /* Form Elements */
 .form-container {
-    background-color: var(--card-background);
-    border-radius: var(--border-radius-medium);
-    padding: var(--spacing-xl);
-    box-shadow: var(--shadow-medium);
-    margin: 0 auto var(--spacing-lg);
-    max-width: 600px;
-    width: 100%;
+    @apply bg-[var(--card-background)] rounded-[var(--border-radius-medium)] p-[var(--spacing-xl)] shadow-[var(--shadow-medium)] max-w-[600px] w-full mx-auto mb-[var(--spacing-lg)];
 }
 
 .form-content {
@@ -429,38 +488,43 @@
 
 /* Responsive Adjustments */
 @media (max-width: 768px) {
+    .page-header {
+        @apply max-w-full px-[var(--spacing-md)];
+    }
+    .alert {
+        @apply max-w-full px-[var(--spacing-md)];
+    }
+    .loading {
+        @apply max-w-full px-[var(--spacing-md)];
+    }
+    .step-header {
+        @apply max-w-full px-[var(--spacing-md)];
+    }
     .form-container {
         padding: var(--spacing-lg);
         margin: 0 var(--spacing-md) var(--spacing-lg);
     }
-
     .address-fields {
         grid-template-columns: 1fr;
         gap: var(--spacing-md);
     }
-
     .date-fields {
         grid-template-columns: 1fr;
         gap: var(--spacing-md);
     }
-
     .form-navigation {
         flex-direction: column;
         gap: var(--spacing-sm);
     }
-
     .form-navigation .btn {
         width: 100%;
     }
-
     .year-label {
         top: 90px;
     }
-
     .confirmation-container {
         padding: var(--spacing-lg);
     }
-
     .signature-pad {
         height: 150px;
     }
@@ -470,24 +534,19 @@
     .step-header h2 {
         font-size: var(--font-size-large);
     }
-
     .step-description {
         font-size: var(--font-size-small);
     }
-
     .timeline-segment-tooltip {
         font-size: 12px;
         padding: 4px 8px;
     }
-
     .year-label {
         font-size: 12px;
     }
-
     .confirmation-container {
         padding: var(--spacing-md);
     }
-
     .signature-pad {
         height: 120px;
     }
@@ -576,12 +635,10 @@
     .grid-cols-1-2-1 {
         grid-template-columns: 1fr;
     }
-
     .btn-group {
         flex-direction: column;
         width: 100%;
     }
-
     .btn-group .btn {
         width: 100%;
     }

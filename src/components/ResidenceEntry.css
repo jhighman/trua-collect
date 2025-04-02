@@ -1,47 +1,223 @@
-.residence-entry {
-  padding: var(--spacing-md);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-medium);
-  margin-bottom: var(--spacing-md);
+/* ResidenceEntry.css */
+
+/* Fix for dropdown menus bleeding through */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
 }
 
-.residence-entry__summary {
+/* Checkbox styling */
+.checkbox-visible {
+  border: 2px solid var(--color-gray-400);
+  border-radius: 4px;
+  background-color: white;
+  box-shadow: var(--shadow-sm);
+  min-width: 20px;
+  min-height: 20px;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--spacing-md);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
-.residence-entry__location {
+.checkbox-visible:hover {
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-md);
+}
+
+.checkbox-visible:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(var(--primary), 0.2);
+}
+
+.checkbox-visible[data-state="checked"] {
+  border-color: var(--primary-color);
+  background-color: var(--primary-color);
+  color: white;
+}
+
+/* Consent checkbox container */
+.consent-checkbox-container {
+  padding: 1rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  border: 1px solid var(--color-gray-200);
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
-.residence-entry__country {
+.consent-checkbox-container > [data-slot="checkbox"] {
+  margin-right: 10px;
+}
+
+.consent-checkbox-container:hover {
+  background-color: var(--color-gray-50);
+  border-color: var(--color-gray-200);
+}
+
+.consent-label {
   font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-medium);
+  color: var(--text-color);
+  line-height: 1.5;
+}
+
+.residence-entry-card {
+  width: 100%;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  background-color: white;
+}
+
+.residence-entry-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.residence-entry-form {
+  width: 100%;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 2rem;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  background-color: white;
+}
+
+.residence-entry-form:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+/* Card header styling */
+.residence-entry-form [data-slot="card-header"] {
+  background-color: var(--primary-color-light, #e6f0ff);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1.25rem 1.5rem;
+}
+
+.residence-entry-form [data-slot="card-title"] {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+/* Card content styling */
+.residence-entry-form [data-slot="card-content"] {
+  padding: 1.5rem;
+}
+
+/* Card footer styling */
+.residence-entry-form [data-slot="card-footer"] {
+  background-color: var(--color-gray-50);
+  border-top: 1px solid var(--border-color);
+  padding: 1.25rem 1.5rem;
+}
+
+/* Make form elements more prominent */
+.residence-entry-form [data-slot="form-label"] {
+  font-weight: 500;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
   color: var(--text-color);
 }
 
-.residence-entry__address-text {
-  color: var(--text-color);
+.residence-entry-form [data-slot="select-trigger"],
+.residence-entry-form [data-slot="input"] {
+  height: 3rem;
+  font-size: 1rem;
+  border-width: 1px;
+  border-color: var(--border-color);
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background-color: white;
 }
 
-.residence-entry__city-state {
-  color: var(--light-text);
-  font-size: var(--font-size-small);
+/* Style the select content */
+[data-radix-select-content],
+.select-content-dropdown {
+  z-index: 9999 !important;
+  background-color: white !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 0.5rem !important;
+  box-shadow: var(--shadow-md) !important;
+  overflow: hidden !important;
+  max-height: 300px !important;
+  padding: 0.5rem !important;
 }
 
-.residence-entry__dates-text {
-  color: var(--light-text);
-  font-size: var(--font-size-small);
-  white-space: nowrap;
+/* Style select items */
+.select-item {
+  padding: 0.75rem 1rem !important;
+  margin: 0.25rem 0 !important;
+  border-radius: 0.25rem !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
 }
 
-.residence-entry__actions {
-  display: flex;
-  gap: var(--spacing-sm);
-  margin-top: var(--spacing-md);
+.select-item:hover {
+  background-color: var(--color-gray-100) !important;
 }
 
-/* Form styles are inherited from common.css */ 
+.select-item[data-highlighted="true"] {
+  background-color: var(--primary-color-light) !important;
+  color: var(--primary-color) !important;
+}
+
+.select-item[data-state="checked"] {
+  background-color: var(--primary-color-light) !important;
+  color: var(--primary-color) !important;
+  font-weight: 500 !important;
+}
+
+.residence-entry-form [data-slot="select-trigger"]:hover,
+.residence-entry-form [data-slot="input"]:hover {
+  border-color: var(--primary-color);
+}
+
+.residence-entry-form [data-slot="select-trigger"]:focus,
+.residence-entry-form [data-slot="input"]:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(var(--primary), 0.2);
+}
+
+/* Button styling */
+.residence-entry-form [data-slot="button"] {
+  height: 3rem;
+  min-width: 8rem;
+  font-weight: 500;
+  font-size: 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .residence-entry-form {
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+  }
+  
+  .residence-entry-card {
+    border-radius: 8px;
+    margin-bottom: 1rem;
+  }
+  
+  .residence-entry-form [data-slot="card-content"] {
+    padding: 1rem;
+  }
+  
+  .residence-entry-form [data-slot="card-footer"] {
+    padding: 1rem;
+  }
+}

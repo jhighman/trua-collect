@@ -2,15 +2,32 @@ import React from 'react';
 import { useForm } from '../context/FormContext';
 import { useTranslation } from '../context/TranslationContext';
 import type { ConsentsStepValues } from '../utils/FormStateManager';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
+import { Checkbox } from './ui/checkbox';
+import { Label } from './ui/label';
+import StepNavigation from './StepNavigation';
 import './ConsentsStep.css';
 
+// Define the ConsentItem interface
+interface ConsentItem {
+  field: string;
+  title: string;
+  text: string;
+  label: string;
+  checked: boolean;
+  error: string;
+}
+
 export const ConsentsStep: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  
+  // Log current language for debugging
+  console.log('ConsentsStep - Current language:', language);
+  
   const {
     setValue,
     getValue,
     getStepErrors,
-    isStepValid,
     moveToNextStep,
     moveToPreviousStep,
     canMoveNext,
@@ -47,136 +64,106 @@ export const ConsentsStep: React.FC = () => {
   console.log('Required consents:', requiredConsents);
   console.log('Current consent values:', { driverLicenseConsent, drugTestConsent, biometricConsent });
 
+  // Create an array of consents to render, using null for non-required consents
+  const consentsToRender = [
+    requiredConsents.driverLicense
+      ? {
+          field: 'driverLicenseConsent',
+          title: t('consents.driver_license.title'),
+          text: t('consents.driver_license.text'),
+          label: t('consents.driver_license.checkbox'),
+          checked: driverLicenseConsent,
+          error: errors.driverLicenseConsent || '',
+        }
+      : null,
+    requiredConsents.drugTest
+      ? {
+          field: 'drugTestConsent',
+          title: t('consents.drug_test.title'),
+          text: t('consents.drug_test.text'),
+          label: t('consents.drug_test.checkbox'),
+          checked: drugTestConsent,
+          error: errors.drugTestConsent || '',
+        }
+      : null,
+    requiredConsents.biometric
+      ? {
+          field: 'biometricConsent',
+          title: t('consents.biometric.title'),
+          text: t('consents.biometric.text'),
+          label: t('consents.biometric.checkbox'),
+          checked: biometricConsent,
+          error: errors.biometricConsent || '',
+        }
+      : null,
+  ].filter((item): item is ConsentItem => item !== null); // Type predicate to narrow to ConsentItem
+
   return (
     <div className="consents-step">
       <div className="step-header">
-        <h2>{t('consents.title') || 'Required Consents'}</h2>
+        <h2>{t('consents.title')}</h2>
         <p className="step-description">
-          {t('consents.description') || 'Please review and provide the following required consents to proceed.'}
+          {t('consents.description')}
         </p>
       </div>
 
-      <div className="form-container">
-        {requiredConsents.driverLicense && (
-          <div className="consent-group">
-            <h3>{t('consents.driver_license.title') || 'Driver License Verification Consent'}</h3>
-            <p className="consent-text">
-              {t('consents.driver_license.text') ||
-                'I consent to the verification of my driver license information as part of this background check process.'}
-            </p>
-            <div className="checkbox-container">
-              <input
-                type="checkbox"
-                id="driverLicenseConsent"
-                checked={driverLicenseConsent}
-                onChange={(e) => handleConsentChange('driverLicenseConsent', e.target.checked)}
-                aria-invalid={!!errors.driverLicenseConsent}
-                aria-describedby={errors.driverLicenseConsent ? 'driverLicenseConsent-error' : undefined}
-              />
-              <label htmlFor="driverLicenseConsent">
-                {t('consents.driver_license.checkbox') || 'I consent to driver license verification'}
-              </label>
-            </div>
-            {errors.driverLicenseConsent && (
-              <div className="error-message" id="driverLicenseConsent-error">
-                {errors.driverLicenseConsent}
-              </div>
-            )}
-          </div>
-        )}
-
-        {requiredConsents.drugTest && (
-          <div className="consent-group">
-            <h3>{t('consents.drug_test.title') || 'Drug Test Consent'}</h3>
-            <p className="consent-text">
-              {t('consents.drug_test.text') ||
-                'I consent to undergo drug testing as part of this employment screening process.'}
-            </p>
-            <div className="checkbox-container">
-              <input
-                type="checkbox"
-                id="drugTestConsent"
-                checked={drugTestConsent}
-                onChange={(e) => handleConsentChange('drugTestConsent', e.target.checked)}
-                aria-invalid={!!errors.drugTestConsent}
-                aria-describedby={errors.drugTestConsent ? 'drugTestConsent-error' : undefined}
-              />
-              <label htmlFor="drugTestConsent">
-                {t('consents.drug_test.checkbox') || 'I consent to drug testing'}
-              </label>
-            </div>
-            {errors.drugTestConsent && (
-              <div className="error-message" id="drugTestConsent-error">
-                {errors.drugTestConsent}
-              </div>
-            )}
-          </div>
-        )}
-
-        {requiredConsents.biometric && (
-          <div className="consent-group">
-            <h3>{t('consents.biometric.title') || 'Biometric Data Consent'}</h3>
-            <p className="consent-text">
-              {t('consents.biometric.text') ||
-                'I consent to the collection, storage, and use of my biometric data for identity verification purposes.'}
-            </p>
-            <div className="checkbox-container">
-              <input
-                type="checkbox"
-                id="biometricConsent"
-                checked={biometricConsent}
-                onChange={(e) => handleConsentChange('biometricConsent', e.target.checked)}
-                aria-invalid={!!errors.biometricConsent}
-                aria-describedby={errors.biometricConsent ? 'biometricConsent-error' : undefined}
-              />
-              <label htmlFor="biometricConsent">
-                {t('consents.biometric.checkbox') || 'I consent to biometric data collection and use'}
-              </label>
-            </div>
-            {errors.biometricConsent && (
-              <div className="error-message" id="biometricConsent-error">
-                {errors.biometricConsent}
-              </div>
-            )}
-          </div>
-        )}
-
-        {!requiredConsents.driverLicense && !requiredConsents.drugTest && !requiredConsents.biometric && (
-          <div className="no-consents-message">
-            {t('consents.none_required') || 'No consents are required for this verification process.'}
-          </div>
-        )}
-
-        <div className="form-status">
-          {isStepValid('consents') ? (
-            <div className="valid-status">
-              {t('consents.valid') || 'All required consents have been provided'}
-            </div>
-          ) : (
-            <div className="invalid-status">
-              {t('consents.invalid') || 'Please provide all required consents to proceed'}
-            </div>
-          )}
+      {consentsToRender.length === 0 ? (
+        <div className="no-consents-message">
+          {t('consents.none_required')}
         </div>
+      ) : (
+        <div className="space-y-6">
+          {consentsToRender.map((consent) => (
+            <Card key={consent.field} className="form-container hover:shadow-md transition-all duration-200">
+              <CardHeader>
+                <CardTitle className="text-xl font-bold text-[var(--primary-color)]">
+                  {consent.title}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="mb-5 text-base leading-relaxed">
+                  {consent.text}
+                </CardDescription>
+                <div className="mt-5">
+                  <div className="flex items-center consent-checkbox-container p-4 rounded-md bg-[var(--color-gray-50)] hover:bg-[var(--color-gray-100)] transition-colors duration-200">
+                    <Checkbox
+                      id={consent.field}
+                      checked={consent.checked}
+                      onCheckedChange={(checked) => handleConsentChange(consent.field, checked as boolean)}
+                      className="checkbox-visible transition-all duration-200"
+                      aria-invalid={!!consent.error}
+                      aria-describedby={consent.error ? `${consent.field}-error` : undefined}
+                    />
+                    <Label htmlFor={consent.field} className="consent-label text-base ml-3">
+                      {consent.label}
+                    </Label>
+                  </div>
+                </div>
+                {consent.error && (
+                  <div
+                    className="text-[var(--error-color)] text-base mt-4 p-4 bg-[var(--error-color-light)] rounded-md flex items-start"
+                    id={`${consent.field}-error`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 mt-0.5">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="8" x2="12" y2="12"></line>
+                      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    {consent.error}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
 
-        <div className="navigation-buttons">
-          {canMovePrevious && (
-            <button type="button" onClick={moveToPreviousStep} className="btn btn-secondary">
-              {t('common.previous') || 'Previous'}
-            </button>
-          )}
-          {canMoveNext && (
-            <button
-              type="button"
-              onClick={moveToNextStep}
-              className="btn btn-primary"
-              disabled={!isStepValid('consents')}
-            >
-              {t('common.next') || 'Next'}
-            </button>
-          )}
+          <StepNavigation
+            onNext={moveToNextStep}
+            onPrevious={moveToPreviousStep}
+            canMoveNext={canMoveNext}
+            canMovePrevious={canMovePrevious}
+          />
         </div>
-      </div>
+      )}
     </div>
   );
 };

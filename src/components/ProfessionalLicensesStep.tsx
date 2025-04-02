@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm, TimelineEntry } from '../context/FormContext';
 import { useTranslation } from '../context/TranslationContext';
 import { ProfessionalLicenseEntry, ProfessionalLicenseEntryData } from './ProfessionalLicenseEntry';
+import StepNavigation from './StepNavigation';
 import './ProfessionalLicensesStep.css';
 
 export const ProfessionalLicensesStep: React.FC = () => {
@@ -208,38 +209,26 @@ export const ProfessionalLicensesStep: React.FC = () => {
       </div>
       
       {/* Navigation buttons */}
-      <div className="form-navigation">
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={moveToPreviousStep}
-          disabled={!canMovePrevious}
-        >
-          {t('common.previous') || 'Previous'}
-        </button>
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => {
-            console.log('Next button clicked');
-            console.log('Can move next:', canMoveNext);
-            
-            // Check if the professional-licenses step is complete
-            const isComplete = entries.length > 0;
-            console.log('Is professional-licenses complete:', isComplete);
-            
-            if (isComplete) {
-              console.log('Moving to next step');
-              moveToNextStep();
-            } else {
-              console.log('Professional-licenses step is not complete, cannot move next');
-            }
-          }}
-          disabled={!canMoveNext}
-        >
-          {t('common.next') || 'Next'}
-        </button>
-      </div>
+      <StepNavigation
+        onPrevious={moveToPreviousStep}
+        onNext={() => {
+          console.log('Next button clicked');
+          console.log('Can move next:', canMoveNext);
+          
+          // Check if the professional-licenses step is complete
+          const isComplete = entries.length > 0;
+          console.log('Is professional-licenses complete:', isComplete);
+          
+          if (isComplete) {
+            console.log('Moving to next step');
+            moveToNextStep();
+          } else {
+            console.log('Professional-licenses step is not complete, cannot move next');
+          }
+        }}
+        canMovePrevious={canMovePrevious}
+        canMoveNext={canMoveNext}
+      />
     </div>
   );
 };

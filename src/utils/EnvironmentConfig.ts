@@ -24,8 +24,8 @@ export interface EnvironmentConfig {
 const defaultConfig: EnvironmentConfig = {
   // Default collection key in hyphen-separated format
   // Format: [language]-[personal]-[consents]-[residence]-[employment]-[education]-[proLicense]-[signature]
-  // en-EP-DT-R3-E3-E-P-C = English, Email+Phone, Driver License + Drug Test consents, 3-year residence, 3-year employment, Education enabled, Professional licenses enabled, Checkbox signature
-  defaultCollectionKey: 'en-EP-DT-R3-E3-E-P-C',
+  // en-N-N-R3-E3-E-P-C = English, Personal Info disabled, No consents, 3-year residence, 3-year employment, Education enabled, Professional licenses enabled, Checkbox signature
+  defaultCollectionKey: 'en-N-N-R3-E3-E-P-C',
   port: 3000,
   devMode: true,
   logLevel: 'info',

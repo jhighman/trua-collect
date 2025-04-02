@@ -5,6 +5,7 @@ import { useTranslation } from '../context/TranslationContext';
 import { EmploymentEntry } from './EmploymentEntry';
 import type { EmploymentEntryData } from './EmploymentEntry';
 import { Timeline } from './Timeline';
+import StepNavigation from './StepNavigation';
 import './EmploymentHistoryStep.css';
 import './Timeline.css';
 import { getRequirements } from '../utils/collectionKeyParser';
@@ -17,6 +18,7 @@ export const EmploymentHistoryStep: React.FC = () => {
     getStepErrors,
     canMoveNext,
     moveToNextStep,
+    forceNextStep,
     moveToPreviousStep,
     canMovePrevious,
     formState
@@ -25,7 +27,29 @@ export const EmploymentHistoryStep: React.FC = () => {
   const { t, language } = useTranslation();
 
   const [entries, setEntries] = useState<EmploymentEntryData[]>(() => {
-    return getValue('employment-history', 'entries') as unknown as EmploymentEntryData[] || [];
+    const storedEntries = getValue('employment-history', 'entries');
+    console.log('EmploymentHistoryStep - Initial stored entries:', storedEntries);
+    
+    if (Array.isArray(storedEntries)) {
+      // Convert TimelineEntry format to EmploymentEntryData format
+      return storedEntries.map(entry => ({
+        ...entry,
+        start_date: entry.startDate || entry.start_date,
+        end_date: entry.endDate || entry.end_date,
+        is_current: entry.isCurrent || entry.is_current,
+        type: entry.type || '',
+        company: entry.company || '',
+        position: entry.position || '',
+        city: entry.city || '',
+        state_province: entry.state_province || '',
+        description: entry.description || '',
+        contact_name: entry.contact_name || '',
+        contact_info: entry.contact_info || '',
+        duration_years: entry.duration_years || 0
+      })) as unknown as EmploymentEntryData[];
+    }
+    
+    return [] as EmploymentEntryData[];
   });
 
   const [totalYears, setTotalYears] = useState<number>(0);
@@ -68,8 +92,19 @@ export const EmploymentHistoryStep: React.FC = () => {
   }, [getExistingEntries]);
 
   useEffect(() => {
-    setValue('employment-history', 'entries', entries as unknown as TimelineEntry[]);
+    // Ensure entries have the required TimelineEntry properties
+    const timelineEntries = entries.map(entry => ({
+      ...entry,
+      startDate: entry.start_date,
+      endDate: entry.end_date,
+      isCurrent: entry.is_current
+    })) as unknown as TimelineEntry[];
+    
+    console.log('EmploymentHistoryStep - Setting entries in form state:', timelineEntries);
+    setValue('employment-history', 'entries', timelineEntries);
+    
     const total = entries.reduce((sum, entry) => sum + (entry.duration_years || 0), 0);
+    console.log('EmploymentHistoryStep - Total years:', total, 'Required years:', requiredYears);
     setValue('employment-history', 'total_years', total as unknown as FormValue);
     
     // Update step validation based on total years
@@ -105,18 +140,18 @@ export const EmploymentHistoryStep: React.FC = () => {
     });
   };
 
-  const handleSaveEntry = () => {
-    console.log('handleSaveEntry called with newEntry:', newEntry);
+  const handleSaveEntry = (entry: EmploymentEntryData) => {
+    console.log('handleSaveEntry called with entry:', entry);
     
-    const startDate = new Date(newEntry.start_date);
-    const endDate = newEntry.is_current ? new Date() : new Date(newEntry.end_date || '');
+    const startDate = new Date(entry.start_date);
+    const endDate = entry.is_current ? new Date() : new Date(entry.end_date || '');
     const durationMs = endDate.getTime() - startDate.getTime();
     const durationYears = durationMs / (1000 * 60 * 60 * 24 * 365.25);
     
     console.log('Calculated duration:', durationYears);
     
     const entryWithDuration = {
-      ...newEntry,
+      ...entry,
       duration_years: parseFloat(durationYears.toFixed(2))
     };
     
@@ -126,17 +161,33 @@ export const EmploymentHistoryStep: React.FC = () => {
     console.log('New entries array:', newEntries);
     
     setEntries(newEntries);
-    setValue('employment-history', 'entries', newEntries as unknown as TimelineEntry[]);
+    
+    // Ensure entries have the required TimelineEntry properties
+    const timelineEntries = newEntries.map(entry => ({
+      ...entry,
+      startDate: entry.start_date,
+      endDate: entry.end_date,
+      isCurrent: entry.is_current
+    })) as unknown as TimelineEntry[];
+    
+    console.log('EmploymentHistoryStep - Setting entries in handleSaveEntry:', timelineEntries);
+    setValue('employment-history', 'entries', timelineEntries);
     
     // Calculate total years and update form state
     const total = newEntries.reduce((sum, entry) => sum + (entry.duration_years || 0), 0);
-    console.log('Total years:', total, 'Required years:', requiredYears);
+    console.log('EmploymentHistoryStep - Total years in handleSaveEntry:', total, 'Required years:', requiredYears);
     
     setValue('employment-history', 'total_years', total as unknown as FormValue);
     
     // Update step validation based on total years
-    setValue('employment-history', 'isValid', total >= requiredYears as unknown as FormValue);
-    setValue('employment-history', 'isComplete', total >= requiredYears as unknown as FormValue);
+    const isComplete = total >= requiredYears;
+    setValue('employment-history', 'isValid', isComplete as unknown as FormValue);
+    setValue('employment-history', 'isComplete', isComplete as unknown as FormValue);
+    
+    // If we have enough years, move to the next step
+    if (isComplete) {
+      forceNextStep();
+    }
     
     setShowAddForm(false);
     setNewEntry({
@@ -155,9 +206,30 @@ export const EmploymentHistoryStep: React.FC = () => {
   };
 
   const handleRemoveEntry = (index: number) => {
+    console.log('EmploymentHistoryStep - Removing entry at index:', index);
     const newEntries = entries.filter((_, i) => i !== index);
     setEntries(newEntries);
-    setValue('employment-history', 'entries', newEntries as unknown as TimelineEntry[]);
+    
+    // Ensure entries have the required TimelineEntry properties
+    const timelineEntries = newEntries.map(entry => ({
+      ...entry,
+      startDate: entry.start_date,
+      endDate: entry.end_date,
+      isCurrent: entry.is_current
+    })) as unknown as TimelineEntry[];
+    
+    console.log('EmploymentHistoryStep - Setting entries in handleRemoveEntry:', timelineEntries);
+    setValue('employment-history', 'entries', timelineEntries);
+    
+    // Calculate total years and update form state
+    const total = newEntries.reduce((sum, e) => sum + (e.duration_years || 0), 0);
+    console.log('EmploymentHistoryStep - Total years in handleRemoveEntry:', total);
+    setValue('employment-history', 'total_years', total as unknown as FormValue);
+    
+    // Update step validation based on total years
+    const isComplete = total >= requiredYears;
+    setValue('employment-history', 'isValid', isComplete as unknown as FormValue);
+    setValue('employment-history', 'isComplete', isComplete as unknown as FormValue);
   };
 
   const handleUpdateEntry = (index: number, entry: EmploymentEntryData) => {
@@ -171,19 +243,36 @@ export const EmploymentHistoryStep: React.FC = () => {
       ...entry,
       duration_years: parseFloat(durationYears.toFixed(2))
     };
-    
     const newEntries = [...entries];
     newEntries[index] = entryWithDuration;
     setEntries(newEntries);
-    setValue('employment-history', 'entries', newEntries as unknown as TimelineEntry[]);
+    
+    // Ensure entries have the required TimelineEntry properties
+    const timelineEntries = newEntries.map(entry => ({
+      ...entry,
+      startDate: entry.start_date,
+      endDate: entry.end_date,
+      isCurrent: entry.is_current
+    })) as unknown as TimelineEntry[];
+    
+    console.log('EmploymentHistoryStep - Setting entries in handleUpdateEntry:', timelineEntries);
+    setValue('employment-history', 'entries', timelineEntries);
     
     // Calculate total years and update form state
     const total = newEntries.reduce((sum, e) => sum + (e.duration_years || 0), 0);
+    console.log('EmploymentHistoryStep - Total years in handleUpdateEntry:', total, 'Required years:', requiredYears);
     setValue('employment-history', 'total_years', total as unknown as FormValue);
     
     // Update step validation based on total years
-    setValue('employment-history', 'isValid', total >= requiredYears as unknown as FormValue);
-    setValue('employment-history', 'isComplete', total >= requiredYears as unknown as FormValue);
+    const isComplete = total >= requiredYears;
+    setValue('employment-history', 'isValid', isComplete as unknown as FormValue);
+    setValue('employment-history', 'isComplete', isComplete as unknown as FormValue);
+    
+    
+    // If we have enough years, move to the next step
+    if (isComplete) {
+      forceNextStep();
+    }
   };
 
   const employmentTypes = [
@@ -236,7 +325,7 @@ export const EmploymentHistoryStep: React.FC = () => {
       </div>
       
         <div className="entries-list">
-          <h3>{t('employment.entries_title')}</h3>
+          <h3>Your Employment History</h3>
           {entries.map((entry, index) => (
           <div key={index} className="entry-item">
             <div className="entry-content">
@@ -258,7 +347,11 @@ export const EmploymentHistoryStep: React.FC = () => {
         {showAddForm ? (
           <EmploymentEntry
             entry={newEntry}
-            onUpdate={handleSaveEntry}
+            onUpdate={(updatedEntry) => {
+              console.log('EmploymentHistoryStep - onUpdate called with entry:', updatedEntry);
+              // Call handleSaveEntry with the updated entry
+              handleSaveEntry(updatedEntry);
+            }}
             onDelete={handleCancelAdd}
             isEditing={true}
             employmentTypes={employmentTypes}
@@ -268,27 +361,17 @@ export const EmploymentHistoryStep: React.FC = () => {
           />
         ) : (
           <button onClick={() => setShowAddForm(true)} className="btn btn-primary btn-lg btn-block">
-            {t('employment.add_employment') || 'Add Employment'}
+            Add Employment
           </button>
         )}
       </div>
 
-      <div className="form-navigation">
-        <button
-          onClick={moveToPreviousStep}
-          disabled={!canMovePrevious}
-          className="btn btn-secondary"
-        >
-          {t('common.previous') || 'Previous'}
-        </button>
-        <button
-          onClick={moveToNextStep}
-          disabled={!canMoveNext || totalYears < requiredYears}
-          className="btn btn-primary"
-        >
-          {t('common.next') || 'Next'}
-        </button>
-      </div>
+      <StepNavigation
+        onNext={forceNextStep}
+        onPrevious={moveToPreviousStep}
+        canMoveNext={totalYears >= requiredYears}
+        canMovePrevious={canMovePrevious}
+      />
     </div>
   );
 };
