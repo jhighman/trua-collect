@@ -10,6 +10,7 @@ import { Button } from './ui/button';
 import { Checkbox } from './ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { FormError, FormErrorSummary, FormField } from './ui/form-error';
+import { Pencil, Trash2 } from 'lucide-react';
 import './ResidenceEntry.css';
 
 export interface ResidenceEntryData {
@@ -115,10 +116,10 @@ export function ResidenceEntry({ entry, onUpdate, onDelete, onRemove = onDelete,
           <div className="flex justify-between items-start">
             <div className="space-y-2">
               <div className="font-medium text-lg">
-                {editedEntry.country && t(`countries.${editedEntry.country}`)}
+                {editedEntry.country && getCountryByCode(editedEntry.country)?.name}
               </div>
               <div className="text-base">{editedEntry.address}</div>
-              <div className="text-sm text-muted-foreground">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-primary/10 text-primary font-medium">
                 {editedEntry.city}, {editedEntry.state_province} {editedEntry.zip_postal}
               </div>
               <div className="text-sm mt-2">
@@ -127,18 +128,22 @@ export function ResidenceEntry({ entry, onUpdate, onDelete, onRemove = onDelete,
             </div>
             <div className="flex gap-2">
               <Button
-                variant="outline"
-                size="sm"
+                variant="ghost"
+                size="icon"
                 onClick={() => setIsEditable(true)}
+                className="h-9 w-9 text-muted-foreground hover:text-primary"
               >
-                {t('common.edit')}
+                <Pencil className="h-4 w-4" />
+                <span className="sr-only">{t('common.edit')}</span>
               </Button>
               <Button
-                variant="destructive"
-                size="sm"
+                variant="ghost"
+                size="icon"
                 onClick={onDelete}
+                className="h-9 w-9 text-muted-foreground hover:text-destructive"
               >
-                {t('common.delete')}
+                <Trash2 className="h-4 w-4" />
+                <span className="sr-only">{t('common.delete')}</span>
               </Button>
             </div>
           </div>
@@ -148,104 +153,32 @@ export function ResidenceEntry({ entry, onUpdate, onDelete, onRemove = onDelete,
   }
 
   const validationErrors = getValidationErrors();
-return (
-  <Card className="residence-entry-form mb-6">
-    <CardHeader>
-      <CardTitle>{isEditing ? t('residence.add_title') : t('residence.edit_title')}</CardTitle>
-    </CardHeader>
-    <CardContent className="p-6">
-      <div className="space-y-8">
-        <div className="space-y-6">
-          <div className="space-y-3">
-            <Label htmlFor="country" className="flex items-center gap-1 text-base font-medium">
-              {t('residence.country')}
-              <span className="text-destructive">*</span>
-            </Label>
-            <FormField error={showErrors && !editedEntry.country ? t('residence.country_required') : ''}>
-              <Select
-                value={editedEntry.country}
-                onValueChange={(value) => {
-                  setEditedEntry(prev => ({
-                    ...prev,
-                    country: value,
-                    state_province: '', // Reset state when country changes
-                  }));
-                }}
-              >
-                <SelectTrigger className={`w-full h-11 text-base ${!editedEntry.country && showErrors ? 'border-destructive ring-destructive' : ''}`}>
-                  <SelectValue placeholder={t('residence.select_country')} />
-                </SelectTrigger>
-                <SelectContent
-                  position="popper"
-                  sideOffset={5}
-                  align="start"
-                  className="select-content-dropdown"
-                >
-                  {countries.map(country => (
-                    <SelectItem 
-                      key={country.code} 
-                      value={country.code} 
-                      className="select-item"
-                    >
-                      {country.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormField>
-          </div>
-
-          <div className="space-y-3">
-            <Label htmlFor="address" className="flex items-center gap-1 text-base font-medium">
-              {t('residence.address')}
-              <span className="text-destructive">*</span>
-            </Label>
-            <FormField error={showErrors && !editedEntry.address ? t('residence.address_required') : ''}>
-              <Input
-                id="address"
-                className={`h-11 text-base ${!editedEntry.address && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                value={editedEntry.address}
-                onChange={(e) => setEditedEntry({ ...editedEntry, address: e.target.value })}
-                aria-invalid={!editedEntry.address && showErrors}
-              />
-            </FormField>
-          </div>
-
-          <div className="space-y-3">
-            <Label htmlFor="city" className="flex items-center gap-1 text-base font-medium">
-              {t('residence.city')}
-              <span className="text-destructive">*</span>
-            </Label>
-            <FormField error={showErrors && !editedEntry.city ? t('residence.city_required') : ''}>
-              <Input
-                id="city"
-                className={`h-11 text-base ${!editedEntry.city && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                value={editedEntry.city}
-                onChange={(e) => setEditedEntry({ ...editedEntry, city: e.target.value })}
-                aria-invalid={!editedEntry.city && showErrors}
-              />
-            </FormField>
-          </div>
-
-          <div className="flex flex-col md:flex-row gap-6">
-            <div className="flex-1 space-y-3">
-              <Label htmlFor="state_province" className="flex items-center gap-1 text-base font-medium">
-                {t('residence.state_province')}
+  return (
+    <Card className="residence-entry-form mb-6">
+      <CardHeader>
+        <CardTitle>{isEditing ? t('residence.add_title') : t('residence.edit_title')}</CardTitle>
+      </CardHeader>
+      <CardContent className="p-6">
+        <div className="space-y-8">
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <Label htmlFor="country" className="flex items-center gap-1 text-base font-medium">
+                {t('residence.country')}
                 <span className="text-destructive">*</span>
               </Label>
-              <FormField error={showErrors && !editedEntry.state_province ? t('residence.state_required') : ''}>
+              <FormField error={showErrors && !editedEntry.country ? t('residence.country_required') : ''}>
                 <Select
-                  value={editedEntry.state_province}
+                  value={editedEntry.country}
                   onValueChange={(value) => {
                     setEditedEntry(prev => ({
                       ...prev,
-                      state_province: value,
+                      country: value,
+                      state_province: '', // Reset state when country changes
                     }));
                   }}
-                  disabled={!editedEntry.country}
                 >
-                  <SelectTrigger className={`w-full h-11 text-base ${!editedEntry.state_province && showErrors ? 'border-destructive ring-destructive' : ''}`}>
-                    <SelectValue placeholder={t('residence.select_state')} />
+                  <SelectTrigger className={`w-full h-11 text-base select-trigger ${!editedEntry.country && showErrors ? 'border-destructive ring-destructive' : ''}`}>
+                    <SelectValue placeholder={t('residence.select_country')} />
                   </SelectTrigger>
                   <SelectContent
                     position="popper"
@@ -253,117 +186,189 @@ return (
                     align="start"
                     className="select-content-dropdown"
                   >
-                    {availableStates.map(state => (
+                    {countries.map(country => (
                       <SelectItem 
-                        key={state.code} 
-                        value={state.code} 
+                        key={country.code} 
+                        value={country.code} 
                         className="select-item"
                       >
-                        {state.name}
+                        {country.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </FormField>
             </div>
-
-            <div className="w-full md:w-1/3 space-y-3">
-              <Label htmlFor="zip_postal" className="flex items-center gap-1 text-base font-medium">
-                {t('residence.zip_postal')}
+            
+            <div className="space-y-3">
+              <Label htmlFor="address" className="flex items-center gap-1 text-base font-medium">
+                {t('residence.address')}
                 <span className="text-destructive">*</span>
               </Label>
-              <FormField error={showErrors && !editedEntry.zip_postal ? t('residence.zip_required') : ''}>
+              <FormField error={showErrors && !editedEntry.address ? t('residence.address_required') : ''}>
                 <Input
-                  id="zip_postal"
-                  className={`h-11 text-base ${!editedEntry.zip_postal && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                  value={editedEntry.zip_postal}
-                  onChange={(e) => setEditedEntry({ ...editedEntry, zip_postal: e.target.value })}
-                  pattern="[0-9]{5}(-[0-9]{4})?"
-                  aria-invalid={!editedEntry.zip_postal && showErrors}
+                  id="address"
+                  className={`h-11 text-base ${!editedEntry.address && showErrors ? 'border-destructive ring-destructive' : ''}`}
+                  value={editedEntry.address}
+                  onChange={(e) => setEditedEntry({ ...editedEntry, address: e.target.value })}
+                  aria-invalid={!editedEntry.address && showErrors}
                 />
               </FormField>
             </div>
-          </div>
-
-          <div className="space-y-6 mt-6">
-            <div className="residence-current-checkbox-container p-4 rounded-md bg-[var(--color-gray-50)] hover:bg-[var(--color-gray-100)] transition-colors duration-200">
-              <Checkbox
-                id="is_current"
-                checked={editedEntry.is_current}
-                onCheckedChange={(checked) => setEditedEntry({
-                  ...editedEntry,
-                  is_current: checked === true,
-                  end_date: checked === true ? null : editedEntry.end_date
-                })}
-                className="residence-checkbox-visible transition-all duration-200"
-              />
-              <label
-                htmlFor="is_current"
-                className="ml-3 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                {t('residence.is_current')}
-              </label>
+            
+            <div className="space-y-3">
+              <Label htmlFor="city" className="flex items-center gap-1 text-base font-medium">
+                {t('residence.city')}
+                <span className="text-destructive">*</span>
+              </Label>
+              <FormField error={showErrors && !editedEntry.city ? t('residence.city_required') : ''}>
+                <Input
+                  id="city"
+                  className={`h-11 text-base ${!editedEntry.city && showErrors ? 'border-destructive ring-destructive' : ''}`}
+                  value={editedEntry.city}
+                  onChange={(e) => setEditedEntry({ ...editedEntry, city: e.target.value })}
+                  aria-invalid={!editedEntry.city && showErrors}
+                />
+              </FormField>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <Label htmlFor="start_date" className="flex items-center gap-1 text-base font-medium">
-                  {t('residence.from_date')}
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="flex-1 space-y-3">
+                <Label htmlFor="state_province" className="flex items-center gap-1 text-base font-medium">
+                  {t('residence.state_province')}
                   <span className="text-destructive">*</span>
                 </Label>
-                <FormField error={showErrors && !editedEntry.start_date ? t('common.start_date_required') : ''}>
-                  <Input
-                    type="month"
-                    id="start_date"
-                    className={`h-11 text-base ${!editedEntry.start_date && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                    value={editedEntry.start_date}
-                    onChange={(e) => setEditedEntry({ ...editedEntry, start_date: e.target.value })}
-                    aria-invalid={!editedEntry.start_date && showErrors}
-                  />
-                  <p className="text-muted-foreground text-sm">
-                    {t('residence.from_date_help')}
-                  </p>
+                <FormField error={showErrors && !editedEntry.state_province ? t('residence.state_required') : ''}>
+                  <Select
+                    value={editedEntry.state_province}
+                    onValueChange={(value) => {
+                      setEditedEntry(prev => ({
+                        ...prev,
+                        state_province: value,
+                      }));
+                    }}
+                    disabled={!editedEntry.country}
+                  >
+                    <SelectTrigger className={`w-full h-11 text-base select-trigger ${!editedEntry.state_province && showErrors ? 'border-destructive ring-destructive' : ''}`}>
+                      <SelectValue placeholder={t('residence.select_state')} />
+                    </SelectTrigger>
+                    <SelectContent
+                      position="popper"
+                      sideOffset={5}
+                      align="start"
+                      className="select-content-dropdown"
+                    >
+                      {availableStates.map(state => (
+                        <SelectItem 
+                          key={state.code} 
+                          value={state.code} 
+                          className="select-item"
+                        >
+                          {state.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </FormField>
               </div>
-
-              <div className="space-y-3">
-                <Label htmlFor="end_date" className="flex items-center gap-1 text-base font-medium">
-                  {t('residence.to_date')}
-                  {!editedEntry.is_current && <span className="text-destructive">*</span>}
+              
+              <div className="w-full md:w-1/3 space-y-3">
+                <Label htmlFor="zip_postal" className="flex items-center gap-1 text-base font-medium">
+                  {t('residence.zip_postal')}
+                  <span className="text-destructive">*</span>
                 </Label>
-                <FormField error={showErrors && !editedEntry.is_current && !editedEntry.end_date ? t('common.end_date_required') : ''}>
-                  {!editedEntry.is_current ? (
-                    <Input
-                      type="month"
-                      id="end_date"
-                      className={`h-11 text-base ${!editedEntry.end_date && !editedEntry.is_current && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                      value={editedEntry.end_date || ''}
-                      onChange={(e) => setEditedEntry({ ...editedEntry, end_date: e.target.value })}
-                      aria-invalid={!editedEntry.end_date && showErrors}
-                    />
-                  ) : (
-                    <div className="h-11 flex items-center px-3 bg-gray-50 border border-gray-200 rounded-md">
-                      <span className="text-base font-medium text-primary">
-                        {t('common.present')}
-                      </span>
-                    </div>
-                  )}
-                  {!editedEntry.is_current && (
-                    <p className="text-muted-foreground text-sm">
-                      {t('residence.to_date_help')}
-                    </p>
-                  )}
+                <FormField error={showErrors && !editedEntry.zip_postal ? t('residence.zip_required') : ''}>
+                  <Input
+                    id="zip_postal"
+                    className={`h-11 text-base ${!editedEntry.zip_postal && showErrors ? 'border-destructive ring-destructive' : ''}`}
+                    value={editedEntry.zip_postal}
+                    onChange={(e) => setEditedEntry({ ...editedEntry, zip_postal: e.target.value })}
+                    pattern="[0-9]{5}(-[0-9]{4})?"
+                    aria-invalid={!editedEntry.zip_postal && showErrors}
+                  />
                 </FormField>
               </div>
             </div>
-          </div>
+            
+            <div className="space-y-6 mt-6">
+              <div className="residence-current-checkbox-container p-4 rounded-md bg-[var(--color-gray-50)] hover:bg-[var(--color-gray-100)] transition-colors duration-200">
+                <Checkbox
+                  id="is_current"
+                  checked={editedEntry.is_current}
+                  onCheckedChange={(checked) => setEditedEntry({
+                    ...editedEntry, 
+                    is_current: checked === true,
+                    end_date: checked === true ? null : editedEntry.end_date
+                  })}
+                  className="residence-checkbox-visible transition-all duration-200"
+                />
+                <label
+                  htmlFor="is_current"
+                  className="ml-3 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  {t('residence.is_current')}
+                </label>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label htmlFor="start_date" className="flex items-center gap-1 text-base font-medium">
+                    {t('residence.from_date')}
+                    <span className="text-destructive">*</span>
+                  </Label>
+                  <FormField error={showErrors && !editedEntry.start_date ? t('common.start_date_required') : ''}>
+                    <Input
+                      type="month"
+                      id="start_date"
+                      className={`h-11 text-base ${!editedEntry.start_date && showErrors ? 'border-destructive ring-destructive' : ''}`}
+                      value={editedEntry.start_date}
+                      onChange={(e) => setEditedEntry({ ...editedEntry, start_date: e.target.value })}
+                      aria-invalid={!editedEntry.start_date && showErrors}
+                    />
+                    <p className="text-muted-foreground text-sm">
+                      {t('residence.from_date_help')}
+                    </p>
+                  </FormField>
+                </div>
 
-          {showErrors && validationErrors.length > 0 && (
-            <FormErrorSummary errors={validationErrors} />
-          )}
+                <div className="space-y-3">
+                  <Label htmlFor="end_date" className="flex items-center gap-1 text-base font-medium">
+                    {t('residence.to_date')}
+                    {!editedEntry.is_current && <span className="text-destructive">*</span>}
+                  </Label>
+                  <FormField error={showErrors && !editedEntry.is_current && !editedEntry.end_date ? t('common.end_date_required') : ''}>
+                    {!editedEntry.is_current ? (
+                      <Input
+                        type="month"
+                        id="end_date"
+                        className={`h-11 text-base ${!editedEntry.end_date && !editedEntry.is_current && showErrors ? 'border-destructive ring-destructive' : ''}`}
+                        value={editedEntry.end_date || ''}
+                        onChange={(e) => setEditedEntry({ ...editedEntry, end_date: e.target.value })}
+                        aria-invalid={!editedEntry.end_date && showErrors}
+                      />
+                    ) : (
+                      <div className="h-11 flex items-center px-3 bg-gray-50 border border-gray-200 rounded-md">
+                        <span className="text-base font-medium text-primary">
+                          {t('common.present')}
+                        </span>
+                      </div>
+                    )}
+                    {!editedEntry.is_current && (
+                      <p className="text-muted-foreground text-sm">
+                        {t('residence.to_date_help')}
+                      </p>
+                    )}
+                  </FormField>
+                </div>
+              </div>
+            </div>
+            
+            {showErrors && validationErrors.length > 0 && (
+              <FormErrorSummary errors={validationErrors} />
+            )}
+          </div>
         </div>
-      </div>
-    </CardContent>
+      </CardContent>
       <CardFooter className="flex justify-end gap-4 border-t pt-6 px-6 bg-gray-50">
         <Button
           variant="outline"

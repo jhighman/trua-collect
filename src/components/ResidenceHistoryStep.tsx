@@ -6,8 +6,9 @@ import Timeline from './Timeline';
 import { DEFAULT_COUNTRY } from '../utils/countries';
 import StepNavigation from './StepNavigation';
 import { Button } from './ui/button';
+import { PushButton } from './ui/push-button';
 import { Card, CardHeader } from './ui/card';
-import { InfoIcon } from 'lucide-react';
+import { InfoIcon, PlusCircle } from 'lucide-react';
 import './Timeline.css';
 import './ResidenceHistoryStep.css';
 import { getRequirements } from '../utils/collectionKeyParser';
@@ -62,7 +63,7 @@ const [entries, setEntries] = useState<ResidenceEntryState[]>(() => {
   const [totalYears, setTotalYears] = useState<number>(0);
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
   const [newEntry, setNewEntry] = useState<ResidenceEntryData>({
-    country: DEFAULT_COUNTRY,
+    country: '',
     address: '',
     city: '',
     state_province: '',
@@ -160,7 +161,7 @@ const [entries, setEntries] = useState<ResidenceEntryState[]>(() => {
   const handleCancelAdd = () => {
     setShowAddForm(false);
     setNewEntry({
-      country: DEFAULT_COUNTRY,
+      country: '',
       address: '',
       city: '',
       state_province: '',
@@ -224,7 +225,7 @@ const [entries, setEntries] = useState<ResidenceEntryState[]>(() => {
     // Reset the form
     setShowAddForm(false);
     setNewEntry({
-      country: DEFAULT_COUNTRY,
+      country: '',
       address: '',
       city: '',
       state_province: '',
@@ -402,13 +403,14 @@ const [entries, setEntries] = useState<ResidenceEntryState[]>(() => {
           isEditing={true}
         />
       ) : (
-        <Button
+        <PushButton
           onClick={handleAddEntry}
           className="w-full max-w-md mx-auto mb-8 py-6 text-lg font-medium bg-primary hover:bg-primary/90"
           size="lg"
+          icon={PlusCircle}
         >
           {t('residence.add_button')}
-        </Button>
+        </PushButton>
       )}
 
       <StepNavigation

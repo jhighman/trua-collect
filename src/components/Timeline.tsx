@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from '../context/TranslationContext';
+import { AlertTriangle } from 'lucide-react';
 
 interface TimelineEntry {
   startDate: string; // ISO date string
@@ -177,6 +178,7 @@ export const Timeline: React.FC<TimelineProps> = ({
               required: requiredYears.toString()
             })}
             <div className="validation-message">
+              <AlertTriangle />
               {t('timeline.validation_message', {
                 remaining: requiredYears.toString()
               })}
@@ -216,6 +218,7 @@ export const Timeline: React.FC<TimelineProps> = ({
           })}
           {timelineData.yearsAccounted < requiredYears && (
             <div className="validation-message">
+              <AlertTriangle />
               {t('timeline.validation_message', {
                 remaining: (requiredYears - timelineData.yearsAccounted).toFixed(1)
               })}

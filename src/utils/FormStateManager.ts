@@ -119,7 +119,7 @@ export class FormStateManager {
     const currentState = this.state;
     this.config = config;
     const newState = this.initializeState();
-
+    
     if (currentState && currentState.steps) {
       this.logger('FormStateManager: Preserving state from previous state');
       Object.keys(currentState.steps).forEach(stepId => {
@@ -142,7 +142,7 @@ export class FormStateManager {
         }
       });
     }
-
+    
     newState.currentStepId = currentState?.currentStepId || config.initialStep;
     this.logger('FormStateManager: Setting current step to: ' + newState.currentStepId);
     this.state = newState;
