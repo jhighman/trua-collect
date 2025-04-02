@@ -1,6 +1,6 @@
 .employment-entry {
   position: relative;
-  z-index: 10;
+  z-index: 5;
   margin-bottom: var(--spacing-6);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-lg);
@@ -309,4 +309,20 @@
   border-radius: var(--border-radius-small);
   cursor: pointer;
   transition: transform var(--transition-default), box-shadow var(--transition-default);
+}
+
+/* Timeline overrides for employment history */
+.employment-history .timeline-visualization {
+  margin: 40px 0;
+  padding-bottom: 60px;
+  overflow: visible;
+}
+
+.employment-history .timeline-container {
+  margin: 20px 0;
+  overflow: visible;
+}
+
+.employment-history .timeline-segment-tooltip {
+  z-index: 25;
 } 

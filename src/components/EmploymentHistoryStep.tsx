@@ -6,6 +6,9 @@ import { EmploymentEntry } from './EmploymentEntry';
 import type { EmploymentEntryData } from './EmploymentEntry';
 import { Timeline } from './Timeline';
 import StepNavigation from './StepNavigation';
+import { PushButton } from './ui/push-button';
+import { Card, CardHeader, CardContent } from './ui/card';
+import { InfoIcon } from 'lucide-react';
 import './EmploymentHistoryStep.css';
 import './Timeline.css';
 import { getRequirements } from '../utils/collectionKeyParser';
@@ -289,82 +292,79 @@ export const EmploymentHistoryStep: React.FC = () => {
   const errors = getStepErrors('employment-history');
 
   return (
-    <div className="employment-history-step">
-      <div className="step-header">
-      <h2>{t('employment.title')}</h2>
-        <p className="step-description">{t('employment.intro', { years: requiredYears.toString() })}</p>
-      </div>
-      
-      <div className="timeline-container">
-      <Timeline
-        entries={entries.map(entry => ({
-          ...entry,
-          startDate: entry.start_date,
-            endDate: entry.end_date,
-            duration_years: entry.duration_years
-        }))}
-        type="employment"
-        requiredYears={requiredYears}
-        onEntryClick={(entry) => {
-          const index = entries.findIndex(e =>
-              e.start_date === entry.startDate &&
-              e.end_date === entry.endDate
-          );
-          if (index !== -1) {
-            const entryElement = document.querySelector(`.employment-entry:nth-child(${index + 1}) .button.icon[aria-label="Edit employment"]`);
-            if (entryElement) {
-              (entryElement as HTMLElement).click();
-            }
-          }
-        }}
-      />
-      
-      {errors._timeline && (
-        <div className="error-message" role="alert" aria-live="assertive">{errors._timeline}</div>
-      )}
-      </div>
-      
-        <div className="entries-list">
-          <h3>Your Employment History</h3>
-          {entries.map((entry, index) => (
-          <div key={index} className="entry-item">
-            <div className="entry-content">
-            <EmploymentEntry
-              entry={entry}
-              onUpdate={(updatedEntry) => handleUpdateEntry(index, updatedEntry)}
-              onDelete={() => handleRemoveEntry(index)}
-              employmentTypes={employmentTypes}
-              isCompanyRequired={isCompanyRequired}
-              isPositionRequired={isPositionRequired}
-              isContactRequired={isContactRequired}
-            />
-            </div>
+    <div className="employment-history">
+      <Card className="mb-6 w-full">
+        <CardHeader>
+          <h2 className="text-2xl font-semibold tracking-tight">{t('employment.title')}</h2>
+          <div className="flex items-start gap-2 text-muted-foreground">
+            <InfoIcon className="h-5 w-5 mt-0.5 flex-shrink-0" />
+            <p className="text-sm">{t('employment.intro', { years: requiredYears.toString() })}</p>
           </div>
-        ))}
-                  </div>
-                  
-      <div className="add-entry-container">
-        {showAddForm ? (
-          <EmploymentEntry
-            entry={newEntry}
-            onUpdate={(updatedEntry) => {
-              console.log('EmploymentHistoryStep - onUpdate called with entry:', updatedEntry);
-              // Call handleSaveEntry with the updated entry
-              handleSaveEntry(updatedEntry);
+        </CardHeader>
+        <CardContent>
+          <Timeline
+            entries={entries.map(entry => ({
+              ...entry,
+              startDate: entry.start_date,
+              endDate: entry.end_date,
+              duration_years: entry.duration_years
+            }))}
+            type="employment"
+            requiredYears={requiredYears}
+            onEntryClick={(entry) => {
+              const index = entries.findIndex(e =>
+                  e.start_date === entry.startDate &&
+                  e.end_date === entry.endDate
+              );
+              if (index !== -1) {
+                const entryElement = document.querySelector(`.employment-entry:nth-child(${index + 1}) .button.icon[aria-label="Edit employment"]`);
+                if (entryElement) {
+                  (entryElement as HTMLElement).click();
+                }
+              }
             }}
-            onDelete={handleCancelAdd}
-            isEditing={true}
-            employmentTypes={employmentTypes}
-            isCompanyRequired={isCompanyRequired}
-            isPositionRequired={isPositionRequired}
-            isContactRequired={isContactRequired}
           />
-        ) : (
-          <button onClick={() => setShowAddForm(true)} className="btn btn-primary btn-lg btn-block">
-            Add Employment
-          </button>
-        )}
-      </div>
+          
+          {errors._timeline && (
+            <div className="error-message" role="alert" aria-live="assertive">{errors._timeline}</div>
+          )}
+        </CardContent>
+      </Card>
+
+      {entries.map((entry, index) => (
+        <EmploymentEntry
+          key={index}
+          entry={entry}
+          onUpdate={(updatedEntry) => handleUpdateEntry(index, updatedEntry)}
+          onDelete={() => handleRemoveEntry(index)}
+          employmentTypes={employmentTypes}
+          isCompanyRequired={isCompanyRequired}
+          isPositionRequired={isPositionRequired}
+          isContactRequired={isContactRequired}
+        />
+      ))}
+
+      <PushButton
+        variant="outline"
+        size="lg"
+        onClick={() => setShowAddForm(true)}
+        className="w-full"
+      >
+        {t('employment.add_button')}
+      </PushButton>
+
+      {showAddForm && (
+        <EmploymentEntry
+          entry={newEntry}
+          onUpdate={handleSaveEntry}
+          onDelete={() => setShowAddForm(false)}
+          employmentTypes={employmentTypes}
+          isCompanyRequired={isCompanyRequired}
+          isPositionRequired={isPositionRequired}
+          isContactRequired={isContactRequired}
+          isEditing={true}
+        />
+      )}
 
       <StepNavigation
         onNext={forceNextStep}

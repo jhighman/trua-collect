@@ -6,6 +6,8 @@ import Timeline from './Timeline';
 import { DEFAULT_COUNTRY } from '../utils/countries';
 import StepNavigation from './StepNavigation';
 import { Button } from './ui/button';
+import { Card, CardHeader } from './ui/card';
+import { InfoIcon } from 'lucide-react';
 import './Timeline.css';
 import './ResidenceHistoryStep.css';
 import { getRequirements } from '../utils/collectionKeyParser';
@@ -194,40 +196,32 @@ const [entries, setEntries] = useState<ResidenceEntryState[]>(() => {
     // Update the entries state
     const newEntries = [...entries, entryWithDuration];
     console.log('ResidenceHistoryStep - New entries array:', newEntries);
-    setEntries(newEntries);
     
     // Calculate total years immediately
     const total = newEntries.reduce((sum, entry) => sum + (entry.duration_years || 0), 0);
     console.log('ResidenceHistoryStep - Total years:', total, 'Required years:', yearsRequired);
-    const isComplete = total >= yearsRequired;
     
-    // Ensure entries have the required TimelineEntry properties
+    // Update local state
+    setEntries(newEntries);
+    setTotalYears(total);
+    
+    // Format entries for form state
     const timelineEntries = newEntries.map(entry => ({
       ...entry,
       startDate: entry.start_date,
       endDate: entry.end_date,
-      isCurrent: entry.is_current
-    })) as unknown as TimelineEntry[];
+      isCurrent: entry.is_current,
+      type: 'residence'
+    }));
     
-    // Update form state directly
-    console.log('ResidenceHistoryStep - Setting value for residence-history.entries:', timelineEntries);
-    setValue('residence-history', 'entries', timelineEntries);
-    console.log('ResidenceHistoryStep - Setting value for residence-history.total_years:', total);
+    // Update form state
+    setValue('residence-history', 'entries', timelineEntries as unknown as FormValue);
     setValue('residence-history', 'total_years', total.toString() as unknown as FormValue);
-    console.log('ResidenceHistoryStep - Setting value for residence-history.isComplete:', isComplete);
-    setValue('residence-history', 'isComplete', isComplete);
-    setValue('residence-history', '_complete', isComplete);
-    setValue('residence-history', 'isValid', isComplete);
+    setValue('residence-history', 'isComplete', total >= yearsRequired);
+    setValue('residence-history', '_complete', total >= yearsRequired);
+    setValue('residence-history', 'isValid', total >= yearsRequired);
     
-    // Force refresh if we have enough years
-    if (isComplete) {
-      console.log('ResidenceHistoryStep - Forcing current step to:', currentStep);
-      forceSetCurrentStep(currentStep);
-      // Directly move to the next step if we have enough years
-      console.log('ResidenceHistoryStep - Forcing next step');
-      forceNextStep();
-    }
-    
+    // Reset the form
     setShowAddForm(false);
     setNewEntry({
       country: DEFAULT_COUNTRY,
@@ -240,6 +234,11 @@ const [entries, setEntries] = useState<ResidenceEntryState[]>(() => {
       is_current: false,
       duration_years: 0
     });
+
+    // If we have enough years, move to next step
+    if (total >= yearsRequired) {
+      forceNextStep();
+    }
   };
 
   const handleRemoveEntry = (index: number) => {
@@ -347,46 +346,53 @@ const [entries, setEntries] = useState<ResidenceEntryState[]>(() => {
 
   return (
     <div className="residence-history-step">
-      <div className="step-header">
-        <h2>{t('residence.title')}</h2>
-        <p className="step-description">
-          {t('residence.intro', translationParams)}
-        </p>
-      </div>
+      <Card className="mb-6 w-full">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-semibold tracking-tight">{t('residence.title')}</h2>
+            <InfoIcon className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {t('residence.intro', translationParams)}
+          </p>
+        </CardHeader>
+      </Card>
       
-      {/* Timeline visualization */}
-      <Timeline
-        entries={entries.map(entry => ({
-          ...entry,
-          startDate: entry.start_date,
-          endDate: entry.end_date,
-          type: 'residence'
-        }))}
-        type="residence"
-        requiredYears={yearsRequired}
-        onEntryClick={(entry) => {
-          const index = entries.findIndex(e => 
-            e.start_date === entry.startDate && 
-            e.end_date === entry.endDate
-          );
-          if (index !== -1) {
-            // Set the entry to edit mode
-            const updatedEntries = [...entries];
-            setEntries(updatedEntries);
-          }
-        }}
-      />
-
-      <div className="entries-list">
-        {entries.map((entry, index) => (
-          <ResidenceEntry
-            key={index}
-            entry={entry}
-            onUpdate={(updatedEntry) => handleUpdateEntry(index, updatedEntry)}
-            onDelete={() => handleRemoveEntry(index)}
+      {entries.length > 0 && (
+        <>
+          <Timeline
+            entries={entries.map(entry => ({
+              ...entry,
+              startDate: entry.start_date,
+              endDate: entry.end_date,
+              type: 'residence'
+            }))}
+            type="residence"
+            requiredYears={yearsRequired}
+            onEntryClick={(entry) => {
+              const index = entries.findIndex(e => 
+                e.start_date === entry.startDate && 
+                e.end_date === entry.endDate
+              );
+              if (index !== -1) {
+                const updatedEntries = [...entries];
+                setEntries(updatedEntries);
+              }
+            }}
           />
-        ))}
-      </div>
+
+          <div className="entries-list">
+            {entries.map((entry, index) => (
+              <ResidenceEntry
+                key={index}
+                entry={entry}
+                onUpdate={(updatedEntry) => handleUpdateEntry(index, updatedEntry)}
+                onDelete={() => handleRemoveEntry(index)}
+              />
+            ))}
+          </div>
+        </>
+      )}
 
       {showAddForm ? (
         <ResidenceEntry
@@ -404,12 +410,14 @@ const [entries, setEntries] = useState<ResidenceEntryState[]>(() => {
           {t('residence.add_button')}
         </Button>
       )}
-<StepNavigation
-  onNext={moveToNextStep}
-  onPrevious={moveToPreviousStep}
-  canMoveNext={totalYears >= yearsRequired}
-  canMovePrevious={canMovePrevious}
-/>
+
+      <StepNavigation
+        onNext={moveToNextStep}
+        onPrevious={moveToPreviousStep}
+        canMoveNext={totalYears >= yearsRequired}
+        canMovePrevious={canMovePrevious}
+      />
+      
       {errors && Array.isArray(errors) && errors.length > 0 && (
         <div className="error-messages">
           {errors.map((error: string, index: number) => (

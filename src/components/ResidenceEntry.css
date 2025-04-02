@@ -5,8 +5,21 @@
   z-index: 9999 !important;
 }
 
-/* Checkbox styling */
-.checkbox-visible {
+/* Style the select content */
+[data-radix-select-content],
+.select-content-dropdown {
+  z-index: 9999 !important;
+  background-color: white !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 0.5rem !important;
+  box-shadow: var(--shadow-md) !important;
+  overflow: hidden !important;
+  max-height: 300px !important;
+  padding: 0.5rem !important;
+}
+
+/* Residence-specific checkbox styling */
+.residence-checkbox-visible {
   border: 2px solid var(--color-gray-400);
   border-radius: 4px;
   background-color: white;
@@ -19,24 +32,24 @@
   cursor: pointer;
 }
 
-.checkbox-visible:hover {
+.residence-checkbox-visible:hover {
   border-color: var(--primary-color);
   box-shadow: var(--shadow-md);
 }
 
-.checkbox-visible:focus-visible {
+.residence-checkbox-visible:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px rgba(var(--primary), 0.2);
 }
 
-.checkbox-visible[data-state="checked"] {
+.residence-checkbox-visible[data-state="checked"] {
   border-color: var(--primary-color);
   background-color: var(--primary-color);
   color: white;
 }
 
-/* Consent checkbox container */
-.consent-checkbox-container {
+/* Residence current checkbox container */
+.residence-current-checkbox-container {
   padding: 1rem;
   border-radius: 8px;
   transition: all 0.2s ease;
@@ -44,18 +57,19 @@
   display: flex;
   align-items: center;
   margin-bottom: 1rem;
+  background-color: var(--color-gray-50);
 }
 
-.consent-checkbox-container > [data-slot="checkbox"] {
+.residence-current-checkbox-container > [data-slot="checkbox"] {
   margin-right: 10px;
 }
 
-.consent-checkbox-container:hover {
+.residence-current-checkbox-container:hover {
   background-color: var(--color-gray-50);
   border-color: var(--color-gray-200);
 }
 
-.consent-label {
+.residence-label {
   font-weight: var(--font-weight-medium);
   font-size: var(--font-size-medium);
   color: var(--text-color);
@@ -143,19 +157,6 @@
   background-color: white;
 }
 
-/* Style the select content */
-[data-radix-select-content],
-.select-content-dropdown {
-  z-index: 9999 !important;
-  background-color: white !important;
-  border: 1px solid var(--border-color) !important;
-  border-radius: 0.5rem !important;
-  box-shadow: var(--shadow-md) !important;
-  overflow: hidden !important;
-  max-height: 300px !important;
-  padding: 0.5rem !important;
-}
-
 /* Style select items */
 .select-item {
   padding: 0.75rem 1rem !important;
@@ -163,6 +164,7 @@
   border-radius: 0.25rem !important;
   cursor: pointer !important;
   transition: all 0.2s ease !important;
+  background-color: white !important;
 }
 
 .select-item:hover {
@@ -220,4 +222,15 @@
   .residence-entry-form [data-slot="card-footer"] {
     padding: 1rem;
   }
+}
+
+/* Remove any positioning that might interfere */
+[data-radix-select-viewport] {
+  background-color: white !important;
+}
+
+/* Ensure the checkbox container stays below the dropdown */
+.residence-current-checkbox-container {
+  position: relative;
+  z-index: 1;
 }

@@ -8,6 +8,8 @@ export const translations = {
     "common.add": "Add",
     "common.edit": "Edit",
     "common.remove": "Remove",
+    "common.delete": "Delete",
+    "common.current": "Current",
     "common.years": "years",
     
     // Form steps
@@ -191,6 +193,8 @@ export const translations = {
     "common.add": "Añadir",
     "common.edit": "Editar",
     "common.remove": "Eliminar",
+    "common.delete": "Eliminar",
+    "common.current": "Actual",
     "common.years": "años",
     
     // Form steps
@@ -351,6 +355,8 @@ export const translations = {
     "common.add": "Ajouter",
     "common.edit": "Modifier",
     "common.remove": "Supprimer",
+    "common.delete": "Supprimer",
+    "common.current": "Actuel",
     "common.years": "ans",
     
     // Form steps
@@ -506,6 +512,8 @@ export const translations = {
     "common.add": "Aggiungi",
     "common.edit": "Modifica",
     "common.remove": "Rimuovi",
+    "common.delete": "Rimuovi",
+    "common.current": "Attuale",
     "common.years": "anni",
     
     // Form steps

@@ -175,9 +175,18 @@ return (
                 <SelectTrigger className={`w-full h-11 text-base ${!editedEntry.country && showErrors ? 'border-destructive ring-destructive' : ''}`}>
                   <SelectValue placeholder={t('residence.select_country')} />
                 </SelectTrigger>
-                <SelectContent className="select-content-dropdown">
+                <SelectContent
+                  position="popper"
+                  sideOffset={5}
+                  align="start"
+                  className="select-content-dropdown"
+                >
                   {countries.map(country => (
-                    <SelectItem key={country.code} value={country.code} className="select-item">
+                    <SelectItem 
+                      key={country.code} 
+                      value={country.code} 
+                      className="select-item"
+                    >
                       {country.name}
                     </SelectItem>
                   ))}
@@ -238,9 +247,18 @@ return (
                   <SelectTrigger className={`w-full h-11 text-base ${!editedEntry.state_province && showErrors ? 'border-destructive ring-destructive' : ''}`}>
                     <SelectValue placeholder={t('residence.select_state')} />
                   </SelectTrigger>
-                  <SelectContent className="select-content-dropdown" position="popper" sideOffset={5}>
+                  <SelectContent
+                    position="popper"
+                    sideOffset={5}
+                    align="start"
+                    className="select-content-dropdown"
+                  >
                     {availableStates.map(state => (
-                      <SelectItem key={state.code} value={state.code} className="select-item">
+                      <SelectItem 
+                        key={state.code} 
+                        value={state.code} 
+                        className="select-item"
+                      >
                         {state.name}
                       </SelectItem>
                     ))}
@@ -268,7 +286,7 @@ return (
           </div>
 
           <div className="space-y-6 mt-6">
-            <div className="consent-checkbox-container p-4 rounded-md bg-[var(--color-gray-50)] hover:bg-[var(--color-gray-100)] transition-colors duration-200">
+            <div className="residence-current-checkbox-container p-4 rounded-md bg-[var(--color-gray-50)] hover:bg-[var(--color-gray-100)] transition-colors duration-200">
               <Checkbox
                 id="is_current"
                 checked={editedEntry.is_current}
@@ -277,11 +295,14 @@ return (
                   is_current: checked === true,
                   end_date: checked === true ? null : editedEntry.end_date
                 })}
-                className="checkbox-visible transition-all duration-200"
+                className="residence-checkbox-visible transition-all duration-200"
               />
-              <Label htmlFor="is_current" className="consent-label text-base ml-3">
+              <label
+                htmlFor="is_current"
+                className="ml-3 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
                 {t('residence.is_current')}
-              </Label>
+              </label>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

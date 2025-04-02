@@ -93,7 +93,7 @@ export interface FormProviderProps {
   collectionKey?: string;
 }
 
-export const FormProvider: React.FC<FormProviderProps> = ({
+export const FormProvider: React.FC<FormProviderProps> = React.memo(({
   children,
   requirements,
   onSubmit,
@@ -180,8 +180,13 @@ export const FormProvider: React.FC<FormProviderProps> = ({
         }
       });
 
-      const firstEnabledStep = initialStep || stepOrder.find(stepId => isStepEnabled(stepId, safeRequirements)) || 'personal-info';
-      formManagerInstance!.forceSetCurrentStep(firstEnabledStep);
+      // Only set the initial step if it's enabled, otherwise find the first enabled step
+      const effectiveInitialStep = isStepEnabled(initialStep, safeRequirements)
+        ? initialStep
+        : stepOrder.find(stepId => isStepEnabled(stepId, safeRequirements)) || 'personal-info';
+      
+      console.log(`FormContext: Setting initial step to: ${effectiveInitialStep}`);
+      formManagerInstance!.forceSetCurrentStep(effectiveInitialStep);
       initializedRef.current = true;
     }
 
@@ -202,10 +207,29 @@ export const FormProvider: React.FC<FormProviderProps> = ({
   }, [formManager, stateVersion]);
 
   const navigationState = useMemo(() => {
-    const navState = formManager.getNavigationState();
-    console.log('FormContext: Computed navigationState:', navState);
-    return navState;
-  }, [formManager, stateVersion]);
+    const currentStepId = formState.currentStepId;
+    const stepRequirement = _stepIdToRequirementKey(currentStepId);
+    
+    let canMoveNext = formManager.isStepValid(currentStepId);
+    
+    // Special handling for residence history step
+    if (currentStepId === 'residence-history' && stepRequirement) {
+      const requirement = safeRequirements.verificationSteps[stepRequirement];
+      if (requirement && 'years' in requirement) {
+        const yearsRequired = requirement.years || 0;
+        const totalYearsValue = formManager.getState().steps[currentStepId].values['total_years'];
+        const totalYears = parseFloat(totalYearsValue?.toString() || '0');
+        
+        console.log(`Checking residence history: total years ${totalYears}, required years ${yearsRequired}`);
+        canMoveNext = totalYears >= yearsRequired;
+      }
+    }
+
+    const state = formManager.getNavigationState();
+    state.canMoveNext = canMoveNext;
+    console.log('FormContext: Computed navigationState:', state);
+    return state;
+  }, [formManager, formState.currentStepId, safeRequirements, stateVersion]);
 
   const moveToNextStep = useCallback(() => {
     // Force move to the next step without checking if it's enabled
@@ -231,9 +255,9 @@ export const FormProvider: React.FC<FormProviderProps> = ({
   }, [formManager, navigationState, formState.currentStepId, onStepChange]);
 
   const moveToStep = useCallback((stepId: FormStepId) => {
-    formManager.forceSetCurrentStep(stepId);
+        formManager.forceSetCurrentStep(stepId);
     if (onStepChange) onStepChange(stepId, formManager.getState());
-    setStateVersion(v => v + 1);
+      setStateVersion(v => v + 1);
   }, [formManager, onStepChange]);
 
   const forceNextStep = useCallback(() => {
@@ -242,7 +266,7 @@ export const FormProvider: React.FC<FormProviderProps> = ({
       const nextStep = navigationState.availableSteps[currentIndex + 1];
       formManager.forceSetCurrentStep(nextStep);
       if (onStepChange) onStepChange(nextStep, formManager.getState());
-      setStateVersion(v => v + 1);
+        setStateVersion(v => v + 1);
     }
   }, [formManager, navigationState, formState.currentStepId, onStepChange]);
 
@@ -268,7 +292,7 @@ export const FormProvider: React.FC<FormProviderProps> = ({
       value = step.values[fieldId] ?? null;
     }
     console.log(`Getting value for ${stepId}.${fieldId}:`, value);
-    return value;
+      return value;
   }, [formManager]);
 
   const getStepErrors = useCallback((stepId: FormStepId) => {
@@ -339,28 +363,28 @@ export const FormProvider: React.FC<FormProviderProps> = ({
 
   const contextValue = useMemo(() => ({
     currentStep: formState.currentStepId,
-    formState,
-    navigationState,
-    canMoveNext: navigationState.canMoveNext,
-    canMovePrevious: navigationState.canMovePrevious,
-    availableSteps: navigationState.availableSteps,
-    completedSteps: navigationState.completedSteps,
-    moveToNextStep,
-    moveToPreviousStep,
-    moveToStep,
-    forceNextStep,
+      formState,
+      navigationState,
+      canMoveNext: navigationState.canMoveNext,
+      canMovePrevious: navigationState.canMovePrevious,
+      availableSteps: navigationState.availableSteps,
+      completedSteps: navigationState.completedSteps,
+      moveToNextStep,
+      moveToPreviousStep,
+      moveToStep,
+      forceNextStep,
     forceSetCurrentStep,
-    setValue,
-    getValue,
-    getStepErrors,
-    isStepValid,
-    addTimelineEntry,
-    updateTimelineEntry,
-    removeTimelineEntry,
-    getTimelineEntries,
-    formErrors,
-    submitForm,
-    isSubmitting,
+      setValue,
+      getValue,
+      getStepErrors,
+      isStepValid,
+      addTimelineEntry,
+      updateTimelineEntry,
+      removeTimelineEntry,
+      getTimelineEntries,
+      formErrors,
+      submitForm,
+      isSubmitting,
   }), [
     formState,
     navigationState,
@@ -383,7 +407,9 @@ export const FormProvider: React.FC<FormProviderProps> = ({
   ]);
 
   return <FormContext.Provider value={contextValue}>{children}</FormContext.Provider>;
-};
+});
+
+FormProvider.displayName = 'FormProvider';
 
 export const useForm = (): FormContextType => {
   const context = useContext(FormContext);

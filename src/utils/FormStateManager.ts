@@ -112,7 +112,7 @@ export class FormStateManager {
     this.state = this.initializeState();
     this.isInitialized = true;
   }
-
+  
   public updateConfig(config: FormConfig): void {
     this.logger('FormStateManager: Updating config with new initialStep: ' + config.initialStep);
 
@@ -160,12 +160,12 @@ export class FormStateManager {
 
   private initializeState(): FormState {
     this.logger('FormStateManager: Initializing state');
-
+    
     if (this.isInitialized && this.state) {
       this.logger('FormStateManager: Already initialized, preserving current state');
       return this.state;
     }
-
+    
     const initialSteps: Record<FormStepId, StepState> = {
       'personal-info': this.createStepState(),
       'education': this.createStepState(),
@@ -234,7 +234,7 @@ export class FormStateManager {
   public getNavigationState(): NavigationState {
     const currentStepIndex = this.config.steps.findIndex(s => s.id === this.state.currentStepId);
     const completedSteps = this.getCompletedSteps();
-
+    
     return {
       canMoveNext: this.canMoveNext(),
       canMovePrevious: currentStepIndex > 0,
@@ -242,7 +242,7 @@ export class FormStateManager {
       completedSteps,
     };
   }
-
+  
   public forceSetCurrentStep(stepId: FormStepId): FormState {
     this.logger('FormStateManager: Force setting current step to: ' + stepId);
     return this.moveToStep(stepId);
@@ -261,7 +261,7 @@ export class FormStateManager {
       ...this.state,
       currentStepId: stepId,
     };
-
+    
     this.notifyListeners();
     return this.getState();
   }
@@ -379,7 +379,7 @@ export class FormStateManager {
     const requiredStartDate = new Date();
     requiredStartDate.setFullYear(today.getFullYear() - 5);
 
-    const sortedEntries = [...entries].sort((a, b) =>
+    const sortedEntries = [...entries].sort((a, b) => 
       new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
     );
 
@@ -438,7 +438,7 @@ export class FormStateManager {
         this.logger('No highest education level set');
         return false;
       }
-
+      
       const collegeOrHigher = isCollegeOrHigher(educationValues.highestLevel);
       if (collegeOrHigher) {
         const entries = educationValues.entries;
@@ -448,7 +448,7 @@ export class FormStateManager {
 
       return true;
     }
-
+    
     return currentStep.isValid && currentStep.isComplete;
   }
 
@@ -562,9 +562,10 @@ export class FormStateManager {
       isComplete: false,
       errors: {},
       values: {},
-      touched: new Set<string>(),
+      touched: new Set(),
       _initialized: false,
       _complete: false,
+      _config: undefined
     };
   }
 }
