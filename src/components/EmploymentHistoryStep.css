@@ -1,216 +1,123 @@
 .employment-history-step {
-  max-width: 800px;
+  max-width: var(--container-width-lg);
   margin: 0 auto;
-  padding: 20px;
+  padding: var(--spacing-8);
+  background-color: var(--background-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
 }
 
 .employment-history-step .step-header {
-  margin-bottom: 24px;
+  margin-bottom: var(--spacing-8);
+  text-align: center;
 }
 
 .employment-history-step .step-header h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: #333;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-color-primary);
+  margin-bottom: var(--spacing-4);
 }
 
 .employment-history-step .step-description {
-  color: #666;
-  margin-bottom: 16px;
+  font-size: var(--font-size-lg);
+  color: var(--text-color-secondary);
+  margin-bottom: var(--spacing-6);
+  max-width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
 }
 
 .employment-history-step .entries-list {
-  margin-top: 24px;
-  margin-bottom: 24px;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  padding: 16px;
-  background-color: #f9f9f9;
+  margin-top: var(--spacing-8);
+  margin-bottom: var(--spacing-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
 }
 
-.employment-history-step .entries-list h3 {
-  font-size: 1.2rem;
-  font-weight: 500;
-  margin-bottom: 16px;
-  color: #444;
+.employment-history-step .btn-block {
+  margin-bottom: var(--spacing-8);
+  padding: var(--spacing-4);
+  font-size: var(--font-size-lg);
 }
 
-.employment-history-step .entry-item {
+.employment-history-step .add-employment-button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-md);
+  padding: 1rem 2rem;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: block;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto var(--spacing-8) auto;
+  text-align: center;
+}
+
+.employment-history-step .add-employment-button:hover {
+  background-color: var(--primary-color-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.employment-history-step .step-navigation {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  padding: 12px;
-  border-bottom: 1px solid #e0e0e0;
-  margin-bottom: 12px;
+  margin-top: var(--spacing-6);
+  padding-top: var(--spacing-4);
+  border-top: 1px solid var(--border-color);
 }
 
-.employment-history-step .entry-item:last-child {
-  border-bottom: none;
+.employment-history-step .error-messages {
+  margin-top: var(--spacing-4);
+  padding: var(--spacing-4);
+  background-color: var(--error-background);
+  border: 1px solid var(--error-border);
+  border-radius: var(--border-radius-md);
+}
+
+.employment-history-step .error {
+  color: var(--error-color);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--spacing-2);
+}
+
+.employment-history-step .error:last-child {
   margin-bottom: 0;
 }
 
-.employment-history-step .entry-content {
-  flex: 1;
+/* Timeline styles */
+.employment-history-step .timeline-container {
+  margin: var(--spacing-8) 0;
+  padding: var(--spacing-6);
+  background-color: var(--background-color-light);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
-.employment-history-step .entry-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.employment-history-step .edit-button,
-.employment-history-step .remove-button {
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  border: none;
-}
-
-.employment-history-step .edit-button {
-  background-color: #f0f0f0;
-  color: #333;
-}
-
-.employment-history-step .remove-button {
-  background-color: #ffebee;
-  color: #d32f2f;
-}
-
-.employment-history-step .add-entry-container {
-  margin-top: 16px;
-  margin-bottom: 24px;
-}
-
-.employment-history-step .add-button {
-  background-color: #e3f2fd;
-  color: #1976d2;
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-  border: none;
-}
-
-.employment-history-step .add-entry-form {
-  margin-top: 16px;
-  margin-bottom: 24px;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  padding: 16px;
-  background-color: #f9f9f9;
-}
-
-.employment-history-step .add-entry-form h3 {
-  font-size: 1.2rem;
-  font-weight: 500;
-  margin-bottom: 16px;
-  color: #444;
-}
-
-.employment-history-step .form-group {
-  margin-bottom: 16px;
-}
-
-.employment-history-step .form-group label {
-  display: block;
-  margin-bottom: 4px;
-  font-weight: 500;
-  color: #555;
-}
-
-.employment-history-step .form-group input[type="text"],
-.employment-history-step .form-group input[type="date"] {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.employment-history-step .form-group input[type="checkbox"] {
-  margin-right: 8px;
-}
-
-.employment-history-step .form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-.employment-history-step .form-navigation {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 24px;
-}
-
-.employment-history-step .button.primary {
-  background-color: #1976d2;
-  color: white;
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-  border: none;
-}
-
-.employment-history-step .button.primary:disabled {
-  background-color: #e0e0e0;
-  color: #9e9e9e;
-  cursor: not-allowed;
-}
-
-.employment-history-step .button.secondary {
-  background-color: #f5f5f5;
-  color: #333;
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-  border: 1px solid #ccc;
-}
-
-.employment-history-step .button.secondary:disabled {
-  color: #9e9e9e;
-  cursor: not-allowed;
-}
-
-.employment-history-step .error-message {
-  color: #d32f2f;
-  background-color: #ffebee;
-  padding: 8px 12px;
-  border-radius: 4px;
-  margin-bottom: 16px;
-}
-
-.employment-history-step .form-status {
-  margin-top: 16px;
-  padding: 12px;
-  border-radius: 4px;
-}
-
-.employment-history-step .valid-status {
-  background-color: #e8f5e9;
-  color: #2e7d32;
-}
-
-.employment-history-step .invalid-status {
-  background-color: #ffebee;
-  color: #d32f2f;
-}
-
+/* Responsive Adjustments */
 @media (max-width: 768px) {
   .employment-history-step {
-    padding: 16px;
+    padding: var(--spacing-4);
   }
 
-  .employment-history-step .form-navigation {
+  .employment-history-step .step-header h2 {
+    font-size: var(--font-size-xl);
+  }
+
+  .employment-history-step .step-navigation {
     flex-direction: column;
-    gap: 12px;
+    gap: var(--spacing-4);
   }
 
-  .employment-history-step .button {
+  .employment-history-step .btn {
     width: 100%;
   }
-} 
+}

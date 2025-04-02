@@ -1,328 +1,256 @@
-.employment-entry {
+/* EmploymentEntry.css */
+
+/* Fix for dropdown menus */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+}
+
+/* Style the select content */
+.select-content-dropdown {
+  z-index: 9999 !important;
+  background-color: white !important;
+  border: 1px solid var(--color-gray-200);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem !important;
+  overflow: hidden !important;
+  max-height: 300px !important;
+  padding: 0.5rem !important;
+}
+
+/* Ensure proper layering */
+.select-item {
   position: relative;
-  z-index: 5;
-  margin-bottom: var(--spacing-6);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-lg);
-  background-color: var(--background-color);
-  box-shadow: var(--shadow-sm);
+  z-index: 1;
+  background-color: white !important;
+  transition: background-color 0.2s;
 }
 
-.employment-entry:last-child {
-  margin-bottom: 0;
+.select-item:hover {
+  background-color: var(--color-gray-50);
 }
 
-.employment-entry .entry-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
-}
-
-.employment-entry .entry-title {
-  font-size: 1.1rem;
-  font-weight: 500;
-  color: #333;
-  margin: 0;
-}
-
-.employment-entry .entry-subtitle {
-  color: #666;
-  font-size: 0.9rem;
-  margin: 4px 0;
-}
-
-.employment-entry .entry-dates {
-  color: #666;
-  font-size: 0.9rem;
-  margin: 4px 0;
-}
-
-.employment-entry .entry-actions {
-  padding: var(--spacing-3);
-  border-top: 1px solid var(--border-color);
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--spacing-2);
-  background-color: var(--background-color-light);
-}
-
-.employment-entry .button {
-  padding: 6px 12px;
+/* Employment-specific checkbox styling */
+.employment-checkbox-visible {
+  z-index: 1;
+  position: relative;
+  border: 2px solid var(--color-gray-400);
   border-radius: 4px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  border: none;
+  background-color: white;
+  box-shadow: var(--shadow-sm);
+  min-width: 20px;
+  min-height: 20px;
   display: flex;
   align-items: center;
-  gap: 4px;
-}
-
-.employment-entry .button.icon {
-  padding: 6px;
-  border-radius: 50%;
-}
-
-.employment-entry .button.edit {
-  background-color: #f0f0f0;
-  color: #333;
-}
-
-.employment-entry .button.remove {
-  background-color: #ffebee;
-  color: #d32f2f;
-}
-
-.employment-entry .edit-form {
-  margin-top: 16px;
-}
-
-.employment-entry .form-group {
-  margin-bottom: 16px;
-}
-
-.employment-entry .form-group label {
-  display: block;
-  margin-bottom: 4px;
-  font-weight: 500;
-  color: #555;
-}
-
-.employment-entry .form-group input[type="text"],
-.employment-entry .form-group input[type="date"],
-.employment-entry .form-group select,
-.employment-entry .form-group textarea {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 0.9rem;
-}
-
-.employment-entry .form-group textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-
-.employment-entry .form-group input[type="checkbox"] {
-  margin-right: 8px;
-}
-
-.employment-entry .form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-.employment-entry .form-actions button {
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-size: 0.9rem;
+  justify-content: center;
   cursor: pointer;
 }
 
-.employment-entry .form-actions .save {
-  background-color: #1976d2;
-  color: white;
-  border: none;
-}
-
-.employment-entry .form-actions .cancel {
-  background-color: #f5f5f5;
-  color: #333;
-  border: 1px solid #ccc;
-}
-
-.employment-entry .error-message {
-  color: #d32f2f;
-  background-color: #ffebee;
-  padding: 8px 12px;
-  border-radius: 4px;
-  margin-top: 8px;
-  font-size: 0.9rem;
-}
-
-@media (max-width: 768px) {
-  .employment-entry {
-    padding: 12px;
-  }
-
-  .employment-entry .entry-header {
-    flex-direction: column;
-  }
-
-  .employment-entry .entry-actions {
-    margin-top: 12px;
-  }
-
-  .employment-entry .form-actions {
-    flex-direction: column;
-  }
-
-  .employment-entry .form-actions button {
-    width: 100%;
-  }
-}
-
-/* Component-specific styles */
-.employment-entry-form {
-  position: relative;
-  z-index: 20;
-  max-width: var(--container-width-lg);
-  margin: 0 auto;
-  padding: var(--spacing-6);
-  background-color: var(--background-color);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-lg);
+.employment-checkbox-visible:hover {
+  border-color: var(--primary-color);
   box-shadow: var(--shadow-md);
 }
 
-.employment-entry-form .grid {
-  gap: var(--spacing-4);
+.employment-checkbox-visible:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(var(--primary), 0.2);
 }
 
-/* Read-only view customizations */
-.employment-entry .entry-content {
-  padding: var(--spacing-4);
+.employment-checkbox-visible[data-state="checked"] {
+  border-color: var(--primary-color);
+  background-color: var(--primary-color);
+  color: white;
 }
 
-.employment-entry .company-name {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--text-color-primary);
-  margin-bottom: var(--spacing-2);
-}
-
-.employment-entry .job-title {
-  font-size: var(--font-size-md);
-  color: var(--text-color-secondary);
-  margin-bottom: var(--spacing-2);
-}
-
-.employment-entry .location,
-.employment-entry .dates {
-  font-size: var(--font-size-sm);
-  color: var(--text-color-muted);
-  margin-bottom: var(--spacing-2);
-}
-
-.employment-entry .responsibilities {
-  margin-top: var(--spacing-3);
-  white-space: pre-wrap;
-  color: var(--text-color-secondary);
-}
-
-/* Textarea customization */
-.employment-entry-form .responsibilities-input {
-  min-height: 120px;
-  resize: vertical;
-}
-
-/* Checkbox label alignment */
-.employment-entry-form .form-group label:has(.checkbox-control) {
-  margin-top: var(--spacing-lg);
-}
-
-/* Supervisor section */
-.employment-entry-form .supervisor-section {
-  margin-top: var(--spacing-6);
-  padding-top: var(--spacing-4);
-  border-top: 1px solid var(--border-color);
-}
-
-.employment-entry-form .supervisor-section-title {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--text-color-primary);
-  margin-bottom: var(--spacing-4);
-}
-
-/* Contact permission section */
-.employment-entry-form .contact-permission {
-  margin-top: var(--spacing-4);
-}
-
-.employment-entry-form .contact-permission-label {
+/* Employment current checkbox container */
+.employment-current-checkbox-container {
+  position: relative;
+  z-index: 1;
+  padding: 1rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  border: 1px solid var(--color-gray-200);
   display: flex;
   align-items: center;
-  gap: var(--spacing-2);
-  color: var(--text-color-secondary);
+  margin-bottom: 1rem;
+  background-color: var(--color-gray-50);
 }
 
-.employment-entry-form .form-actions {
-  margin-top: var(--spacing-6);
-  padding-top: var(--spacing-4);
+.employment-current-checkbox-container > [data-slot="checkbox"] {
+  margin-right: 10px;
+}
+
+.employment-current-checkbox-container:hover {
+  background-color: var(--color-gray-50);
+  border-color: var(--color-gray-200);
+}
+
+.employment-label {
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-medium);
+  color: var(--text-color);
+  line-height: 1.5;
+}
+
+.employment-entry-card {
+  width: 100%;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  background-color: white;
+}
+
+.employment-entry-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.employment-entry-form {
+  width: 100%;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 2rem;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  background-color: white;
+}
+
+.employment-entry-form:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+/* Card header styling */
+.employment-entry-form [data-slot="card-header"] {
+  background-color: var(--primary-color-light, #e6f0ff);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1.25rem 1.5rem;
+}
+
+.employment-entry-form [data-slot="card-title"] {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+/* Card content styling */
+.employment-entry-form [data-slot="card-content"] {
+  padding: 1.5rem;
+}
+
+/* Card footer styling */
+.employment-entry-form [data-slot="card-footer"] {
+  background-color: var(--color-gray-50);
   border-top: 1px solid var(--border-color);
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--spacing-2);
+  padding: 1.25rem 1.5rem;
 }
 
-/* Responsive Adjustments */
+/* Make form elements more prominent */
+.employment-entry-form [data-slot="form-label"] {
+  font-weight: 500;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+}
+
+.employment-entry-form [data-slot="select-trigger"],
+.employment-entry-form [data-slot="input"] {
+  height: 3rem;
+  font-size: 1rem;
+  border-width: 1px;
+  border-color: var(--border-color);
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background-color: white;
+}
+
+/* Style select items */
+.select-item {
+  padding: 0.75rem 1rem !important;
+  margin: 0.25rem 0 !important;
+  border-radius: 0.25rem !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  background-color: white !important;
+}
+
+.select-item:hover {
+  background-color: var(--color-gray-100) !important;
+}
+
+.select-item[data-highlighted="true"] {
+  background-color: var(--primary-color-light) !important;
+  color: var(--primary-color) !important;
+}
+
+.select-item[data-state="checked"] {
+  background-color: var(--primary-color-light) !important;
+  color: var(--primary-color) !important;
+  font-weight: 500 !important;
+}
+
+.employment-entry-form [data-slot="select-trigger"]:hover,
+.employment-entry-form [data-slot="input"]:hover {
+  border-color: var(--primary-color);
+}
+
+.employment-entry-form [data-slot="select-trigger"]:focus,
+.employment-entry-form [data-slot="input"]:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(var(--primary), 0.2);
+}
+
+/* Button styling */
+.employment-entry-form [data-slot="button"] {
+  height: 3rem;
+  min-width: 8rem;
+  font-weight: 500;
+  font-size: 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .employment-entry-form {
-    padding: var(--spacing-4);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
   }
-
-  .employment-entry-form .grid-cols-2,
-  .employment-entry-form .grid-cols-1-2-1 {
-    grid-template-columns: 1fr;
+  
+  .employment-entry-card {
+    border-radius: 8px;
+    margin-bottom: 1rem;
+  }
+  
+  .employment-entry-form [data-slot="card-content"] {
+    padding: 1rem;
+  }
+  
+  .employment-entry-form [data-slot="card-footer"] {
+    padding: 1rem;
   }
 }
 
-/* Update timeline styles to ensure proper layering */
-.timeline-visualization {
+/* Remove any positioning that might interfere */
+[data-radix-select-viewport] {
+  background-color: white !important;
+}
+
+/* Ensure the select trigger is above the checkbox but below the dropdown */
+.select-trigger {
   position: relative;
-  z-index: 5;
-  margin: var(--spacing-md) 0;
-  font-family: var(--font-family);
-}
-
-.timeline-container {
-  position: relative;
-  z-index: 5;
-  height: 100px;
-  margin: var(--spacing-lg) 0;
-}
-
-.timeline-ruler {
-  position: absolute;
-  z-index: 1;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background-color: rgba(26, 43, 90, 0.1);
-  transform: translateY(-50%);
-  border-radius: 2px;
-}
-
-/* Ensure segments appear above the ruler */
-.timeline-segment {
-  position: absolute;
   z-index: 2;
-  top: 50%;
-  height: 24px;
-  background-color: var(--primary-color);
-  transform: translateY(-50%);
-  border-radius: var(--border-radius-small);
-  cursor: pointer;
-  transition: transform var(--transition-default), box-shadow var(--transition-default);
 }
 
-/* Timeline overrides for employment history */
-.employment-history .timeline-visualization {
-  margin: 40px 0;
-  padding-bottom: 60px;
-  overflow: visible;
+/* Add a solid background to the select content */
+[role="listbox"] {
+  background-color: white !important;
 }
-
-.employment-history .timeline-container {
-  margin: 20px 0;
-  overflow: visible;
-}
-
-.employment-history .timeline-segment-tooltip {
-  z-index: 25;
-} 

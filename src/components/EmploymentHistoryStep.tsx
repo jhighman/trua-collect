@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useForm, FormStepId, TimelineEntry } from '../context/FormContext';
+import { PlusCircle } from 'lucide-react';
 import type { FormValue } from '../utils/FormStateManager';
 import { useTranslation } from '../context/TranslationContext';
 import { EmploymentEntry } from './EmploymentEntry';
@@ -60,6 +61,7 @@ export const EmploymentHistoryStep: React.FC = () => {
     type: '',
     company: '',
     position: '',
+    country: '',
     city: '',
     state_province: '',
     start_date: '',
@@ -67,7 +69,10 @@ export const EmploymentHistoryStep: React.FC = () => {
     is_current: false,
     description: '',
     contact_name: '',
-    contact_info: ''
+    contact_type: '',
+    contact_email: '',
+    contact_phone: '',
+    contact_preferred_method: ''
   });
 
   // Get the required years from the collection key parser
@@ -119,10 +124,8 @@ export const EmploymentHistoryStep: React.FC = () => {
     }
   }, [entries, setValue, requiredYears]);
 
-  const handleAddEntry = (entry: EmploymentEntryData) => {
-    const newEntries = [...entries, entry];
-    setEntries(newEntries);
-    setValue('employment-history', 'entries', newEntries as unknown as TimelineEntry[]);
+  const handleAddEntry = () => {
+    setShowAddForm(true);
   };
 
   const handleCancelAdd = () => {
@@ -131,6 +134,7 @@ export const EmploymentHistoryStep: React.FC = () => {
       type: '',
       company: '',
       position: '',
+      country: '',
       city: '',
       state_province: '',
       start_date: '',
@@ -138,7 +142,10 @@ export const EmploymentHistoryStep: React.FC = () => {
       is_current: false,
       description: '',
       contact_name: '',
-      contact_info: ''
+      contact_type: '',
+      contact_email: '',
+      contact_phone: '',
+      contact_preferred_method: ''
     });
   };
 
@@ -214,6 +221,7 @@ export const EmploymentHistoryStep: React.FC = () => {
       type: '',
       company: '',
       position: '',
+      country: '',
       city: '',
       state_province: '',
       start_date: '',
@@ -221,7 +229,10 @@ export const EmploymentHistoryStep: React.FC = () => {
       is_current: false,
       description: '',
       contact_name: '',
-      contact_info: ''
+      contact_type: '',
+      contact_email: '',
+      contact_phone: '',
+      contact_preferred_method: ''
     });
   };
 
@@ -309,57 +320,65 @@ export const EmploymentHistoryStep: React.FC = () => {
   const errors = getStepErrors('employment-history');
 
   return (
-    <div className="employment-history">
+    <div className="employment-history-step">
       <StepHeader
         title={t('employment.title')}
         description={t('employment.intro', { years: requiredYears.toString() })}
-      >
-        <Timeline
-          entries={entries.map(entry => ({
-            ...entry,
-            startDate: entry.start_date,
-            endDate: entry.end_date,
-            duration_years: entry.duration_years
-          }))}
-          type="employment"
-          requiredYears={requiredYears}
-          onEntryClick={(entry) => {
-            const index = entries.findIndex(e =>
-                e.start_date === entry.startDate &&
-                e.end_date === entry.endDate
-            );
-            if (index !== -1) {
-              const entryElement = document.querySelector(`.employment-entry:nth-child(${index + 1}) .button.icon[aria-label="Edit employment"]`);
-              if (entryElement) {
-                (entryElement as HTMLElement).click();
+      />
+      
+      {entries.length > 0 && (
+        <>
+          <Timeline
+            entries={entries.map(entry => ({
+              ...entry,
+              startDate: entry.start_date,
+              endDate: entry.end_date,
+              duration_years: entry.duration_years
+            }))}
+            type="employment"
+            requiredYears={requiredYears}
+            onEntryClick={(entry) => {
+              const index = entries.findIndex(e =>
+                  e.start_date === entry.startDate &&
+                  e.end_date === entry.endDate
+              );
+              if (index !== -1) {
+                const entryElement = document.querySelector(`.employment-entry:nth-child(${index + 1}) .button.icon[aria-label="Edit employment"]`);
+                if (entryElement) {
+                  (entryElement as HTMLElement).click();
+                }
               }
-            }
-          }}
-        />
-        
-        {errors._timeline && (
-          <div className="error-message" role="alert" aria-live="assertive">{errors._timeline}</div>
-        )}
-      </StepHeader>
+            }}
+          />
+          
+          {errors._timeline && (
+            <div className="error-message" role="alert" aria-live="assertive">{errors._timeline}</div>
+          )}
+        </>
+      )}
 
-      {entries.map((entry, index) => (
-        <EmploymentEntry
-          key={index}
-          entry={entry}
-          onUpdate={(updatedEntry) => handleUpdateEntry(index, updatedEntry)}
-          onDelete={() => handleRemoveEntry(index)}
-          employmentTypes={employmentTypes}
-          isCompanyRequired={isCompanyRequired}
-          isPositionRequired={isPositionRequired}
-          isContactRequired={isContactRequired}
-        />
-      ))}
+      {entries.length > 0 && (
+        <div className="entries-list">
+          {entries.map((entry, index) => (
+            <EmploymentEntry
+              key={index}
+              entry={entry}
+              onUpdate={(updatedEntry) => handleUpdateEntry(index, updatedEntry)}
+              onDelete={() => handleRemoveEntry(index)}
+              employmentTypes={employmentTypes}
+              isCompanyRequired={entry.type === 'Job'}
+              isPositionRequired={entry.type === 'Job'}
+              isContactRequired={true}
+            />
+          ))}
+        </div>
+      )}
 
       <PushButton
-        variant="outline"
+        onClick={handleAddEntry}
+        className="w-full max-w-md mx-auto mb-8 py-6 text-lg font-medium bg-primary hover:bg-primary/90"
         size="lg"
-        onClick={() => setShowAddForm(true)}
-        className="w-full"
+        icon={PlusCircle}
       >
         {t('employment.add_button')}
       </PushButton>
@@ -370,9 +389,9 @@ export const EmploymentHistoryStep: React.FC = () => {
           onUpdate={handleSaveEntry}
           onDelete={() => setShowAddForm(false)}
           employmentTypes={employmentTypes}
-          isCompanyRequired={isCompanyRequired}
-          isPositionRequired={isPositionRequired}
-          isContactRequired={isContactRequired}
+          isCompanyRequired={newEntry.type === 'Job'}
+          isPositionRequired={newEntry.type === 'Job'}
+          isContactRequired={true}
           isEditing={true}
         />
       )}
