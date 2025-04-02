@@ -9,6 +9,7 @@ import FormStepRenderer from './FormStepRenderer';
 import { FormLogger } from '../utils/FormLogger';
 import { getConfig } from '../utils/EnvironmentConfig';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'; // shadcn Card component
+import Footer from './Footer'; // Import the Footer component
 import { AlertTriangle } from 'lucide-react'; // Lucide icon for warning
 import './VerificationEntry.css';
 
@@ -212,10 +213,6 @@ console.log('VerificationEntry - Determined initial step:', initialStep);
       onStepChange={handleStepChange}
     >
       <div className="verification-entry">
-        <div className="page-header">
-          <h1>Trua Verify</h1>
-        </div>
-
         {isDevelopmentMode && (
           <Card className="dev-mode-card">
             <CardHeader className="flex flex-row items-center gap-2 p-2">
@@ -242,6 +239,9 @@ console.log('VerificationEntry - Determined initial step:', initialStep);
         )}
 
         <FormStepRenderer currentStep={currentStep} consentsRequired={anyConsentsRequired} />
+        
+        {/* Add the Footer component at the bottom */}
+        <Footer />
       </div>
     </FormProvider>
   );

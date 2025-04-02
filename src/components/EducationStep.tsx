@@ -3,6 +3,7 @@ import { useForm } from '../context/FormContext';
 import { useTranslation } from '../context/TranslationContext';
 import { EducationEntry, EducationEntryData } from './EducationEntry';
 import StepNavigation from './StepNavigation';
+import StepHeader from './StepHeader';
 import './EducationStep.css';
 import { EducationLevel, isCollegeOrHigher } from '../types/EducationLevel';
 
@@ -166,12 +167,10 @@ export const EducationStep: React.FC = () => {
   
   return (
     <div className="education-step">
-      <div className="step-header">
-        <h2>{t('education.title') || 'Education History'}</h2>
-        <p className="step-description">
-          {t('education.intro') || 'Please provide your education history, beginning with your highest level of education.'}
-        </p>
-      </div>
+      <StepHeader
+        title={t('education.title') || 'Education History'}
+        description={t('education.intro') || 'Please provide your education history, beginning with your highest level of education.'}
+      />
       
       {/* Education Level Selection */}
       <div className="education-level-selection">

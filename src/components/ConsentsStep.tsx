@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import StepNavigation from './StepNavigation';
+import StepHeader from './StepHeader';
 import './ConsentsStep.css';
 
 // Define the ConsentItem interface
@@ -100,12 +101,10 @@ export const ConsentsStep: React.FC = () => {
 
   return (
     <div className="consents-step">
-      <div className="step-header">
-        <h2>{t('consents.title')}</h2>
-        <p className="step-description">
-          {t('consents.description')}
-        </p>
-      </div>
+      <StepHeader
+        title={t('consents.title')}
+        description={t('consents.description')}
+      />
 
       {consentsToRender.length === 0 ? (
         <div className="no-consents-message">

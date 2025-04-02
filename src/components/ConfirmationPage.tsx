@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { PdfService } from '../services/PdfService';
 // Import jsPDF
 import { jsPDF } from 'jspdf';
+import Footer from './Footer'; // Import the Footer component
 
 // Extend the jsPDF type to include methods we need
 declare module 'jspdf' {
@@ -196,6 +197,7 @@ const ConfirmationPage: React.FC<ConfirmationPageProps> = ({ trackingId }) => {
           <h2>Preparing Your Verification Document</h2>
           <div className="loading-spinner"></div>
           <p>Please wait while we prepare your document...</p>
+          <Footer />
         </div>
       </div>
     );
@@ -208,12 +210,13 @@ const ConfirmationPage: React.FC<ConfirmationPageProps> = ({ trackingId }) => {
         <div className="confirmation-container error">
           <h2>Something Went Wrong</h2>
           <p>{error}</p>
-          <button 
+          <button
             className="retry-button"
             onClick={() => window.location.reload()}
           >
             Try Again
           </button>
+          <Footer />
         </div>
       </div>
     );
@@ -266,6 +269,9 @@ const ConfirmationPage: React.FC<ConfirmationPageProps> = ({ trackingId }) => {
             and reference your tracking ID.
           </p>
         </div>
+        
+        {/* Add the Footer component */}
+        <Footer />
       </div>
     </div>
   );

@@ -7,8 +7,7 @@ import type { EmploymentEntryData } from './EmploymentEntry';
 import { Timeline } from './Timeline';
 import StepNavigation from './StepNavigation';
 import { PushButton } from './ui/push-button';
-import { Card, CardHeader, CardContent } from './ui/card';
-import { InfoIcon } from 'lucide-react';
+import StepHeader from './StepHeader';
 import './EmploymentHistoryStep.css';
 import './Timeline.css';
 import { getRequirements } from '../utils/collectionKeyParser';
@@ -187,9 +186,27 @@ export const EmploymentHistoryStep: React.FC = () => {
     setValue('employment-history', 'isValid', isComplete as unknown as FormValue);
     setValue('employment-history', 'isComplete', isComplete as unknown as FormValue);
     
-    // If we have enough years, move to the next step
+    // If we have enough years, ensure the next step is initialized before moving to it
     if (isComplete) {
-      forceNextStep();
+      // Get the next step in the step order
+      const stepOrder: FormStepId[] = [
+        'personal-info',
+        'consents',
+        'residence-history',
+        'employment-history',
+        'education',
+        'professional-licenses',
+        'signature',
+      ];
+      
+      const currentIndex = stepOrder.indexOf('employment-history');
+      if (currentIndex < stepOrder.length - 1) {
+        const nextStep = stepOrder[currentIndex + 1];
+        console.log('EmploymentHistoryStep - Moving to next step:', nextStep);
+        
+        // Use moveToNextStep instead of forceNextStep to ensure proper navigation
+        moveToNextStep();
+      }
     }
     
     setShowAddForm(false);
@@ -293,43 +310,37 @@ export const EmploymentHistoryStep: React.FC = () => {
 
   return (
     <div className="employment-history">
-      <Card className="mb-6 w-full">
-        <CardHeader>
-          <h2 className="text-2xl font-semibold tracking-tight">{t('employment.title')}</h2>
-          <div className="flex items-start gap-2 text-muted-foreground">
-            <InfoIcon className="h-5 w-5 mt-0.5 flex-shrink-0" />
-            <p className="text-sm">{t('employment.intro', { years: requiredYears.toString() })}</p>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Timeline
-            entries={entries.map(entry => ({
-              ...entry,
-              startDate: entry.start_date,
-              endDate: entry.end_date,
-              duration_years: entry.duration_years
-            }))}
-            type="employment"
-            requiredYears={requiredYears}
-            onEntryClick={(entry) => {
-              const index = entries.findIndex(e =>
-                  e.start_date === entry.startDate &&
-                  e.end_date === entry.endDate
-              );
-              if (index !== -1) {
-                const entryElement = document.querySelector(`.employment-entry:nth-child(${index + 1}) .button.icon[aria-label="Edit employment"]`);
-                if (entryElement) {
-                  (entryElement as HTMLElement).click();
-                }
+      <StepHeader
+        title={t('employment.title')}
+        description={t('employment.intro', { years: requiredYears.toString() })}
+      >
+        <Timeline
+          entries={entries.map(entry => ({
+            ...entry,
+            startDate: entry.start_date,
+            endDate: entry.end_date,
+            duration_years: entry.duration_years
+          }))}
+          type="employment"
+          requiredYears={requiredYears}
+          onEntryClick={(entry) => {
+            const index = entries.findIndex(e =>
+                e.start_date === entry.startDate &&
+                e.end_date === entry.endDate
+            );
+            if (index !== -1) {
+              const entryElement = document.querySelector(`.employment-entry:nth-child(${index + 1}) .button.icon[aria-label="Edit employment"]`);
+              if (entryElement) {
+                (entryElement as HTMLElement).click();
               }
-            }}
-          />
-          
-          {errors._timeline && (
-            <div className="error-message" role="alert" aria-live="assertive">{errors._timeline}</div>
-          )}
-        </CardContent>
-      </Card>
+            }
+          }}
+        />
+        
+        {errors._timeline && (
+          <div className="error-message" role="alert" aria-live="assertive">{errors._timeline}</div>
+        )}
+      </StepHeader>
 
       {entries.map((entry, index) => (
         <EmploymentEntry

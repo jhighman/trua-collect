@@ -21,8 +21,9 @@ export const StepNavigation: React.FC<StepNavigationProps> = ({
   return (
     <div className="form-navigation">
       <div className="flex items-center justify-between w-full">
-        <div>
-          {canMovePrevious && onPrevious && (
+        <div className="navigation-button-container">
+          {/* Only show the Previous button if canMovePrevious is true and onPrevious is provided */}
+          {canMovePrevious && onPrevious ? (
             <Button
               type="button"
               onClick={onPrevious}
@@ -46,9 +47,12 @@ export const StepNavigation: React.FC<StepNavigationProps> = ({
               </svg>
               {t('common.previous') || 'Previous'}
             </Button>
+          ) : (
+            /* Add an empty div to maintain layout when there's no Previous button */
+            <div></div>
           )}
         </div>
-        <div>
+        <div className="navigation-button-container">
           <Button
             type="button"
             onClick={() => {

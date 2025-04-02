@@ -38,7 +38,16 @@ export const FormStepRenderer: React.FC<FormStepRendererProps> = ({
 
   // Helper function to check if a step is enabled
   const isStepEnabled = useCallback((stepId: FormStepId) => {
-    return formState.steps[stepId] && formState.steps[stepId]._initialized;
+    // First check if the step exists in formState
+    if (!formState.steps[stepId]) {
+      console.log(`FormStepRenderer - Step ${stepId} does not exist in formState`);
+      return false;
+    }
+    
+    // Then check if it's initialized
+    const isInitialized = !!formState.steps[stepId]._initialized;
+    console.log(`FormStepRenderer - Step ${stepId} initialized: ${isInitialized}`);
+    return isInitialized;
   }, [formState.steps]);
 
   // Find the first enabled step

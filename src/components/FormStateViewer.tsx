@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FormLogger } from '../utils/FormLogger';
 import { parseCollectionKey, getRequirements, getTimelineYears, getEmployerCount } from '../utils/collectionKeyParser';
+import Footer from './Footer'; // Import the Footer component
 import './FormStateViewer.css';
 
 // Icons for collapse/expand
@@ -224,6 +225,9 @@ export const FormStateViewer: React.FC = () => {
           </div>
         )}
       </div>
+      
+      {/* Add the Footer component */}
+      <Footer />
     </div>
   );
 };

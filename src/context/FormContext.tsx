@@ -148,14 +148,19 @@ export const FormProvider: React.FC<FormProviderProps> = React.memo(({
         'signature',
       ];
 
+      // Initialize all steps in the step order, even if they're not enabled
+      // This ensures that all steps have the _initialized property set
       stepOrder.forEach(stepId => {
+        // Set basic initialization for all steps
+        formManagerInstance!.setValue(stepId, '_initialized', true);
+        formManagerInstance!.setValue(stepId, '_complete', false);
+        formManagerInstance!.setValue(stepId, 'isValid', false);
+        formManagerInstance!.setValue(stepId, 'isComplete', false);
+        
+        // Only initialize step-specific values if the step is enabled
         if (isStepEnabled(stepId, safeRequirements)) {
           console.log(`FormContext: Initializing step ${stepId}`);
-          formManagerInstance!.setValue(stepId, '_initialized', true);
-          formManagerInstance!.setValue(stepId, '_complete', false);
-          formManagerInstance!.setValue(stepId, 'isValid', false);
-          formManagerInstance!.setValue(stepId, 'isComplete', false);
-
+          
           switch (stepId) {
             case 'personal-info':
               formManagerInstance!.setValue(stepId, 'fullName', '');
@@ -166,6 +171,9 @@ export const FormProvider: React.FC<FormProviderProps> = React.memo(({
               formManagerInstance!.setValue(stepId, 'total_years', '0');
               break;
             case 'employment-history':
+              formManagerInstance!.setValue(stepId, 'entries', []);
+              formManagerInstance!.setValue(stepId, 'total_years', '0');
+              break;
             case 'education':
             case 'professional-licenses':
               formManagerInstance!.setValue(stepId, 'entries', []);

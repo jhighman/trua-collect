@@ -1,0 +1,50 @@
+.step-header-container {
+  margin-bottom: 2rem;
+}
+
+.step-header-title {
+  background-color: var(--primary-color, #0066cc);
+  color: white;
+  padding: 1rem;
+  text-align: center;
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.step-header-title h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.step-header-description {
+  background-color: var(--color-gray-50, #f9fafb);
+  padding: 1.25rem;
+  display: flex;
+  align-items: flex-start;
+  border-radius: 0 0 0.5rem 0.5rem;
+  border: 1px solid var(--color-gray-200, #e5e7eb);
+  border-top: none;
+}
+
+.step-header-description .info-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 1rem;
+  flex-shrink: 0;
+  color: var(--primary-color, #0066cc);
+}
+
+.step-header-description p {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--color-gray-700, #374151);
+}
+
+.step-header-content {
+  padding: 1.5rem;
+  background-color: white;
+  border: 1px solid var(--color-gray-200, #e5e7eb);
+  border-top: none;
+  border-radius: 0 0 0.5rem 0.5rem;
+  margin-top: -0.5rem;
+}

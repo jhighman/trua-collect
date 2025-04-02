@@ -4,6 +4,7 @@ import { useTranslation } from '../context/TranslationContext';
 import { useForm } from '../context/FormContext';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
+import StepHeader from './StepHeader';
 import './Signature.css';
 
 // Define the extended props type
@@ -145,12 +146,10 @@ export const Signature: React.FC<SignatureProps> = ({ onSignatureChange }) => {
   
   return (
     <div className="signature-component">
-      <div className="signature-title">
-        <h3>{t('signature.title') || 'Your Signature'}</h3>
-        <p className="signature-instructions">
-          {t('signature.instructions') || 'Please sign using your mouse or touch screen below.'}
-        </p>
-      </div>
+      <StepHeader
+        title={t('signature.title') || 'Your Signature'}
+        description={t('signature.instructions') || 'Please sign using your mouse or touch screen below.'}
+      />
       
       <div className={`signature-canvas-container ${error ? 'has-error' : ''}`}>
         <SignatureCanvas

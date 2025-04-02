@@ -7,8 +7,8 @@ import { DEFAULT_COUNTRY } from '../utils/countries';
 import StepNavigation from './StepNavigation';
 import { Button } from './ui/button';
 import { PushButton } from './ui/push-button';
-import { Card, CardHeader } from './ui/card';
-import { InfoIcon, PlusCircle } from 'lucide-react';
+import StepHeader from './StepHeader';
+import { PlusCircle } from 'lucide-react';
 import './Timeline.css';
 import './ResidenceHistoryStep.css';
 import { getRequirements } from '../utils/collectionKeyParser';
@@ -236,9 +236,27 @@ const [entries, setEntries] = useState<ResidenceEntryState[]>(() => {
       duration_years: 0
     });
 
-    // If we have enough years, move to next step
+    // If we have enough years, ensure the next step is initialized before moving to it
     if (total >= yearsRequired) {
-      forceNextStep();
+      // Get the next step in the step order
+      const stepOrder: FormStepId[] = [
+        'personal-info',
+        'consents',
+        'residence-history',
+        'employment-history',
+        'education',
+        'professional-licenses',
+        'signature',
+      ];
+      
+      const currentIndex = stepOrder.indexOf('residence-history');
+      if (currentIndex < stepOrder.length - 1) {
+        const nextStep = stepOrder[currentIndex + 1];
+        console.log('ResidenceHistoryStep - Moving to next step:', nextStep);
+        
+        // Use moveToNextStep instead of forceNextStep to ensure proper navigation
+        moveToNextStep();
+      }
     }
   };
 
@@ -347,17 +365,10 @@ const [entries, setEntries] = useState<ResidenceEntryState[]>(() => {
 
   return (
     <div className="residence-history-step">
-      <Card className="mb-6 w-full">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-semibold tracking-tight">{t('residence.title')}</h2>
-            <InfoIcon className="h-5 w-5 text-muted-foreground" />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {t('residence.intro', translationParams)}
-          </p>
-        </CardHeader>
-      </Card>
+      <StepHeader
+        title={t('residence.title')}
+        description={t('residence.intro', translationParams)}
+      />
       
       {entries.length > 0 && (
         <>
