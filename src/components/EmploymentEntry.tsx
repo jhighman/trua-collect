@@ -49,8 +49,8 @@ interface EmploymentEntryProps {
 }
 
 export function EmploymentEntry({ 
-  entry, 
-  onUpdate, 
+  entry,
+  onUpdate,
   onRemove,
   onDelete,
   employmentTypes = [],
@@ -126,10 +126,10 @@ export function EmploymentEntry({
   // Collect all validation errors
   const getValidationErrors = () => {
     const errors = [];
-    if (isCompanyRequired && !editedEntry.company) {
+    if (isCompanyRequired && !editedEntry.company && editedEntry.type !== 'unemployed') {
       errors.push({ id: 'company-error', message: t('employment.company_required') });
     }
-    if (isPositionRequired && !editedEntry.position) {
+    if (isPositionRequired && !editedEntry.position && editedEntry.type !== 'unemployed') {
       errors.push({ id: 'position-error', message: t('employment.position_required') });
     }
     if (!editedEntry.country) {
@@ -240,11 +240,21 @@ export function EmploymentEntry({
                 </Label>
                 <FormField error={showErrors && !editedEntry.type ? t('employment.type_required') : ''}>
                   <Select
-                    value={editedEntry.type}
+              value={editedEntry.type}
                     onValueChange={(value) => {
                       setEditedEntry(prev => ({
                         ...prev,
                         type: value,
+                        // Clear contact information if type is unemployed
+                        ...(value === 'unemployed' ? {
+                          contact_name: '',
+                          contact_type: '',
+                          contact_email: '',
+                          contact_phone: '',
+                          contact_preferred_method: '',
+                          company: '',
+                          position: ''
+                        } : {})
                       }));
                     }}
                   >
@@ -257,7 +267,7 @@ export function EmploymentEntry({
                       align="start"
                       className="select-content-dropdown"
                     >
-                      {employmentTypes.map(type => (
+              {employmentTypes.map(type => (
                         <SelectItem 
                           key={type.value} 
                           value={type.value} 
@@ -269,43 +279,45 @@ export function EmploymentEntry({
                     </SelectContent>
                   </Select>
                 </FormField>
-              </div>
+          </div>
             )}
 
-            {/* Company and Position */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <Label htmlFor="company" className="flex items-center gap-1 text-base font-medium">
-                  {t('employment.company')}
-                  {isCompanyRequired && <span className="text-destructive">*</span>}
-                </Label>
-                <FormField error={showErrors && isCompanyRequired && !editedEntry.company ? t('employment.company_required') : ''}>
-                  <Input
-                    id="company"
-                    className={`h-11 text-base ${isCompanyRequired && !editedEntry.company && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                    value={editedEntry.company}
-                    onChange={(e) => setEditedEntry({ ...editedEntry, company: e.target.value })}
-                    aria-invalid={isCompanyRequired && !editedEntry.company && showErrors}
-                  />
-                </FormField>
+            {/* Company and Position - Hide for unemployed */}
+            {editedEntry.type !== 'unemployed' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label htmlFor="company" className="flex items-center gap-1 text-base font-medium">
+                    {t('employment.company')}
+                    {isCompanyRequired && <span className="text-destructive">*</span>}
+                  </Label>
+                  <FormField error={showErrors && isCompanyRequired && !editedEntry.company ? t('employment.company_required') : ''}>
+                    <Input
+                      id="company"
+                      className={`h-11 text-base ${isCompanyRequired && !editedEntry.company && showErrors ? 'border-destructive ring-destructive' : ''}`}
+              value={editedEntry.company}
+                      onChange={(e) => setEditedEntry({ ...editedEntry, company: e.target.value })}
+                      aria-invalid={isCompanyRequired && !editedEntry.company && showErrors}
+            />
+                  </FormField>
+          </div>
+          
+                <div className="space-y-3">
+                  <Label htmlFor="position" className="flex items-center gap-1 text-base font-medium">
+                    {t('employment.position')}
+                    {isPositionRequired && <span className="text-destructive">*</span>}
+                  </Label>
+                  <FormField error={showErrors && isPositionRequired && !editedEntry.position ? t('employment.position_required') : ''}>
+                    <Input
+                      id="position"
+                      className={`h-11 text-base ${isPositionRequired && !editedEntry.position && showErrors ? 'border-destructive ring-destructive' : ''}`}
+              value={editedEntry.position}
+                      onChange={(e) => setEditedEntry({ ...editedEntry, position: e.target.value })}
+                      aria-invalid={isPositionRequired && !editedEntry.position && showErrors}
+                    />
+                  </FormField>
+                </div>
               </div>
-
-              <div className="space-y-3">
-                <Label htmlFor="position" className="flex items-center gap-1 text-base font-medium">
-                  {t('employment.position')}
-                  {isPositionRequired && <span className="text-destructive">*</span>}
-                </Label>
-                <FormField error={showErrors && isPositionRequired && !editedEntry.position ? t('employment.position_required') : ''}>
-                  <Input
-                    id="position"
-                    className={`h-11 text-base ${isPositionRequired && !editedEntry.position && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                    value={editedEntry.position}
-                    onChange={(e) => setEditedEntry({ ...editedEntry, position: e.target.value })}
-                    aria-invalid={isPositionRequired && !editedEntry.position && showErrors}
-                  />
-                </FormField>
-              </div>
-            </div>
+            )}
 
             {/* Country */}
             <div className="space-y-3">
@@ -339,8 +351,8 @@ export function EmploymentEntry({
                   </SelectContent>
                 </Select>
               </FormField>
-            </div>
-            
+          </div>
+          
             {/* City and State */}
             <div className="flex flex-col md:flex-row gap-6">
               <div className="flex-1 space-y-3">
@@ -352,13 +364,13 @@ export function EmploymentEntry({
                   <Input
                     id="city"
                     className={`h-11 text-base ${!editedEntry.city && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                    value={editedEntry.city}
+              value={editedEntry.city}
                     onChange={(e) => setEditedEntry({ ...editedEntry, city: e.target.value })}
                     aria-invalid={!editedEntry.city && showErrors}
-                  />
+            />
                 </FormField>
-              </div>
-
+          </div>
+          
               <div className="flex-1 space-y-3">
                 <Label htmlFor="state_province" className="flex items-center gap-1 text-base font-medium">
                   {t('employment.state_province')}
@@ -366,7 +378,7 @@ export function EmploymentEntry({
                 </Label>
                 <FormField error={showErrors && !editedEntry.state_province ? t('employment.state_required') : ''}>
                   <Select
-                    value={editedEntry.state_province}
+              value={editedEntry.state_province}
                     onValueChange={handleStateChange}
                     disabled={!editedEntry.country}
                   >
@@ -430,7 +442,7 @@ export function EmploymentEntry({
                       type="month"
                       id="start_date"
                       className={`h-11 text-base ${!editedEntry.start_date && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                      value={editedEntry.start_date}
+              value={editedEntry.start_date}
                       onChange={(e) => setEditedEntry({ ...editedEntry, start_date: e.target.value })}
                       aria-invalid={!editedEntry.start_date && showErrors}
                     />
@@ -440,8 +452,8 @@ export function EmploymentEntry({
                         : t('employment.from_date_help_default') || t('employment.from_date_help_job')}
                     </p>
                   </FormField>
-                </div>
-
+          </div>
+          
                 <div className="space-y-3">
                   <Label htmlFor="end_date" className="flex items-center gap-1 text-base font-medium">
                     {t('employment.to_date')}
