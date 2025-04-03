@@ -26,7 +26,7 @@ interface SignatureProps {
 
 export const Signature: React.FC<SignatureProps> = ({ onSignatureChange }) => {
   const { t } = useTranslation();
-  const { setValue, getValue, getStepErrors, submitForm } = useForm();
+  const { setValue, getValue, getStepErrors, submitForm, formState } = useForm();
   const sigCanvas = useRef<SignatureCanvas>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -134,6 +134,9 @@ export const Signature: React.FC<SignatureProps> = ({ onSignatureChange }) => {
       
       // Submit the form
       await submitForm();
+      
+      // Store the current form state in localStorage
+      localStorage.setItem('formState', JSON.stringify(formState));
       
       // Navigate to confirmation page with tracking ID
       navigate(`/confirmation?trackingId=${trackingId}`);

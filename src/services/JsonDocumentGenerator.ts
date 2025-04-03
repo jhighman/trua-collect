@@ -1,5 +1,5 @@
 import { DocumentMetadata, EducationEntry, EmploymentHistoryEntry, JsonDocument, PersonalInfo, ProfessionalLicenseEntry, ResidenceHistoryEntry, Signature, Timeline } from '../types/documents';
-import { FormState } from '../types/form';
+import { FormState, ProfessionalLicensesStepValues, EmploymentHistoryStepValues, ResidenceHistoryStepValues, EducationStepValues, PersonalInfoStepValues, SignatureStepValues } from '../types/form';
 import { Logger } from '../utils/logger';
 
 export class JsonDocumentGenerator {
@@ -22,12 +22,12 @@ export class JsonDocumentGenerator {
       return {
         metadata,
         timeline,
-        personalInfo: this.formState.personalInfo?.entries[0],
-        residenceHistory: this.formState.residenceHistory?.entries,
-        employmentHistory: this.formState.employmentHistory?.entries,
-        education: this.formState.education?.entries,
-        professionalLicenses: this.formState.professionalLicenses?.entries,
-        signature: this.formState.signature?.entries[0]
+        personalInfo: (this.formState.steps['personal-info']?.values as PersonalInfoStepValues),
+        residenceHistory: (this.formState.steps['residence-history']?.values as ResidenceHistoryStepValues)?.entries,
+        employmentHistory: (this.formState.steps['employment-history']?.values as EmploymentHistoryStepValues)?.entries,
+        education: (this.formState.steps['education']?.values as EducationStepValues)?.entries,
+        professionalLicenses: (this.formState.steps['professional-licenses']?.values as ProfessionalLicensesStepValues)?.entries,
+        signature: (this.formState.steps['signature']?.values as SignatureStepValues)?.signature
       };
     } catch (error) {
       this.logger.error('Error generating JSON document:', error);
@@ -39,18 +39,21 @@ export class JsonDocumentGenerator {
     const entries: (ResidenceHistoryEntry | EmploymentHistoryEntry | EducationEntry | ProfessionalLicenseEntry)[] = [];
 
     // Add residence history entries
-    if (formState.residenceHistory?.entries) {
-      entries.push(...formState.residenceHistory.entries);
+    const residenceHistory = (formState.steps['residence-history']?.values as ResidenceHistoryStepValues)?.entries;
+    if (residenceHistory) {
+      entries.push(...residenceHistory);
     }
 
     // Add employment history entries
-    if (formState.employmentHistory?.entries) {
-      entries.push(...formState.employmentHistory.entries);
+    const employmentHistory = (formState.steps['employment-history']?.values as EmploymentHistoryStepValues)?.entries;
+    if (employmentHistory) {
+      entries.push(...employmentHistory);
     }
 
     // Add education entries
-    if (formState.education?.entries) {
-      entries.push(...formState.education.entries.map((entry: EducationEntry) => ({
+    const education = (formState.steps['education']?.values as EducationStepValues)?.entries;
+    if (education) {
+      entries.push(...education.map((entry: EducationEntry) => ({
         ...entry,
         startDate: entry.completionDate,
         endDate: entry.completionDate
@@ -58,8 +61,9 @@ export class JsonDocumentGenerator {
     }
 
     // Add professional license entries
-    if (formState.professionalLicenses?.entries) {
-      entries.push(...formState.professionalLicenses.entries.map((entry: ProfessionalLicenseEntry) => ({
+    const professionalLicenses = (formState.steps['professional-licenses']?.values as ProfessionalLicensesStepValues)?.entries;
+    if (professionalLicenses) {
+      entries.push(...professionalLicenses.map((entry: ProfessionalLicenseEntry) => ({
         ...entry,
         startDate: entry.startDate || entry.expirationDate,
         endDate: entry.endDate || entry.expirationDate,

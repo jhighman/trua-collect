@@ -24,6 +24,14 @@ import {
 } from '../types/steps';
 import { JsonDocumentGenerator } from '../services/JsonDocumentGenerator';
 import { FormState } from '../types/form';
+import { 
+  PersonalInfo, 
+  ResidenceHistoryEntry, 
+  EmploymentHistoryEntry,
+  EducationEntry,
+  ProfessionalLicenseEntry,
+  Signature
+} from '../types/documents';
 
 // Extend the jsPDF type to include methods we need
 declare module 'jspdf' {
@@ -111,27 +119,70 @@ export const ConfirmationPage: React.FC<ConfirmationPageProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [jsonDocument, setJsonDocument] = useState<JsonDocument | null>(null);
+  
+  // Validate formState - try to get it from localStorage if it's not provided as a prop
+  const [localFormState, setLocalFormState] = useState<FormState | null>(null);
+  
+  useEffect(() => {
+    if (!formState || Object.keys(formState).length === 0) {
+      try {
+        const storedFormState = localStorage.getItem('formState');
+        if (storedFormState) {
+          const parsedState = JSON.parse(storedFormState);
+          // Validate the parsed state has required properties
+          if (parsedState && 
+              parsedState.steps && 
+              parsedState.steps['personal-info'] &&
+              parsedState.steps['residence-history'] &&
+              parsedState.steps['employment-history']) {
+            setLocalFormState(parsedState);
+          } else {
+            setError(t('error.invalid_form_state'));
+          }
+        } else {
+          setError(t('error.missing_form_data'));
+        }
+      } catch (error) {
+        console.error('Error retrieving form state from localStorage:', error);
+        setError(t('error.invalid_form_state'));
+      }
+    }
+  }, [formState, t]);
+  
+  // Use the prop formState if available, otherwise use the one from localStorage
+  const effectiveFormState = (formState && Object.keys(formState).length > 0) ? formState : localFormState;
 
   const handleGenerateDocument = useCallback(async () => {
+    if (!effectiveFormState) {
+      setError(t('error.missing_form_data'));
+      onError(t('error.missing_form_data'));
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
 
       // Generate JSON document
-      const generator = new JsonDocumentGenerator(formState);
+      const generator = new JsonDocumentGenerator(effectiveFormState);
       const document = generator.generateJsonDocument(trackingId);
       setJsonDocument(document);
 
       // Generate PDF document
       const pdfService = new PdfService();
-      const pdfDoc = await pdfService.generateVerificationPdf(formState);
+      const pdfDoc = await pdfService.generateVerificationPdf(effectiveFormState);
       const pdfBlob = new Blob([pdfDoc.output('blob')], { type: 'application/pdf' });
       const pdfObjectUrl = URL.createObjectURL(pdfBlob);
       setPdfUrl(pdfObjectUrl);
 
       // Save documents
       const documentService = new DocumentService();
-      await documentService.saveDocuments(document, pdfDoc);
+      try {
+        await documentService.saveDocuments(document, pdfDoc);
+      } catch (saveError) {
+        console.warn('Failed to save documents, but generation was successful:', saveError);
+        // Don't fail the whole process if just the save failed
+      }
 
       setIsLoading(false);
       onSuccess();
@@ -141,16 +192,16 @@ export const ConfirmationPage: React.FC<ConfirmationPageProps> = ({
       setError(errorMessage);
       onError(errorMessage);
     }
-  }, [formState, trackingId, onSuccess, onError]);
+  }, [effectiveFormState, trackingId, onSuccess, onError, t]);
 
   // Call handleGenerateDocument when component mounts
   React.useEffect(() => {
     handleGenerateDocument();
   }, [handleGenerateDocument]);
-
-  // Validate formState
-  if (!formState) {
-    console.error('Form state is undefined');
+  
+  // If we still don't have a valid form state, show an error
+  if (!effectiveFormState) {
+    console.error('Form state is undefined and not available in localStorage');
     return (
       <div className="confirmation-page">
         <div className="confirmation-container error">
@@ -168,8 +219,8 @@ export const ConfirmationPage: React.FC<ConfirmationPageProps> = ({
     );
   }
 
-  // Map entries from form state with proper validation
-  const employmentEntries = (formState?.employmentHistory?.entries || []).map(entry => ({
+  // Map entries from form state with proper validation and default values
+  const employmentEntries = ((effectiveFormState?.steps['employment-history']?.values as EmploymentHistoryStepValues)?.entries || []).map((entry: EmploymentHistoryEntry) => ({
     ...entry,
     company: entry?.employer || '',
     type: 'employment',
@@ -184,7 +235,7 @@ export const ConfirmationPage: React.FC<ConfirmationPageProps> = ({
     no_contact_attestation: entry?.no_contact_attestation
   })) as DisplayEmploymentEntry[];
 
-  const residenceEntries = (formState?.residenceHistory?.entries || []).map(entry => ({
+  const residenceEntries = ((effectiveFormState?.steps['residence-history']?.values as ResidenceHistoryStepValues)?.entries || []).map((entry: ResidenceHistoryEntry) => ({
     ...entry,
     isCurrent: !entry?.endDate,
     address: entry?.address || '',
@@ -194,7 +245,7 @@ export const ConfirmationPage: React.FC<ConfirmationPageProps> = ({
     zip_postal: entry?.zip_postal || ''
   })) as DisplayResidenceEntry[];
 
-  const educationEntries = (formState?.education?.entries || []).map(entry => ({
+  const educationEntries = ((effectiveFormState?.steps['education']?.values as EducationStepValues)?.entries || []).map((entry: EducationEntry) => ({
     ...entry,
     startDate: entry?.completionDate || '',
     endDate: entry?.completionDate || '',
@@ -205,11 +256,11 @@ export const ConfirmationPage: React.FC<ConfirmationPageProps> = ({
     location: entry?.location
   })) as DisplayEducationEntry[];
 
-  const licenseEntries = (formState?.professionalLicenses?.entries || []).map(entry => ({
+  const professionalLicenseEntries = ((effectiveFormState?.steps['professional-licenses']?.values as ProfessionalLicensesStepValues)?.entries || []).map((entry: ProfessionalLicenseEntry) => ({
     ...entry,
-    startDate: entry?.expirationDate || new Date().toISOString(),
-    endDate: entry?.expirationDate || new Date().toISOString(),
-    isCurrent: true,
+    startDate: entry?.issueDate || '',
+    endDate: entry?.expirationDate || '',
+    isCurrent: entry?.isActive || false,
     licenseType: entry?.licenseType || '',
     licenseNumber: entry?.licenseNumber || '',
     issuingAuthority: entry?.issuingAuthority || '',
@@ -217,10 +268,11 @@ export const ConfirmationPage: React.FC<ConfirmationPageProps> = ({
     country: entry?.country || '',
     issueDate: entry?.issueDate || '',
     expirationDate: entry?.expirationDate,
-    isActive: entry?.isActive || false
+    isActive: entry?.isActive || false,
+    description: entry?.description
   })) as DisplayLicenseEntry[];
 
-  const personalInfo = formState?.personalInfo?.entries?.[0] || { fullName: '', email: '' };
+  const personalInfo = ((effectiveFormState?.steps['personal-info']?.values as PersonalInfoStepValues) || { fullName: '', email: '' });
   const claimantName = personalInfo?.fullName || t('common.applicant');
 
   const handleJsonDownload = () => {
@@ -362,8 +414,8 @@ export const ConfirmationPage: React.FC<ConfirmationPageProps> = ({
 
           <div className="timeline-section">
             <h3>{t('professional_licenses')}</h3>
-            {licenseEntries.length > 0 ? (
-              licenseEntries.map((entry, index) => (
+            {professionalLicenseEntries.length > 0 ? (
+              professionalLicenseEntries.map((entry, index) => (
                 <div key={index} className="timeline-entry">
                   <div className="date-range">
                     {formatDate(entry.startDate)} - {entry.isCurrent ? t('present') : formatDate(entry.endDate)}

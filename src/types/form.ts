@@ -15,28 +15,28 @@ export type FormStepId =
   | 'professional-licenses'
   | 'signature';
 
-interface PersonalInfoStepValues {
+export interface PersonalInfoStepValues {
   fullName: string;
   email: string;
 }
 
-interface ResidenceHistoryStepValues {
+export interface ResidenceHistoryStepValues {
   entries: ResidenceHistoryEntry[];
 }
 
-interface EmploymentHistoryStepValues {
+export interface EmploymentHistoryStepValues {
   entries: EmploymentHistoryEntry[];
 }
 
-interface EducationStepValues {
+export interface EducationStepValues {
   entries: EducationEntry[];
 }
 
-interface ProfessionalLicensesStepValues {
+export interface ProfessionalLicensesStepValues {
   entries: ProfessionalLicenseEntry[];
 }
 
-interface SignatureStepValues {
+export interface SignatureStepValues {
   signature: string;
   confirmation: boolean;
   trackingId?: string;
@@ -58,6 +58,13 @@ export interface StepState {
 }
 
 export interface FormState {
+  currentStepId: FormStepId;
+  steps: {
+    [key in FormStepId]: StepState;
+  };
+  completedSteps: FormStepId[];
+  isSubmitting: boolean;
+  isComplete: boolean;
   personalInfo?: {
     entries: PersonalInfo[];
   };

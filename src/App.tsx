@@ -93,7 +93,10 @@ const App: React.FC = () => {
             <Route path="/verify" element={<VerificationEntry onSubmit={handleSubmit} urlKey={keyParam || undefined} urlToken={tokenParam || undefined} />} />
             <Route path="/confirmation" element={
               <ConfirmationPage
+                formState={JSON.parse(localStorage.getItem('formState') || '{}')}
                 trackingId={new URLSearchParams(window.location.search).get('trackingId') || 'unknown'}
+                onSuccess={() => console.log('Confirmation successful')}
+                onError={(error) => console.error('Confirmation error:', error)}
               />
             } />
             <Route path="/logs" element={<FormStateViewer />} />
