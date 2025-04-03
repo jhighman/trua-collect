@@ -47,8 +47,8 @@ interface EmploymentEntryProps {
 }
 
 export function EmploymentEntry({ 
-  entry, 
-  onUpdate, 
+  entry,
+  onUpdate,
   onRemove,
   onDelete,
   employmentTypes = [],
@@ -124,10 +124,10 @@ export function EmploymentEntry({
   // Collect all validation errors
   const getValidationErrors = () => {
     const errors = [];
-    if (isCompanyRequired && !editedEntry.company) {
+    if (isCompanyRequired && !editedEntry.company && editedEntry.type !== 'unemployed') {
       errors.push({ id: 'company-error', message: t('employment.company_required') });
     }
-    if (isPositionRequired && !editedEntry.position) {
+    if (isPositionRequired && !editedEntry.position && editedEntry.type !== 'unemployed') {
       errors.push({ id: 'position-error', message: t('employment.position_required') });
     }
     if (!editedEntry.country) {
@@ -145,7 +145,7 @@ export function EmploymentEntry({
     if (!editedEntry.is_current && !editedEntry.end_date) {
       errors.push({ id: 'end-date-error', message: t('common.end_date_required') });
     }
-    if (isContactRequired) {
+    if (isContactRequired && editedEntry.type !== 'unemployed') {
       if (!editedEntry.contact_name) {
         errors.push({ id: 'contact-name-error', message: t('employment.contact_name_required') });
       }
@@ -235,11 +235,21 @@ export function EmploymentEntry({
                 </Label>
                 <FormField error={showErrors && !editedEntry.type ? t('employment.type_required') : ''}>
                   <Select
-                    value={editedEntry.type}
+              value={editedEntry.type}
                     onValueChange={(value) => {
                       setEditedEntry(prev => ({
                         ...prev,
                         type: value,
+                        // Clear contact information if type is unemployed
+                        ...(value === 'unemployed' ? {
+                          contact_name: '',
+                          contact_type: '',
+                          contact_email: '',
+                          contact_phone: '',
+                          contact_preferred_method: '',
+                          company: '',
+                          position: ''
+                        } : {})
                       }));
                     }}
                   >
@@ -252,7 +262,7 @@ export function EmploymentEntry({
                       align="start"
                       className="select-content-dropdown"
                     >
-                      {employmentTypes.map(type => (
+              {employmentTypes.map(type => (
                         <SelectItem 
                           key={type.value} 
                           value={type.value} 
@@ -264,43 +274,45 @@ export function EmploymentEntry({
                     </SelectContent>
                   </Select>
                 </FormField>
-              </div>
+          </div>
             )}
 
-            {/* Company and Position */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <Label htmlFor="company" className="flex items-center gap-1 text-base font-medium">
-                  {t('employment.company')}
-                  {isCompanyRequired && <span className="text-destructive">*</span>}
-                </Label>
-                <FormField error={showErrors && isCompanyRequired && !editedEntry.company ? t('employment.company_required') : ''}>
-                  <Input
-                    id="company"
-                    className={`h-11 text-base ${isCompanyRequired && !editedEntry.company && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                    value={editedEntry.company}
-                    onChange={(e) => setEditedEntry({ ...editedEntry, company: e.target.value })}
-                    aria-invalid={isCompanyRequired && !editedEntry.company && showErrors}
-                  />
-                </FormField>
+            {/* Company and Position - Hide for unemployed */}
+            {editedEntry.type !== 'unemployed' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label htmlFor="company" className="flex items-center gap-1 text-base font-medium">
+                    {t('employment.company')}
+                    {isCompanyRequired && <span className="text-destructive">*</span>}
+                  </Label>
+                  <FormField error={showErrors && isCompanyRequired && !editedEntry.company ? t('employment.company_required') : ''}>
+                    <Input
+                      id="company"
+                      className={`h-11 text-base ${isCompanyRequired && !editedEntry.company && showErrors ? 'border-destructive ring-destructive' : ''}`}
+              value={editedEntry.company}
+                      onChange={(e) => setEditedEntry({ ...editedEntry, company: e.target.value })}
+                      aria-invalid={isCompanyRequired && !editedEntry.company && showErrors}
+            />
+                  </FormField>
+          </div>
+          
+                <div className="space-y-3">
+                  <Label htmlFor="position" className="flex items-center gap-1 text-base font-medium">
+                    {t('employment.position')}
+                    {isPositionRequired && <span className="text-destructive">*</span>}
+                  </Label>
+                  <FormField error={showErrors && isPositionRequired && !editedEntry.position ? t('employment.position_required') : ''}>
+                    <Input
+                      id="position"
+                      className={`h-11 text-base ${isPositionRequired && !editedEntry.position && showErrors ? 'border-destructive ring-destructive' : ''}`}
+              value={editedEntry.position}
+                      onChange={(e) => setEditedEntry({ ...editedEntry, position: e.target.value })}
+                      aria-invalid={isPositionRequired && !editedEntry.position && showErrors}
+                    />
+                  </FormField>
+                </div>
               </div>
-
-              <div className="space-y-3">
-                <Label htmlFor="position" className="flex items-center gap-1 text-base font-medium">
-                  {t('employment.position')}
-                  {isPositionRequired && <span className="text-destructive">*</span>}
-                </Label>
-                <FormField error={showErrors && isPositionRequired && !editedEntry.position ? t('employment.position_required') : ''}>
-                  <Input
-                    id="position"
-                    className={`h-11 text-base ${isPositionRequired && !editedEntry.position && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                    value={editedEntry.position}
-                    onChange={(e) => setEditedEntry({ ...editedEntry, position: e.target.value })}
-                    aria-invalid={isPositionRequired && !editedEntry.position && showErrors}
-                  />
-                </FormField>
-              </div>
-            </div>
+            )}
 
             {/* Country */}
             <div className="space-y-3">
@@ -334,8 +346,8 @@ export function EmploymentEntry({
                   </SelectContent>
                 </Select>
               </FormField>
-            </div>
-            
+          </div>
+          
             {/* City and State */}
             <div className="flex flex-col md:flex-row gap-6">
               <div className="flex-1 space-y-3">
@@ -347,13 +359,13 @@ export function EmploymentEntry({
                   <Input
                     id="city"
                     className={`h-11 text-base ${!editedEntry.city && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                    value={editedEntry.city}
+              value={editedEntry.city}
                     onChange={(e) => setEditedEntry({ ...editedEntry, city: e.target.value })}
                     aria-invalid={!editedEntry.city && showErrors}
-                  />
+            />
                 </FormField>
-              </div>
-
+          </div>
+          
               <div className="flex-1 space-y-3">
                 <Label htmlFor="state_province" className="flex items-center gap-1 text-base font-medium">
                   {t('employment.state_province')}
@@ -361,7 +373,7 @@ export function EmploymentEntry({
                 </Label>
                 <FormField error={showErrors && !editedEntry.state_province ? t('employment.state_required') : ''}>
                   <Select
-                    value={editedEntry.state_province}
+              value={editedEntry.state_province}
                     onValueChange={handleStateChange}
                     disabled={!editedEntry.country}
                   >
@@ -387,23 +399,32 @@ export function EmploymentEntry({
                   </Select>
                 </FormField>
               </div>
-            </div>
-            
+          </div>
+          
             {/* Description */}
             <div className="space-y-3">
               <Label htmlFor="description" className="flex items-center gap-1 text-base font-medium">
                 {t('employment.description')}
               </Label>
               <FormField error="">
-                <textarea
+            <textarea
                   id="description"
                   className="w-full min-h-[100px] p-3 rounded-md border border-input bg-background text-sm"
-                  value={editedEntry.description}
+              value={editedEntry.description}
                   onChange={(e) => setEditedEntry({ ...editedEntry, description: e.target.value })}
+                  placeholder={t(
+                    editedEntry.type === 'unemployed'
+                      ? 'employment.description_unemployed'
+                      : editedEntry.type === 'education'
+                      ? 'employment.description_education'
+                      : editedEntry.type === 'other'
+                      ? 'employment.description_other'
+                      : 'employment.description_job'
+                  )}
                 />
               </FormField>
-            </div>
-            
+          </div>
+          
             {/* Dates */}
             <div className="space-y-6 mt-6">
               <div className="employment-current-checkbox-container p-4 rounded-md bg-[var(--color-gray-50)] hover:bg-[var(--color-gray-100)] transition-colors duration-200">
@@ -421,14 +442,22 @@ export function EmploymentEntry({
                   htmlFor="is_current"
                   className="ml-3 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                  {t('employment.is_current_job')}
-                </label>
-              </div>
-              
+                  {t(
+                    editedEntry.type === 'unemployed'
+                      ? 'employment.is_current_unemployed'
+                      : editedEntry.type === 'education'
+                      ? 'employment.is_current_education'
+                      : editedEntry.type === 'other'
+                      ? 'employment.is_current_generic'
+                      : 'employment.is_current_job'
+                  )}
+            </label>
+          </div>
+          
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <Label htmlFor="start_date" className="flex items-center gap-1 text-base font-medium">
-                    {t('common.start_date')}
+                    {t('employment.from_date')}
                     <span className="text-destructive">*</span>
                   </Label>
                   <FormField error={showErrors && !editedEntry.start_date ? t('common.start_date_required') : ''}>
@@ -436,28 +465,52 @@ export function EmploymentEntry({
                       type="month"
                       id="start_date"
                       className={`h-11 text-base ${!editedEntry.start_date && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                      value={editedEntry.start_date}
+              value={editedEntry.start_date}
                       onChange={(e) => setEditedEntry({ ...editedEntry, start_date: e.target.value })}
                       aria-invalid={!editedEntry.start_date && showErrors}
                     />
+                    <p className="text-muted-foreground text-sm">
+                      {t(
+                        editedEntry.type === 'unemployed'
+                          ? 'employment.from_date_help_unemployed'
+                          : editedEntry.type === 'education'
+                          ? 'employment.from_date_help_education'
+                          : editedEntry.type === 'other'
+                          ? 'employment.from_date_help_other'
+                          : 'employment.from_date_help'
+                      )}
+                    </p>
                   </FormField>
-                </div>
-
+          </div>
+          
                 <div className="space-y-3">
                   <Label htmlFor="end_date" className="flex items-center gap-1 text-base font-medium">
-                    {t('common.end_date')}
+                    {t('employment.to_date')}
                     {!editedEntry.is_current && <span className="text-destructive">*</span>}
                   </Label>
                   <FormField error={showErrors && !editedEntry.is_current && !editedEntry.end_date ? t('common.end_date_required') : ''}>
                     {!editedEntry.is_current ? (
-                      <Input
-                        type="month"
-                        id="end_date"
-                        className={`h-11 text-base ${!editedEntry.end_date && !editedEntry.is_current && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                        value={editedEntry.end_date || ''}
-                        onChange={(e) => setEditedEntry({ ...editedEntry, end_date: e.target.value })}
-                        aria-invalid={!editedEntry.end_date && showErrors}
-                      />
+                      <>
+                        <Input
+                          type="month"
+                          id="end_date"
+                          className={`h-11 text-base ${!editedEntry.end_date && !editedEntry.is_current && showErrors ? 'border-destructive ring-destructive' : ''}`}
+                          value={editedEntry.end_date || ''}
+                          onChange={(e) => setEditedEntry({ ...editedEntry, end_date: e.target.value })}
+                          aria-invalid={!editedEntry.end_date && showErrors}
+                        />
+                        <p className="text-muted-foreground text-sm">
+                          {t(
+                            editedEntry.type === 'unemployed'
+                              ? 'employment.to_date_help_unemployed'
+                              : editedEntry.type === 'education'
+                              ? 'employment.to_date_help_education'
+                              : editedEntry.type === 'other'
+                              ? 'employment.to_date_help_other'
+                              : 'employment.to_date_help'
+                          )}
+                        </p>
+                      </>
                     ) : (
                       <div className="h-11 flex items-center px-3 bg-gray-50 border border-gray-200 rounded-md">
                         <span className="text-base font-medium text-primary">
@@ -468,149 +521,156 @@ export function EmploymentEntry({
                   </FormField>
                 </div>
               </div>
-            </div>
-            
+          </div>
+          
             {/* Contact Information */}
-            {isContactRequired && (
-              <div className="space-y-6 border-t pt-6">
-                <h3 className="text-lg font-medium">{t('employment.contact_section')}</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <Label htmlFor="contact_name" className="flex items-center gap-1 text-base font-medium">
-                      {t('employment.contact_name')}
-                      <span className="text-destructive">*</span>
-                    </Label>
-                    <FormField error={showErrors && !editedEntry.contact_name ? t('employment.contact_name_required') : ''}>
-                      <Input
-                        id="contact_name"
-                        className={`h-11 text-base ${!editedEntry.contact_name && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                        value={editedEntry.contact_name}
-                        onChange={(e) => setEditedEntry({ ...editedEntry, contact_name: e.target.value })}
-                        placeholder={t('employment.contact_name_placeholder')}
-                        aria-invalid={!editedEntry.contact_name && showErrors}
-                      />
-                    </FormField>
+            {editedEntry.type && editedEntry.type !== 'unemployed' && (
+              <div className="border-t border-border mt-10">
+                <div className="pt-10">
+                  <CardHeader className="px-0 pb-8">
+                    <CardTitle>{t('employment.contact_section')}</CardTitle>
+                    <p className="text-muted-foreground mt-1.5">
+                      {t('employment.contact_section_description')}
+                    </p>
+                  </CardHeader>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <Label htmlFor="contact_name" className="flex items-center gap-1 text-base font-medium">
+                        {t('employment.contact_name')}
+                        {isContactRequired && <span className="text-destructive">*</span>}
+                      </Label>
+                      <FormField error={showErrors && isContactRequired && !editedEntry.contact_name ? t('employment.contact_name_required') : ''}>
+                        <Input
+                          id="contact_name"
+                          className={`h-11 text-base ${isContactRequired && !editedEntry.contact_name && showErrors ? 'border-destructive ring-destructive' : ''}`}
+                          value={editedEntry.contact_name}
+                          onChange={(e) => setEditedEntry({ ...editedEntry, contact_name: e.target.value })}
+                          placeholder={t('employment.contact_name_placeholder')}
+                          aria-invalid={isContactRequired && !editedEntry.contact_name && showErrors}
+                        />
+                      </FormField>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <Label htmlFor="contact_type" className="flex items-center gap-1 text-base font-medium">
+                        {t('employment.contact_type')}
+                        {isContactRequired && <span className="text-destructive">*</span>}
+                      </Label>
+                      <FormField error={showErrors && isContactRequired && !editedEntry.contact_type ? t('employment.contact_type_required') : ''}>
+                        <Select
+                          value={editedEntry.contact_type}
+                          onValueChange={(value) => {
+                            setEditedEntry(prev => ({
+                              ...prev,
+                              contact_type: value,
+                            }));
+                          }}
+                        >
+                          <SelectTrigger className={`w-full h-11 text-base select-trigger ${isContactRequired && !editedEntry.contact_type && showErrors ? 'border-destructive ring-destructive' : ''}`}>
+                            <SelectValue placeholder={t('employment.select_contact_type')} />
+                          </SelectTrigger>
+                          <SelectContent
+                            position="popper"
+                            sideOffset={5}
+                            align="start"
+                            className="select-content-dropdown"
+                          >
+                            {contactTypes.map(type => (
+                              <SelectItem 
+                                key={type.value} 
+                                value={type.value} 
+                                className="select-item"
+                              >
+                                {type.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormField>
+                    </div>
                   </div>
                   
-                  <div className="space-y-3">
-                    <Label htmlFor="contact_type" className="flex items-center gap-1 text-base font-medium">
-                      {t('employment.contact_type')}
-                      <span className="text-destructive">*</span>
-                    </Label>
-                    <FormField error={showErrors && !editedEntry.contact_type ? t('employment.contact_type_required') : ''}>
-                      <Select
-                        value={editedEntry.contact_type}
-                        onValueChange={(value) => {
-                          setEditedEntry(prev => ({
-                            ...prev,
-                            contact_type: value,
-                          }));
-                        }}
-                      >
-                        <SelectTrigger className={`w-full h-11 text-base select-trigger ${!editedEntry.contact_type && showErrors ? 'border-destructive ring-destructive' : ''}`}>
-                          <SelectValue placeholder={t('employment.select_contact_type')} />
-                        </SelectTrigger>
-                        <SelectContent
-                          position="popper"
-                          sideOffset={5}
-                          align="start"
-                          className="select-content-dropdown"
-                        >
-                          {contactTypes.map(type => (
-                            <SelectItem 
-                              key={type.value} 
-                              value={type.value} 
-                              className="select-item"
-                            >
-                              {type.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormField>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <Label htmlFor="contact_email" className="flex items-center gap-1 text-base font-medium">
-                      {t('employment.contact_email')}
-                      {!editedEntry.contact_phone && <span className="text-destructive">*</span>}
-                    </Label>
-                    <FormField error={showErrors && !editedEntry.contact_email && !editedEntry.contact_phone ? t('employment.contact_info_required') : ''}>
-                      <Input
-                        id="contact_email"
-                        type="email"
-                        className={`h-11 text-base ${!editedEntry.contact_email && !editedEntry.contact_phone && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                        value={editedEntry.contact_email}
-                        onChange={(e) => setEditedEntry({ ...editedEntry, contact_email: e.target.value })}
-                        placeholder={t('employment.contact_email_placeholder')}
-                        aria-invalid={!editedEntry.contact_email && !editedEntry.contact_phone && showErrors}
-                      />
-                    </FormField>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <Label htmlFor="contact_email" className="flex items-center gap-1 text-base font-medium">
+                        {t('employment.contact_email')}
+                        {isContactRequired && !editedEntry.contact_phone && <span className="text-destructive">*</span>}
+                      </Label>
+                      <FormField error={showErrors && isContactRequired && !editedEntry.contact_email && !editedEntry.contact_phone ? t('employment.contact_info_required') : ''}>
+                        <Input
+                          id="contact_email"
+                          type="email"
+                          className={`h-11 text-base ${isContactRequired && !editedEntry.contact_email && !editedEntry.contact_phone && showErrors ? 'border-destructive ring-destructive' : ''}`}
+                          value={editedEntry.contact_email}
+                          onChange={(e) => setEditedEntry({ ...editedEntry, contact_email: e.target.value })}
+                          placeholder={t('employment.contact_email_placeholder')}
+                          aria-invalid={isContactRequired && !editedEntry.contact_email && !editedEntry.contact_phone && showErrors}
+                        />
+                      </FormField>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <Label htmlFor="contact_phone" className="flex items-center gap-1 text-base font-medium">
+                        {t('employment.contact_phone')}
+                        {isContactRequired && !editedEntry.contact_email && <span className="text-destructive">*</span>}
+                      </Label>
+                      <FormField error={showErrors && isContactRequired && !editedEntry.contact_email && !editedEntry.contact_phone ? t('employment.contact_info_required') : ''}>
+                        <Input
+                          id="contact_phone"
+                          type="tel"
+                          className={`h-11 text-base ${isContactRequired && !editedEntry.contact_email && !editedEntry.contact_phone && showErrors ? 'border-destructive ring-destructive' : ''}`}
+                          value={editedEntry.contact_phone}
+                          onChange={(e) => setEditedEntry({ ...editedEntry, contact_phone: e.target.value })}
+                          placeholder={t('employment.contact_phone_placeholder')}
+                          aria-invalid={isContactRequired && !editedEntry.contact_email && !editedEntry.contact_phone && showErrors}
+                        />
+                      </FormField>
+                    </div>
                   </div>
                   
-                  <div className="space-y-3">
-                    <Label htmlFor="contact_phone" className="flex items-center gap-1 text-base font-medium">
-                      {t('employment.contact_phone')}
-                      {!editedEntry.contact_email && <span className="text-destructive">*</span>}
-                    </Label>
-                    <FormField error={showErrors && !editedEntry.contact_email && !editedEntry.contact_phone ? t('employment.contact_info_required') : ''}>
-                      <Input
-                        id="contact_phone"
-                        type="tel"
-                        className={`h-11 text-base ${!editedEntry.contact_email && !editedEntry.contact_phone && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                        value={editedEntry.contact_phone}
-                        onChange={(e) => setEditedEntry({ ...editedEntry, contact_phone: e.target.value })}
-                        placeholder={t('employment.contact_phone_placeholder')}
-                        aria-invalid={!editedEntry.contact_email && !editedEntry.contact_phone && showErrors}
-                      />
-                    </FormField>
-                  </div>
-                </div>
-                
-                {(editedEntry.contact_email || editedEntry.contact_phone) && (
-                  <div className="space-y-3">
-                    <Label htmlFor="contact_preferred_method" className="flex items-center gap-1 text-base font-medium">
-                      {t('employment.contact_preferred_method')}
-                      <span className="text-destructive">*</span>
-                    </Label>
-                    <FormField error={showErrors && !editedEntry.contact_preferred_method ? t('employment.contact_method_required') : ''}>
-                      <Select
-                        value={editedEntry.contact_preferred_method}
-                        onValueChange={(value) => {
-                          setEditedEntry(prev => ({
-                            ...prev,
-                            contact_preferred_method: value,
-                          }));
-                        }}
-                      >
-                        <SelectTrigger className={`w-full h-11 text-base select-trigger ${!editedEntry.contact_preferred_method && showErrors ? 'border-destructive ring-destructive' : ''}`}>
-                          <SelectValue placeholder={t('employment.select_contact_method')} />
-                        </SelectTrigger>
-                        <SelectContent
-                          position="popper"
-                          sideOffset={5}
-                          align="start"
-                          className="select-content-dropdown"
+                  {(editedEntry.contact_email || editedEntry.contact_phone) && (
+                    <div className="space-y-3">
+                      <Label htmlFor="contact_preferred_method" className="flex items-center gap-1 text-base font-medium">
+                        {t('employment.contact_preferred_method')}
+                        {isContactRequired && <span className="text-destructive">*</span>}
+                      </Label>
+                      <FormField error={showErrors && isContactRequired && !editedEntry.contact_preferred_method ? t('employment.contact_method_required') : ''}>
+                        <Select
+                          value={editedEntry.contact_preferred_method}
+                          onValueChange={(value) => {
+                            setEditedEntry(prev => ({
+                              ...prev,
+                              contact_preferred_method: value,
+                            }));
+                          }}
                         >
-                          {contactMethods.map(method => (
-                            <SelectItem 
-                              key={method.value} 
-                              value={method.value} 
-                              className="select-item"
-                              disabled={(method.value === 'email' && !editedEntry.contact_email) || 
-                                       (method.value === 'phone' && !editedEntry.contact_phone)}
-                            >
-                              {method.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormField>
-                  </div>
-                )}
+                          <SelectTrigger className={`w-full h-11 text-base select-trigger ${isContactRequired && !editedEntry.contact_preferred_method && showErrors ? 'border-destructive ring-destructive' : ''}`}>
+                            <SelectValue placeholder={t('employment.select_contact_method')} />
+                          </SelectTrigger>
+                          <SelectContent
+                            position="popper"
+                            sideOffset={5}
+                            align="start"
+                            className="select-content-dropdown"
+                          >
+                            {contactMethods.map(method => (
+                              <SelectItem 
+                                key={method.value} 
+                                value={method.value} 
+                                className="select-item"
+                                disabled={(method.value === 'email' && !editedEntry.contact_email) || 
+                                         (method.value === 'phone' && !editedEntry.contact_phone)}
+                              >
+                                {method.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormField>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
             

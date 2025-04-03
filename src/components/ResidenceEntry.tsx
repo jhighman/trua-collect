@@ -209,13 +209,13 @@ export function ResidenceEntry({ entry, onUpdate, onDelete, onRemove = onDelete,
                 <Input
                   id="address"
                   className={`h-11 text-base ${!editedEntry.address && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                  value={editedEntry.address}
+              value={editedEntry.address}
                   onChange={(e) => setEditedEntry({ ...editedEntry, address: e.target.value })}
                   aria-invalid={!editedEntry.address && showErrors}
-                />
+            />
               </FormField>
-            </div>
-            
+          </div>
+          
             <div className="space-y-3">
               <Label htmlFor="city" className="flex items-center gap-1 text-base font-medium">
                 {t('residence.city')}
@@ -225,13 +225,13 @@ export function ResidenceEntry({ entry, onUpdate, onDelete, onRemove = onDelete,
                 <Input
                   id="city"
                   className={`h-11 text-base ${!editedEntry.city && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                  value={editedEntry.city}
+              value={editedEntry.city}
                   onChange={(e) => setEditedEntry({ ...editedEntry, city: e.target.value })}
                   aria-invalid={!editedEntry.city && showErrors}
-                />
+            />
               </FormField>
-            </div>
-            
+          </div>
+          
             <div className="flex flex-col md:flex-row gap-6">
               <div className="flex-1 space-y-3">
                 <Label htmlFor="state_province" className="flex items-center gap-1 text-base font-medium">
@@ -240,7 +240,7 @@ export function ResidenceEntry({ entry, onUpdate, onDelete, onRemove = onDelete,
                 </Label>
                 <FormField error={showErrors && !editedEntry.state_province ? t('residence.state_required') : ''}>
                   <Select
-                    value={editedEntry.state_province}
+              value={editedEntry.state_province}
                     onValueChange={(value) => {
                       setEditedEntry(prev => ({
                         ...prev,
@@ -270,9 +270,9 @@ export function ResidenceEntry({ entry, onUpdate, onDelete, onRemove = onDelete,
                     </SelectContent>
                   </Select>
                 </FormField>
-              </div>
-              
-              <div className="w-full md:w-1/3 space-y-3">
+          </div>
+          
+              <div className="w-full md:w-40 shrink-0 space-y-3">
                 <Label htmlFor="zip_postal" className="flex items-center gap-1 text-base font-medium">
                   {t('residence.zip_postal')}
                   <span className="text-destructive">*</span>
@@ -281,15 +281,15 @@ export function ResidenceEntry({ entry, onUpdate, onDelete, onRemove = onDelete,
                   <Input
                     id="zip_postal"
                     className={`h-11 text-base ${!editedEntry.zip_postal && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                    value={editedEntry.zip_postal}
+              value={editedEntry.zip_postal}
                     onChange={(e) => setEditedEntry({ ...editedEntry, zip_postal: e.target.value })}
                     pattern="[0-9]{5}(-[0-9]{4})?"
                     aria-invalid={!editedEntry.zip_postal && showErrors}
-                  />
+            />
                 </FormField>
               </div>
-            </div>
-            
+          </div>
+          
             <div className="space-y-6 mt-6">
               <div className="residence-current-checkbox-container p-4 rounded-md bg-[var(--color-gray-50)] hover:bg-[var(--color-gray-100)] transition-colors duration-200">
                 <Checkbox
@@ -308,8 +308,8 @@ export function ResidenceEntry({ entry, onUpdate, onDelete, onRemove = onDelete,
                 >
                   {t('residence.is_current')}
                 </label>
-              </div>
-              
+          </div>
+          
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <Label htmlFor="start_date" className="flex items-center gap-1 text-base font-medium">
@@ -321,16 +321,16 @@ export function ResidenceEntry({ entry, onUpdate, onDelete, onRemove = onDelete,
                       type="month"
                       id="start_date"
                       className={`h-11 text-base ${!editedEntry.start_date && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                      value={editedEntry.start_date}
+              value={editedEntry.start_date}
                       onChange={(e) => setEditedEntry({ ...editedEntry, start_date: e.target.value })}
                       aria-invalid={!editedEntry.start_date && showErrors}
-                    />
+            />
                     <p className="text-muted-foreground text-sm">
                       {t('residence.from_date_help')}
                     </p>
                   </FormField>
-                </div>
-
+          </div>
+          
                 <div className="space-y-3">
                   <Label htmlFor="end_date" className="flex items-center gap-1 text-base font-medium">
                     {t('residence.to_date')}
@@ -342,27 +342,27 @@ export function ResidenceEntry({ entry, onUpdate, onDelete, onRemove = onDelete,
                         type="month"
                         id="end_date"
                         className={`h-11 text-base ${!editedEntry.end_date && !editedEntry.is_current && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                        value={editedEntry.end_date || ''}
+                value={editedEntry.end_date || ''}
                         onChange={(e) => setEditedEntry({ ...editedEntry, end_date: e.target.value })}
                         aria-invalid={!editedEntry.end_date && showErrors}
-                      />
+              />
                     ) : (
                       <div className="h-11 flex items-center px-3 bg-gray-50 border border-gray-200 rounded-md">
                         <span className="text-base font-medium text-primary">
                           {t('common.present')}
                         </span>
-                      </div>
-                    )}
+            </div>
+          )}
                     {!editedEntry.is_current && (
                       <p className="text-muted-foreground text-sm">
                         {t('residence.to_date_help')}
                       </p>
                     )}
                   </FormField>
-                </div>
-              </div>
+          </div>
             </div>
-            
+          </div>
+          
             {showErrors && validationErrors.length > 0 && (
               <FormErrorSummary errors={validationErrors} />
             )}

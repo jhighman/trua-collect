@@ -254,3 +254,23 @@
 [role="listbox"] {
   background-color: white !important;
 }
+
+/* Contact section styling */
+.employment-contact-section {
+  margin-top: 3rem !important;
+  padding-top: 3rem !important;
+  border-top: 1px solid var(--color-gray-200) !important;
+}
+
+.employment-contact-section h3 {
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+  color: var(--text-color) !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.employment-contact-section p {
+  color: var(--text-muted) !important;
+  font-size: 0.975rem !important;
+  margin-bottom: 2rem !important;
+}
