@@ -28,6 +28,8 @@ export interface EmploymentEntryData {
   contact_email: string;
   contact_phone: string;
   contact_preferred_method: string;
+  no_contact_attestation: boolean;
+  contact_explanation?: string;
   start_date: string;
   end_date: string | null;
   is_current: boolean;
@@ -145,7 +147,7 @@ export function EmploymentEntry({
     if (!editedEntry.is_current && !editedEntry.end_date) {
       errors.push({ id: 'end-date-error', message: t('common.end_date_required') });
     }
-    if (isContactRequired) {
+    if (isContactRequired && editedEntry.type === 'Job' && !editedEntry.no_contact_attestation) {
       if (!editedEntry.contact_name) {
         errors.push({ id: 'contact-name-error', message: t('employment.contact_name_required') });
       }
@@ -184,11 +186,14 @@ export function EmploymentEntry({
                 <div className="text-sm mt-2">{editedEntry.description}</div>
               )}
               {editedEntry.contact_name && (
-                <div className="text-sm mt-2">
-                  <span className="font-medium">{t('employment.contact')}: </span>
-                  {editedEntry.contact_name}
-                  {editedEntry.contact_type && ` (${contactTypes.find(t => t.value === editedEntry.contact_type)?.label})`}
-                </div>
+                <>
+                  <h3 className="text-lg font-bold mt-4 mb-2 p-2 bg-primary/10 text-primary rounded-md">{t('employment.contact_section')}</h3>
+                  <div className="text-sm">
+                    <span className="font-medium">{t('employment.contact')}: </span>
+                    {editedEntry.contact_name}
+                    {editedEntry.contact_type && ` (${contactTypes.find(t => t.value === editedEntry.contact_type)?.label})`}
+                  </div>
+                </>
               )}
             </div>
             <div className="flex gap-2">
@@ -389,21 +394,6 @@ export function EmploymentEntry({
               </div>
             </div>
             
-            {/* Description */}
-            <div className="space-y-3">
-              <Label htmlFor="description" className="flex items-center gap-1 text-base font-medium">
-                {t('employment.description')}
-              </Label>
-              <FormField error="">
-                <textarea
-                  id="description"
-                  className="w-full min-h-[100px] p-3 rounded-md border border-input bg-background text-sm"
-                  value={editedEntry.description}
-                  onChange={(e) => setEditedEntry({ ...editedEntry, description: e.target.value })}
-                />
-              </FormField>
-            </div>
-            
             {/* Dates */}
             <div className="space-y-6 mt-6">
               <div className="employment-current-checkbox-container p-4 rounded-md bg-[var(--color-gray-50)] hover:bg-[var(--color-gray-100)] transition-colors duration-200">
@@ -421,14 +411,18 @@ export function EmploymentEntry({
                   htmlFor="is_current"
                   className="ml-3 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                  {t('employment.is_current_job')}
+                  {editedEntry.type === 'Education'
+                    ? t('employment.is_current_education')
+                    : editedEntry.type === 'Job'
+                      ? t('employment.is_current_job')
+                      : t('employment.is_current_generic')}
                 </label>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <Label htmlFor="start_date" className="flex items-center gap-1 text-base font-medium">
-                    {t('common.start_date')}
+                    {t('employment.from_date')}
                     <span className="text-destructive">*</span>
                   </Label>
                   <FormField error={showErrors && !editedEntry.start_date ? t('common.start_date_required') : ''}>
@@ -440,24 +434,36 @@ export function EmploymentEntry({
                       onChange={(e) => setEditedEntry({ ...editedEntry, start_date: e.target.value })}
                       aria-invalid={!editedEntry.start_date && showErrors}
                     />
+                    <p className="text-muted-foreground text-sm">
+                      {editedEntry.type
+                        ? t(`employment.from_date_help_${editedEntry.type.toLowerCase()}`) || t('employment.from_date_help_job')
+                        : t('employment.from_date_help_default') || t('employment.from_date_help_job')}
+                    </p>
                   </FormField>
                 </div>
 
                 <div className="space-y-3">
                   <Label htmlFor="end_date" className="flex items-center gap-1 text-base font-medium">
-                    {t('common.end_date')}
+                    {t('employment.to_date')}
                     {!editedEntry.is_current && <span className="text-destructive">*</span>}
                   </Label>
                   <FormField error={showErrors && !editedEntry.is_current && !editedEntry.end_date ? t('common.end_date_required') : ''}>
                     {!editedEntry.is_current ? (
-                      <Input
-                        type="month"
-                        id="end_date"
-                        className={`h-11 text-base ${!editedEntry.end_date && !editedEntry.is_current && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                        value={editedEntry.end_date || ''}
-                        onChange={(e) => setEditedEntry({ ...editedEntry, end_date: e.target.value })}
-                        aria-invalid={!editedEntry.end_date && showErrors}
-                      />
+                      <>
+                        <Input
+                          type="month"
+                          id="end_date"
+                          className={`h-11 text-base ${!editedEntry.end_date && !editedEntry.is_current && showErrors ? 'border-destructive ring-destructive' : ''}`}
+                          value={editedEntry.end_date || ''}
+                          onChange={(e) => setEditedEntry({ ...editedEntry, end_date: e.target.value })}
+                          aria-invalid={!editedEntry.end_date && showErrors}
+                        />
+                        <p className="text-muted-foreground text-sm">
+                          {editedEntry.type
+                            ? t(`employment.to_date_help_${editedEntry.type.toLowerCase()}`) || t('employment.to_date_help_job')
+                            : t('employment.to_date_help_default') || t('employment.to_date_help_job')}
+                        </p>
+                      </>
                     ) : (
                       <div className="h-11 flex items-center px-3 bg-gray-50 border border-gray-200 rounded-md">
                         <span className="text-base font-medium text-primary">
@@ -470,146 +476,200 @@ export function EmploymentEntry({
               </div>
             </div>
             
+            {/* Description */}
+            <div className="space-y-3 mt-6">
+              <Label htmlFor="description" className="flex items-center gap-1 text-base font-medium">
+                {t('employment.description')}
+              </Label>
+              <FormField error="">
+                <textarea
+                  id="description"
+                  className="w-full min-h-[100px] p-3 rounded-md border border-input bg-background text-sm"
+                  value={editedEntry.description}
+                  onChange={(e) => setEditedEntry({ ...editedEntry, description: e.target.value })}
+                />
+              </FormField>
+            </div>
+            
             {/* Contact Information */}
-            {isContactRequired && (
+            {isContactRequired && editedEntry.type === 'Job' && (
               <div className="space-y-6 border-t pt-6">
-                <h3 className="text-lg font-medium">{t('employment.contact_section')}</h3>
+                <h3 className="contact-section-heading">{t('employment.contact_section')}</h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <Label htmlFor="contact_name" className="flex items-center gap-1 text-base font-medium">
-                      {t('employment.contact_name')}
-                      <span className="text-destructive">*</span>
-                    </Label>
-                    <FormField error={showErrors && !editedEntry.contact_name ? t('employment.contact_name_required') : ''}>
-                      <Input
-                        id="contact_name"
-                        className={`h-11 text-base ${!editedEntry.contact_name && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                        value={editedEntry.contact_name}
-                        onChange={(e) => setEditedEntry({ ...editedEntry, contact_name: e.target.value })}
-                        placeholder={t('employment.contact_name_placeholder')}
-                        aria-invalid={!editedEntry.contact_name && showErrors}
-                      />
-                    </FormField>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <Label htmlFor="contact_type" className="flex items-center gap-1 text-base font-medium">
-                      {t('employment.contact_type')}
-                      <span className="text-destructive">*</span>
-                    </Label>
-                    <FormField error={showErrors && !editedEntry.contact_type ? t('employment.contact_type_required') : ''}>
-                      <Select
-                        value={editedEntry.contact_type}
-                        onValueChange={(value) => {
-                          setEditedEntry(prev => ({
-                            ...prev,
-                            contact_type: value,
-                          }));
-                        }}
-                      >
-                        <SelectTrigger className={`w-full h-11 text-base select-trigger ${!editedEntry.contact_type && showErrors ? 'border-destructive ring-destructive' : ''}`}>
-                          <SelectValue placeholder={t('employment.select_contact_type')} />
-                        </SelectTrigger>
-                        <SelectContent
-                          position="popper"
-                          sideOffset={5}
-                          align="start"
-                          className="select-content-dropdown"
-                        >
-                          {contactTypes.map(type => (
-                            <SelectItem 
-                              key={type.value} 
-                              value={type.value} 
-                              className="select-item"
-                            >
-                              {type.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormField>
-                  </div>
+                <div className="employment-current-checkbox-container p-4 rounded-md bg-[var(--color-gray-50)] hover:bg-[var(--color-gray-100)] transition-colors duration-200 mb-4">
+                  <Checkbox
+                    id="no_contact_attestation"
+                    checked={editedEntry.no_contact_attestation}
+                    onCheckedChange={(checked) => setEditedEntry({
+                      ...editedEntry,
+                      no_contact_attestation: checked === true
+                    })}
+                    className="employment-checkbox-visible transition-all duration-200"
+                  />
+                  <label
+                    htmlFor="no_contact_attestation"
+                    className="ml-3 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    {t('employment.no_contact_attestation')}
+                  </label>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <Label htmlFor="contact_email" className="flex items-center gap-1 text-base font-medium">
-                      {t('employment.contact_email')}
-                      {!editedEntry.contact_phone && <span className="text-destructive">*</span>}
+                {editedEntry.no_contact_attestation && (
+                  <div className="space-y-3 mt-4">
+                    <Label htmlFor="contact_explanation" className="flex items-center gap-1 text-base font-medium">
+                      {t('employment.contact_explanation')}
                     </Label>
-                    <FormField error={showErrors && !editedEntry.contact_email && !editedEntry.contact_phone ? t('employment.contact_info_required') : ''}>
-                      <Input
-                        id="contact_email"
-                        type="email"
-                        className={`h-11 text-base ${!editedEntry.contact_email && !editedEntry.contact_phone && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                        value={editedEntry.contact_email}
-                        onChange={(e) => setEditedEntry({ ...editedEntry, contact_email: e.target.value })}
-                        placeholder={t('employment.contact_email_placeholder')}
-                        aria-invalid={!editedEntry.contact_email && !editedEntry.contact_phone && showErrors}
+                    <FormField error="">
+                      <textarea
+                        id="contact_explanation"
+                        className="w-full min-h-[100px] p-3 rounded-md border border-input bg-background text-sm"
+                        value={editedEntry.contact_explanation || ''}
+                        onChange={(e) => setEditedEntry({ ...editedEntry, contact_explanation: e.target.value })}
+                        placeholder="explanation"
                       />
                     </FormField>
                   </div>
-                  
-                  <div className="space-y-3">
-                    <Label htmlFor="contact_phone" className="flex items-center gap-1 text-base font-medium">
-                      {t('employment.contact_phone')}
-                      {!editedEntry.contact_email && <span className="text-destructive">*</span>}
-                    </Label>
-                    <FormField error={showErrors && !editedEntry.contact_email && !editedEntry.contact_phone ? t('employment.contact_info_required') : ''}>
-                      <Input
-                        id="contact_phone"
-                        type="tel"
-                        className={`h-11 text-base ${!editedEntry.contact_email && !editedEntry.contact_phone && showErrors ? 'border-destructive ring-destructive' : ''}`}
-                        value={editedEntry.contact_phone}
-                        onChange={(e) => setEditedEntry({ ...editedEntry, contact_phone: e.target.value })}
-                        placeholder={t('employment.contact_phone_placeholder')}
-                        aria-invalid={!editedEntry.contact_email && !editedEntry.contact_phone && showErrors}
-                      />
-                    </FormField>
-                  </div>
-                </div>
+                )}
                 
-                {(editedEntry.contact_email || editedEntry.contact_phone) && (
-                  <div className="space-y-3">
-                    <Label htmlFor="contact_preferred_method" className="flex items-center gap-1 text-base font-medium">
-                      {t('employment.contact_preferred_method')}
-                      <span className="text-destructive">*</span>
-                    </Label>
-                    <FormField error={showErrors && !editedEntry.contact_preferred_method ? t('employment.contact_method_required') : ''}>
-                      <Select
-                        value={editedEntry.contact_preferred_method}
-                        onValueChange={(value) => {
-                          setEditedEntry(prev => ({
-                            ...prev,
-                            contact_preferred_method: value,
-                          }));
-                        }}
-                      >
-                        <SelectTrigger className={`w-full h-11 text-base select-trigger ${!editedEntry.contact_preferred_method && showErrors ? 'border-destructive ring-destructive' : ''}`}>
-                          <SelectValue placeholder={t('employment.select_contact_method')} />
-                        </SelectTrigger>
-                        <SelectContent
-                          position="popper"
-                          sideOffset={5}
-                          align="start"
-                          className="select-content-dropdown"
-                        >
-                          {contactMethods.map(method => (
-                            <SelectItem 
-                              key={method.value} 
-                              value={method.value} 
-                              className="select-item"
-                              disabled={(method.value === 'email' && !editedEntry.contact_email) || 
-                                       (method.value === 'phone' && !editedEntry.contact_phone)}
+                {!editedEntry.no_contact_attestation && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-3">
+                        <Label htmlFor="contact_name" className="flex items-center gap-1 text-base font-medium">
+                          {t('employment.contact_name')}
+                          <span className="text-destructive">*</span>
+                        </Label>
+                        <FormField error={showErrors && !editedEntry.contact_name ? t('employment.contact_name_required') : ''}>
+                          <Input
+                            id="contact_name"
+                            className={`h-11 text-base ${!editedEntry.contact_name && showErrors ? 'border-destructive ring-destructive' : ''}`}
+                            value={editedEntry.contact_name}
+                            onChange={(e) => setEditedEntry({ ...editedEntry, contact_name: e.target.value })}
+                            placeholder={t('employment.contact_name_placeholder')}
+                            aria-invalid={!editedEntry.contact_name && showErrors}
+                          />
+                        </FormField>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <Label htmlFor="contact_type" className="flex items-center gap-1 text-base font-medium">
+                          {t('employment.contact_type')}
+                          <span className="text-destructive">*</span>
+                        </Label>
+                        <FormField error={showErrors && !editedEntry.contact_type ? t('employment.contact_type_required') : ''}>
+                          <Select
+                            value={editedEntry.contact_type}
+                            onValueChange={(value) => {
+                              setEditedEntry(prev => ({
+                                ...prev,
+                                contact_type: value,
+                              }));
+                            }}
+                          >
+                            <SelectTrigger className={`w-full h-11 text-base select-trigger ${!editedEntry.contact_type && showErrors ? 'border-destructive ring-destructive' : ''}`}>
+                              <SelectValue placeholder={t('employment.select_contact_type')} />
+                            </SelectTrigger>
+                            <SelectContent
+                              position="popper"
+                              sideOffset={5}
+                              align="start"
+                              className="select-content-dropdown"
                             >
-                              {method.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormField>
-                  </div>
+                              {contactTypes.map(type => (
+                                <SelectItem
+                                  key={type.value}
+                                  value={type.value}
+                                  className="select-item"
+                                >
+                                  {type.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormField>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-3">
+                        <Label htmlFor="contact_email" className="flex items-center gap-1 text-base font-medium">
+                          {t('employment.contact_email')}
+                          {!editedEntry.contact_phone && <span className="text-destructive">*</span>}
+                        </Label>
+                        <FormField error={showErrors && !editedEntry.contact_email && !editedEntry.contact_phone ? t('employment.contact_info_required') : ''}>
+                          <Input
+                            id="contact_email"
+                            type="email"
+                            className={`h-11 text-base ${!editedEntry.contact_email && !editedEntry.contact_phone && showErrors ? 'border-destructive ring-destructive' : ''}`}
+                            value={editedEntry.contact_email}
+                            onChange={(e) => setEditedEntry({ ...editedEntry, contact_email: e.target.value })}
+                            placeholder={t('employment.contact_email_placeholder')}
+                            aria-invalid={!editedEntry.contact_email && !editedEntry.contact_phone && showErrors}
+                          />
+                        </FormField>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <Label htmlFor="contact_phone" className="flex items-center gap-1 text-base font-medium">
+                          {t('employment.contact_phone')}
+                          {!editedEntry.contact_email && <span className="text-destructive">*</span>}
+                        </Label>
+                        <FormField error={showErrors && !editedEntry.contact_email && !editedEntry.contact_phone ? t('employment.contact_info_required') : ''}>
+                          <Input
+                            id="contact_phone"
+                            type="tel"
+                            className={`h-11 text-base ${!editedEntry.contact_email && !editedEntry.contact_phone && showErrors ? 'border-destructive ring-destructive' : ''}`}
+                            value={editedEntry.contact_phone}
+                            onChange={(e) => setEditedEntry({ ...editedEntry, contact_phone: e.target.value })}
+                            placeholder={t('employment.contact_phone_placeholder')}
+                            aria-invalid={!editedEntry.contact_email && !editedEntry.contact_phone && showErrors}
+                          />
+                        </FormField>
+                      </div>
+                    </div>
+                    
+                    {(editedEntry.contact_email || editedEntry.contact_phone) && (
+                      <div className="space-y-3">
+                        <Label htmlFor="contact_preferred_method" className="flex items-center gap-1 text-base font-medium">
+                          {t('employment.contact_preferred_method')}
+                          <span className="text-destructive">*</span>
+                        </Label>
+                        <FormField error={showErrors && !editedEntry.contact_preferred_method ? t('employment.contact_method_required') : ''}>
+                          <Select
+                            value={editedEntry.contact_preferred_method}
+                            onValueChange={(value) => {
+                              setEditedEntry(prev => ({
+                                ...prev,
+                                contact_preferred_method: value,
+                              }));
+                            }}
+                          >
+                            <SelectTrigger className={`w-full h-11 text-base select-trigger ${!editedEntry.contact_preferred_method && showErrors ? 'border-destructive ring-destructive' : ''}`}>
+                              <SelectValue placeholder={t('employment.select_contact_method')} />
+                            </SelectTrigger>
+                            <SelectContent
+                              position="popper"
+                              sideOffset={5}
+                              align="start"
+                              className="select-content-dropdown"
+                            >
+                              {contactMethods.map(method => (
+                                <SelectItem
+                                  key={method.value}
+                                  value={method.value}
+                                  className="select-item"
+                                  disabled={(method.value === 'email' && !editedEntry.contact_email) ||
+                                           (method.value === 'phone' && !editedEntry.contact_phone)}
+                                >
+                                  {method.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormField>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}

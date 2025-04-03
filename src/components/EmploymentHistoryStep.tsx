@@ -72,7 +72,9 @@ export const EmploymentHistoryStep: React.FC = () => {
     contact_type: '',
     contact_email: '',
     contact_phone: '',
-    contact_preferred_method: ''
+    contact_preferred_method: '',
+    no_contact_attestation: false,
+    contact_explanation: ''
   });
 
   // Get the required years from the collection key parser
@@ -145,7 +147,9 @@ export const EmploymentHistoryStep: React.FC = () => {
       contact_type: '',
       contact_email: '',
       contact_phone: '',
-      contact_preferred_method: ''
+      contact_preferred_method: '',
+      no_contact_attestation: false,
+      contact_explanation: ''
     });
   };
 
@@ -232,7 +236,9 @@ export const EmploymentHistoryStep: React.FC = () => {
       contact_type: '',
       contact_email: '',
       contact_phone: '',
-      contact_preferred_method: ''
+      contact_preferred_method: '',
+      no_contact_attestation: false,
+      contact_explanation: ''
     });
   };
 

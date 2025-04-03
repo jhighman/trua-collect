@@ -181,6 +181,20 @@ export const translations = {
     "employment.contact_type_required": "Please select a contact type",
     "employment.contact_info_required": "Please provide either an email or phone number",
     "employment.contact_method_required": "Please select a preferred contact method",
+    "employment.contact_explanation": "Explanation",
+    "employment.no_contact_attestation": "I don't have a contact for this job",
+    "employment.from_date": "From",
+    "employment.to_date": "To",
+    "employment.from_date_help_job": "When did you start working at this job?",
+    "employment.to_date_help_job": "When did you leave this job?",
+    "employment.from_date_help_education": "When did you start attending this school?",
+    "employment.to_date_help_education": "When did you complete or leave this school?",
+    "employment.from_date_help_unemployed": "When did this period of unemployment begin?",
+    "employment.to_date_help_unemployed": "When did this period of unemployment end?",
+    "employment.from_date_help_other": "When did this period begin?",
+    "employment.to_date_help_other": "When did this period end?",
+    "employment.from_date_help_default": "When did this period begin?",
+    "employment.to_date_help_default": "When did this period end?",
     
     // Navigation
     "navigation.form_controls": "Form Controls",
@@ -372,6 +386,9 @@ export const translations = {
     "employment.contact_type_required": "Por favor seleccione un tipo de contacto",
     "employment.contact_info_required": "Por favor proporcione un correo electrónico o número de teléfono",
     "employment.contact_method_required": "Por favor seleccione un método de contacto preferido",
+    "employment.contact_explanation": "Explicación",
+    "employment.from_date_help_default": "¿Cuándo comenzó este período?",
+    "employment.to_date_help_default": "¿Cuándo terminó este período?",
     
     // Navigation
     "navigation.form_controls": "Navegación del formulario",
@@ -481,12 +498,15 @@ export const translations = {
     "signature.confirm": "Je confirme que ceci est ma signature légale",
     
     // Residence History
+    "employment.contact_explanation": "Explication",
     "residence.title": "Historique de Résidence",
     "residence.intro": "Veuillez fournir votre historique complet de résidence pour les {{years}} dernières années, en commençant par votre adresse actuelle ou la plus récente.",
     "residence.progress": "{{current}} / {{required}} ans",
     "residence.entries_title": "Vos Résidences",
     "residence.add_title": "Ajouter une Résidence",
     "residence.add_button": "Ajouter une Résidence",
+    "employment.from_date_help_default": "Quand cette période a-t-elle commencé?",
+    "employment.to_date_help_default": "Quand cette période s'est-elle terminée?",
     "residence.address": "Adresse",
     "residence.city": "Ville",
     "residence.state_province": "État/Province",

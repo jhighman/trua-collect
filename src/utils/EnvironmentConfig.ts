@@ -25,7 +25,7 @@ const defaultConfig: EnvironmentConfig = {
   // Default collection key in hyphen-separated format
   // Format: [language]-[personal]-[consents]-[residence]-[employment]-[education]-[proLicense]-[signature]
   // en-N-N-R3-E3-E-P-C = English, Personal Info disabled, No consents, 3-year residence, 3-year employment, Education enabled, Professional licenses enabled, Checkbox signature
-  defaultCollectionKey: 'en-N-N-R3-E3-E-P-C',
+  defaultCollectionKey: 'en-N-N-N-E3-N-N-W',
   port: 3000,
   devMode: true,
   logLevel: 'info',
