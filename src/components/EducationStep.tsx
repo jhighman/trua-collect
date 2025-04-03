@@ -4,6 +4,11 @@ import { useTranslation } from '../context/TranslationContext';
 import { EducationEntry, EducationEntryData } from './EducationEntry';
 import StepNavigation from './StepNavigation';
 import StepHeader from './StepHeader';
+import { PlusCircle } from 'lucide-react';
+import { PushButton } from './ui/push-button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Label } from './ui/label';
+import { FormError, FormField } from './ui/form-error';
 import './EducationStep.css';
 import { EducationLevel, isCollegeOrHigher } from '../types/EducationLevel';
 
@@ -26,6 +31,33 @@ export const EducationStep: React.FC = () => {
   const [editingEntry, setEditingEntry] = useState<EducationEntryData | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [errors, setErrors] = useState<Record<string, Record<string, string>>>({});
+  const [showLevelError, setShowLevelError] = useState(false);
+  const [showDropdown, setShowDropdown] = useState<boolean>(false);
+  const [hasAttemptedNext, setHasAttemptedNext] = useState<boolean>(false);
+  
+  // Function to get the translated education level text
+  const getEducationLevelText = (level: string): string => {
+    switch (level) {
+      case EducationLevel.LessThanHighSchool:
+        return t('education.level_less_than_high_school');
+      case EducationLevel.HighSchool:
+        return t('education.level_high_school');
+      case EducationLevel.SomeCollege:
+        return t('education.level_some_college');
+      case EducationLevel.Associates:
+        return t('education.level_associates');
+      case EducationLevel.Bachelors:
+        return t('education.level_bachelors');
+      case EducationLevel.Masters:
+        return t('education.level_masters');
+      case EducationLevel.Doctorate:
+        return t('education.level_doctorate');
+      case EducationLevel.Professional:
+        return t('education.level_professional');
+      default:
+        return '';
+    }
+  };
   
   useEffect(() => {
     const timelineEntries = getValue('education', 'timelineEntries') as EducationEntryData[];
@@ -39,14 +71,18 @@ export const EducationStep: React.FC = () => {
       if (timelineEntries && timelineEntries.length > 0) {
         setValue('education', 'timelineEntries', timelineEntries);
       }
-      
-      setValue('education', '_forceUpdate', Date.now());
+      setValue('education', 'forceUpdate', Date.now());
     }
   }, [getValue, setValue, highestEducationLevel]);
   
   useEffect(() => {
     setErrors({} as Record<string, Record<string, string>>);
   }, [getStepErrors]);
+  
+  // Update showDropdown state when component mounts
+  useEffect(() => {
+    setShowDropdown(!highestEducationLevel || highestEducationLevel === '');
+  }, []);
   
   useEffect(() => {
     if (highestEducationLevel) {
@@ -58,12 +94,11 @@ export const EducationStep: React.FC = () => {
         setValue('education', 'timelineEntries', []);
       }
       
-      setValue('education', '_touched_highestLevel', true);
-      setValue('education', '_touched_timelineEntries', true);
-      
-      setValue('education', '_forceUpdate', Date.now());
+      setValue('education', 'touchedHighestLevel', true);
+      setValue('education', 'touchedTimelineEntries', true);
+      setValue('education', 'forceUpdate', Date.now());
     }
-  }, [entries, formState.currentStep, highestEducationLevel, setValue]);
+  }, [entries, formState.currentStepId, highestEducationLevel, setValue]);
   
   // Create a new empty entry
   const createEmptyEntry = (): EducationEntryData => ({
@@ -100,10 +135,9 @@ export const EducationStep: React.FC = () => {
       setValue('education', 'highestLevel', highestEducationLevel);
       setValue('education', 'timelineEntries', newEntries);
       
-      setValue('education', '_touched_highestLevel', true);
-      setValue('education', '_touched_timelineEntries', true);
-      
-      setValue('education', '_forceUpdate', Date.now());
+      setValue('education', 'touchedHighestLevel', true);
+      setValue('education', 'touchedTimelineEntries', true);
+      setValue('education', 'forceUpdate', Date.now());
     }
   };
   
@@ -126,13 +160,12 @@ export const EducationStep: React.FC = () => {
     setValue('education', 'highestLevel', highestEducationLevel);
     setValue('education', 'timelineEntries', newEntries);
     
-    setValue('education', '_touched_highestLevel', true);
-    setValue('education', '_touched_timelineEntries', true);
+    setValue('education', 'touchedHighestLevel', true);
+    setValue('education', 'touchedTimelineEntries', true);
     
     setEditingEntry(null);
     setShowAddForm(false);
-    
-    setValue('education', '_forceUpdate', Date.now());
+    setValue('education', 'forceUpdate', Date.now());
   };
   
   // Handle canceling entry edit/add
@@ -142,155 +175,161 @@ export const EducationStep: React.FC = () => {
   };
   
   // Handle education level change
-  const handleEducationLevelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const level = e.target.value;
-    setHighestEducationLevel(level);
+  const handleEducationLevelChange = (value: string) => {
+    setHighestEducationLevel(value);
+    setShowDropdown(false);
+    // Don't show error when user selects a value
     
-    const newEntries = !isCollegeOrHigher(level) && entries.length > 0 ? [] : entries;
-    if (!isCollegeOrHigher(level) && entries.length > 0) {
+    const newEntries = !isCollegeOrHigher(value) && entries.length > 0 ? [] : entries;
+    if (!isCollegeOrHigher(value) && entries.length > 0) {
       setEntries([]);
     }
     
-    setValue('education', 'highestLevel', level);
+    setValue('education', 'highestLevel', value);
     setValue('education', 'timelineEntries', newEntries);
-    setValue('education', '_touched_highestLevel', true);
-    setValue('education', '_touched_timelineEntries', true);
-    setValue('education', '_forceUpdate', Date.now());
-  };
-  
-  // Format date for display
-  const formatDate = (dateString: string): string => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString();
+    setValue('education', 'touchedHighestLevel', true);
+    setValue('education', 'touchedTimelineEntries', true);
+    setValue('education', 'forceUpdate', Date.now());
   };
   
   return (
     <div className="education-step">
       <StepHeader
-        title={t('education.title') || 'Education History'}
-        description={t('education.intro') || 'Please provide your education history, beginning with your highest level of education.'}
+        title={t('education.title')}
+        description={t('education.intro')}
       />
       
-      {/* Education Level Selection */}
-      <div className="education-level-selection">
-        <h3>{t('education.level_title') || 'Highest Level of Education'}</h3>
-        <div className="form-group">
-          <label htmlFor="education-level">
-            {t('education.level_label') || 'Select your highest level of education:'}
-            <span className="required">*</span>
-          </label>
-          <select
-            id="education-level"
-            value={highestEducationLevel}
-            onChange={handleEducationLevelChange}
-            className={!highestEducationLevel ? 'has-error' : ''}
-            required
-          >
-            <option value="">{t('education.select_level') || 'Select level...'}</option>
-            <option value={EducationLevel.LessThanHighSchool}>
-              {t('education.level_less_than_high_school') || 'Less than High School'}
-            </option>
-            <option value={EducationLevel.HighSchool}>
-              {t('education.level_high_school') || 'High School or GED'}
-            </option>
-            <option value={EducationLevel.SomeCollege}>
-              {t('education.level_some_college') || 'Some College (no degree)'}
-            </option>
-            <option value={EducationLevel.Associates}>
-              {t('education.level_associates') || 'Associate\'s Degree'}
-            </option>
-            <option value={EducationLevel.Bachelors}>
-              {t('education.level_bachelors') || 'Bachelor\'s Degree'}
-            </option>
-            <option value={EducationLevel.Masters}>
-              {t('education.level_masters') || 'Master\'s Degree'}
-            </option>
-            <option value={EducationLevel.Doctorate}>
-              {t('education.level_doctorate') || 'Doctorate (PhD, EdD, etc.)'}
-            </option>
-            <option value={EducationLevel.Professional}>
-              {t('education.level_professional') || 'Professional Degree (MD, JD, etc.)'}
-            </option>
-          </select>
-          {!highestEducationLevel && (
-            <div className="error-message">
-              {t('education.level_required') || 'Please select your highest level of education'}
-            </div>
-          )}
-        </div>
-      </div>
-      
-      {/* Only show degree entry if education level is college or higher */}
-      {isCollegeOrHigher(highestEducationLevel) && (
-        <>
-          <div className="college-education-section">
-            <h3>{t('education.college_title') || 'College Education Details'}</h3>
-            <p className="section-description">
-              {t('education.college_intro') || 'Please provide details about your college education.'}
-            </p>
-          </div>
-          
-          {/* List of existing entries */}
-          {entries.length > 0 && (
-            <div className="entries-list">
-              <h3>{t('education.entries_title') || 'Your Education'}</h3>
-              
-              {entries.map(entry => (
-                <div key={entry.id} className="entry-item">
-                  <div className="entry-content">
-                    <h4>{entry.institution}</h4>
-                    <p className="entry-degree">{entry.degree}{entry.fieldOfStudy ? ` - ${entry.fieldOfStudy}` : ''}</p>
-                    <p className="entry-dates">
-                      {formatDate(entry.startDate)} - {entry.isCurrent ? (t('common.present') || 'Present') : formatDate(entry.endDate)}
-                    </p>
-                    {entry.location && <p className="entry-location">{entry.location}</p>}
-                    {entry.description && <p className="entry-description">{entry.description}</p>}
-                  </div>
-                  
-                  <div className="entry-actions">
-                    <button
-                      type="button"
-                      className="edit-button"
-                      onClick={() => handleEditEntry(entry)}
-                      aria-label={t('common.edit') || 'Edit'}
-                    >
-                      {t('common.edit') || 'Edit'}
-                    </button>
-                    <button
-                      type="button"
-                      className="remove-button"
-                      onClick={() => handleRemoveEntry(entry.id)}
-                      aria-label={t('common.remove') || 'Remove'}
-                    >
-                      {t('common.remove') || 'Remove'}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          
-          {/* Add/Edit form */}
-          {showAddForm && editingEntry && (
-            <EducationEntry
-              entry={editingEntry}
-              onSave={handleSaveEntry}
-              onCancel={handleCancelEntry}
-              errors={errors[editingEntry.id] || {}}
-            />
-          )}
-          
-          {/* Add button (only show if not currently adding/editing) */}
-          {!showAddForm && (
-            <div className="add-entry-container">
-              <button
-                type="button"
-                className="add-button"
-                onClick={handleAddEntry}
+      {/* Education Level Selection - Only show if no selection has been made or if dropdown is open */}
+      {(!highestEducationLevel || showDropdown) && (
+        <div className="education-level-selection">
+          <h3>{t('education.level_title')}</h3>
+          <div className="space-y-3">
+            <Label htmlFor="education-level" className="flex items-center gap-1 text-base font-medium">
+              {t('education.level_label')}
+              <span className="text-destructive">*</span>
+            </Label>
+            <FormField error={showLevelError ? t('validation.required') : ''}>
+              <Select
+                value={highestEducationLevel}
+                onValueChange={handleEducationLevelChange}
               >
-                {t('education.add_button') || 'Add Degree'}
-              </button>
+                <SelectTrigger className={`w-full h-11 text-base select-trigger ${showLevelError ? 'border-destructive ring-destructive' : ''}`}>
+                  <SelectValue placeholder={t('education.select_level')} />
+                </SelectTrigger>
+                <SelectContent
+                  position="popper"
+                  sideOffset={5}
+                  align="start"
+                  className="select-content-dropdown"
+                >
+                  <SelectItem value={EducationLevel.LessThanHighSchool} className="select-item">
+                    {t('education.level_less_than_high_school')}
+                  </SelectItem>
+                  <SelectItem value={EducationLevel.HighSchool} className="select-item">
+                    {t('education.level_high_school')}
+                  </SelectItem>
+                  <SelectItem value={EducationLevel.SomeCollege} className="select-item">
+                    {t('education.level_some_college')}
+                  </SelectItem>
+                  <SelectItem value={EducationLevel.Associates} className="select-item">
+                    {t('education.level_associates')}
+                  </SelectItem>
+                  <SelectItem value={EducationLevel.Bachelors} className="select-item">
+                    {t('education.level_bachelors')}
+                  </SelectItem>
+                  <SelectItem value={EducationLevel.Masters} className="select-item">
+                    {t('education.level_masters')}
+                  </SelectItem>
+                  <SelectItem value={EducationLevel.Doctorate} className="select-item">
+                    {t('education.level_doctorate')}
+                  </SelectItem>
+                  <SelectItem value={EducationLevel.Professional} className="select-item">
+                    {t('education.level_professional')}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </FormField>
+          </div>
+        </div>
+      )}
+      
+      {/* Education level selected section */}
+      {highestEducationLevel && !showDropdown && (
+        <>
+          {isCollegeOrHigher(highestEducationLevel) ? (
+            <>
+              <div className="college-education-section">
+                <div className="flex items-center justify-between">
+                  <h3>{t('education.college_title')}</h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowDropdown(true)}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Change Education Level
+                  </button>
+                </div>
+                <p className="section-description">
+                  {t('education.college_intro')}
+                </p>
+              </div>
+              
+              {/* List of existing entries */}
+              {entries.length > 0 && (
+                <div className="entries-list">
+                  <h3>{t('education.entries_title')}</h3>
+                  
+                  {entries.map(entry => (
+                    <EducationEntry
+                      key={entry.id}
+                      entry={entry}
+                      onSave={handleSaveEntry}
+                      onCancel={() => handleRemoveEntry(entry.id)}
+                      errors={errors[entry.id] || {}}
+                      isEditing={false}
+                    />
+                  ))}
+                </div>
+              )}
+              
+              {/* Add/Edit form */}
+              {showAddForm && editingEntry && (
+                <EducationEntry
+                  entry={editingEntry}
+                  onSave={handleSaveEntry}
+                  onCancel={handleCancelEntry}
+                  errors={errors[editingEntry.id] || {}}
+                  isEditing={true}
+                />
+              )}
+              
+              {/* Add button (only show if not currently adding/editing) */}
+              {!showAddForm && (
+                <PushButton
+                  onClick={handleAddEntry}
+                  className="w-full max-w-md mx-auto mb-8 py-6 text-lg font-medium bg-primary hover:bg-primary/90"
+                  size="lg"
+                  icon={PlusCircle}
+                >
+                  {t('education.add_button')}
+                </PushButton>
+              )}
+            </>
+          ) : (
+            <div className="non-college-education-section">
+              <div className="flex items-center justify-between">
+                <h3>Education Level: {getEducationLevelText(highestEducationLevel)}</h3>
+                <button
+                  type="button"
+                  onClick={() => setShowDropdown(true)}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Change Education Level
+                </button>
+              </div>
+              <p className="section-description mt-2">
+                No additional education details required.
+              </p>
             </div>
           )}
         </>
@@ -303,24 +342,22 @@ export const EducationStep: React.FC = () => {
             // For college or higher, we need entries
             entries.length > 0 ? (
               <div className="valid-status">
-                {t('education.valid') || 'Education information is complete'}
+                {t('education.valid')}
               </div>
             ) : (
-              <div className="invalid-status">
-                {t('education.college_required') || 'Please add at least one degree'}
-              </div>
+              hasAttemptedNext && (
+                <div className="invalid-status">
+                  {t('education.college_required')}
+                </div>
+              )
             )
           ) : (
             // For non-college, just having the level is enough
             <div className="valid-status">
-              {t('education.valid') || 'Education information is complete'}
+              {t('education.valid')}
             </div>
           )
-        ) : (
-          <div className="invalid-status">
-            {t('education.level_required') || 'Please select your highest level of education'}
-          </div>
-        )}
+        ) : null}
       </div>
       
       {/* Navigation buttons */}
@@ -330,18 +367,22 @@ export const EducationStep: React.FC = () => {
           const isEducationComplete = highestEducationLevel &&
             (!isCollegeOrHigher(highestEducationLevel) || entries.length > 0);
           
+          setHasAttemptedNext(true);
+          
           if (isEducationComplete) {
             setValue('education', 'highestLevel', highestEducationLevel);
             setValue('education', 'timelineEntries', entries.length > 0 ? entries : []);
             
-            setValue('education', '_touched_highestLevel', true);
-            setValue('education', '_touched_timelineEntries', true);
-            
-            setValue('education', '_forceUpdate', Date.now());
+            setValue('education', 'touchedHighestLevel', true);
+            setValue('education', 'touchedTimelineEntries', true);
+            setValue('education', 'forceUpdate', Date.now());
             
             setTimeout(() => {
               moveToNextStep();
             }, 50);
+          } else {
+            // Show error if user tries to navigate without selecting education level
+            setShowLevelError(true);
           }
         }}
         canMovePrevious={canMovePrevious}

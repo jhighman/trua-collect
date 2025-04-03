@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../context/TranslationContext';
 import { TimelineEntry } from '../utils/FormStateManager';
+import { formatDisplayDate } from '../utils/dateUtils';
+import { countries, getCountryByCode, type Country } from '../utils/countries';
+import { getStatesByCountry, getStateByCode, type State } from '../utils/states';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import './ProfessionalLicenseEntry.css';
 
 export interface ProfessionalLicenseEntryData extends TimelineEntry {
@@ -32,9 +36,32 @@ export const ProfessionalLicenseEntry: React.FC<ProfessionalLicenseEntryProps> =
   const { t } = useTranslation();
   const [formData, setFormData] = useState<ProfessionalLicenseEntryData>(entry);
   
+  // Get available states based on selected country
+  const availableStates = formData.country ? getStatesByCountry(formData.country) : [];
+  
+  useEffect(() => {
+    // Initialize with entry data
+    setFormData(entry);
+  }, [entry]);
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleCountryChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      country: value,
+      state: '', // Reset state when country changes
+    }));
+  };
+  
+  const handleStateChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      state: value,
+    }));
   };
   
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,43 +159,60 @@ export const ProfessionalLicenseEntry: React.FC<ProfessionalLicenseEntryProps> =
         
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="state">
-              {t('licenses.state') || 'State/Province'}
+            <label htmlFor="country">
+              {t('licenses.country') || 'Country'}
+              <span className="required">*</span>
             </label>
-            <input
-              type="text"
-              id="state"
-              name="state"
-              value={formData.state}
-              onChange={handleChange}
-              className={errors.state ? 'has-error' : ''}
-              aria-invalid={!!errors.state}
-              aria-describedby={errors.state ? 'state-error' : undefined}
-            />
-            {errors.state && (
-              <div className="error-message" id="state-error">
-                {errors.state}
+            <div className={`select-container ${errors.country ? 'has-error' : ''}`}>
+              <Select
+                value={formData.country}
+                onValueChange={handleCountryChange}
+              >
+                <SelectTrigger className={`select-trigger ${errors.country ? 'has-error' : ''}`}>
+                  <SelectValue placeholder={t('licenses.select_country') || 'Select Country'} />
+                </SelectTrigger>
+                <SelectContent className="select-content">
+                  {countries.map(country => (
+                    <SelectItem key={country.code} value={country.code} className="select-item">
+                      {country.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {errors.country && (
+              <div className="error-message" id="country-error">
+                {errors.country}
               </div>
             )}
           </div>
           
           <div className="form-group">
-            <label htmlFor="country">
-              {t('licenses.country') || 'Country'}
+            <label htmlFor="state">
+              {t('licenses.state') || 'State/Province'}
+              <span className="required">*</span>
             </label>
-            <input
-              type="text"
-              id="country"
-              name="country"
-              value={formData.country}
-              onChange={handleChange}
-              className={errors.country ? 'has-error' : ''}
-              aria-invalid={!!errors.country}
-              aria-describedby={errors.country ? 'country-error' : undefined}
-            />
-            {errors.country && (
-              <div className="error-message" id="country-error">
-                {errors.country}
+            <div className={`select-container ${errors.state ? 'has-error' : ''}`}>
+              <Select
+                value={formData.state}
+                onValueChange={handleStateChange}
+                disabled={!formData.country}
+              >
+                <SelectTrigger className={`select-trigger ${errors.state ? 'has-error' : ''}`}>
+                  <SelectValue placeholder={t('licenses.select_state') || 'Select State/Province'} />
+                </SelectTrigger>
+                <SelectContent className="select-content">
+                  {availableStates.map(state => (
+                    <SelectItem key={state.code} value={state.code} className="select-item">
+                      {state.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {errors.state && (
+              <div className="error-message" id="state-error">
+                {errors.state}
               </div>
             )}
           </div>
@@ -181,7 +225,7 @@ export const ProfessionalLicenseEntry: React.FC<ProfessionalLicenseEntryProps> =
               <span className="required">*</span>
             </label>
             <input
-              type="date"
+              type="month"
               id="issueDate"
               name="issueDate"
               value={formData.issueDate}
@@ -190,6 +234,9 @@ export const ProfessionalLicenseEntry: React.FC<ProfessionalLicenseEntryProps> =
               aria-invalid={!!errors.issueDate}
               aria-describedby={errors.issueDate ? 'issueDate-error' : undefined}
             />
+            <p className="input-help-text">
+              {t('licenses.issue_date_help') || 'Month and year when the license was issued'}
+            </p>
             {errors.issueDate && (
               <div className="error-message" id="issueDate-error">
                 {errors.issueDate}
@@ -202,17 +249,27 @@ export const ProfessionalLicenseEntry: React.FC<ProfessionalLicenseEntryProps> =
               {t('licenses.expiration_date') || 'Expiration Date'}
               {!formData.isActive && <span className="required">*</span>}
             </label>
-            <input
-              type="date"
-              id="expirationDate"
-              name="expirationDate"
-              value={formData.expirationDate}
-              onChange={handleChange}
-              disabled={formData.isActive}
-              className={errors.expirationDate ? 'has-error' : ''}
-              aria-invalid={!!errors.expirationDate}
-              aria-describedby={errors.expirationDate ? 'expirationDate-error' : undefined}
-            />
+            {!formData.isActive ? (
+              <>
+                <input
+                  type="month"
+                  id="expirationDate"
+                  name="expirationDate"
+                  value={formData.expirationDate}
+                  onChange={handleChange}
+                  className={errors.expirationDate ? 'has-error' : ''}
+                  aria-invalid={!!errors.expirationDate}
+                  aria-describedby={errors.expirationDate ? 'expirationDate-error' : undefined}
+                />
+                <p className="input-help-text">
+                  {t('licenses.expiration_date_help') || 'Month and year when the license expires'}
+                </p>
+              </>
+            ) : (
+              <div className="current-indicator">
+                <span>{t('common.present') || 'Present'}</span>
+              </div>
+            )}
             {errors.expirationDate && (
               <div className="error-message" id="expirationDate-error">
                 {errors.expirationDate}

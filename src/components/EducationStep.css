@@ -1,34 +1,26 @@
+/* EducationStep.css */
+
+.education-step {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
 .education-level-selection {
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background-color: #f8f9fa;
+  background-color: var(--color-gray-50);
   border-radius: 0.5rem;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--color-gray-200);
+  box-shadow: var(--shadow-sm);
 }
 
 .education-level-selection h3 {
   margin-top: 0;
   margin-bottom: 1rem;
-  color: #343a40;
-}
-
-.education-level-selection select {
-  width: 100%;
-  padding: 0.75rem;
-  font-size: 1rem;
-  border: 1px solid #ced4da;
-  border-radius: 0.25rem;
-  background-color: white;
-}
-
-.education-level-selection select.has-error {
-  border-color: #dc3545;
-}
-
-.education-level-selection .error-message {
-  color: #dc3545;
-  margin-top: 0.5rem;
-  font-size: 0.875rem;
+  color: var(--text-color);
+  font-size: 1.25rem;
+  font-weight: 600;
 }
 
 .college-education-section {
@@ -38,78 +30,14 @@
 
 .college-education-section h3 {
   margin-top: 0;
-  color: #343a40;
+  color: var(--text-color);
+  font-size: 1.25rem;
+  font-weight: 600;
 }
 
 .college-education-section .section-description {
   margin-bottom: 1.5rem;
-  color: #6c757d;
-}
-
-.required {
-  color: #dc3545;
-  margin-left: 0.25rem;
-}
-
-.form-navigation {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e9ecef;
-}
-
-.form-navigation button {
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.25rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-}
-
-.form-navigation button.secondary {
-  background-color: #f8f9fa;
-  border: 1px solid #ced4da;
-  color: #495057;
-}
-
-.form-navigation button.secondary:hover:not(:disabled) {
-  background-color: #e9ecef;
-}
-
-.form-navigation button.primary {
-  background-color: #007bff;
-  border: 1px solid #007bff;
-  color: white;
-}
-
-.form-navigation button.primary:hover:not(:disabled) {
-  background-color: #0069d9;
-  border-color: #0062cc;
-}
-
-.form-navigation button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.education-step {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 1rem;
-}
-
-.step-header {
-  margin-bottom: 2rem;
-}
-
-.step-header h2 {
-  font-size: 1.5rem;
-  color: #333;
-  margin-bottom: 0.5rem;
-}
-
-.step-description {
-  color: #666;
+  color: var(--text-muted);
   line-height: 1.5;
 }
 
@@ -119,140 +47,67 @@
 
 .entries-list h3 {
   font-size: 1.25rem;
-  color: #333;
+  color: var(--text-color);
   margin-bottom: 1rem;
-}
-
-.entry-item {
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  padding: 1.25rem;
-  margin-bottom: 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.entry-content {
-  flex: 1;
-}
-
-.entry-content h4 {
-  margin-top: 0;
-  margin-bottom: 0.5rem;
-  color: #333;
-  font-size: 1.1rem;
-}
-
-.entry-degree {
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-}
-
-.entry-dates {
-  color: #666;
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-}
-
-.entry-location {
-  color: #666;
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-}
-
-.entry-description {
-  margin-top: 0.75rem;
-  line-height: 1.4;
-}
-
-.entry-actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-left: 1rem;
-}
-
-.edit-button,
-.remove-button {
-  padding: 0.4rem 0.75rem;
-  border-radius: 4px;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
-}
-
-.edit-button {
-  background-color: #f8f9fa;
-  border: 1px solid #ced4da;
-  color: #495057;
-}
-
-.edit-button:hover {
-  background-color: #e2e6ea;
-  border-color: #dae0e5;
-}
-
-.remove-button {
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-  color: #721c24;
-}
-
-.remove-button:hover {
-  background-color: #f1b0b7;
-  border-color: #efb0b9;
-}
-
-.add-entry-container {
-  margin-bottom: 2rem;
-  text-align: center;
-}
-
-.add-button {
-  background-color: #007bff;
-  border: 1px solid #007bff;
-  color: #fff;
-  padding: 0.5rem 1.25rem;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
-}
-
-.add-button:hover {
-  background-color: #0069d9;
-  border-color: #0062cc;
+  font-weight: 600;
 }
 
 .form-status {
   margin-top: 2rem;
   padding: 1rem;
-  border-radius: 4px;
+  border-radius: 0.5rem;
   text-align: center;
+  font-weight: 500;
 }
 
 .valid-status {
-  background-color: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+  background-color: var(--color-success-light, #d4edda);
+  color: var(--color-success, #155724);
+  border: 1px solid var(--color-success-border, #c3e6cb);
 }
 
 .invalid-status {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
+  background-color: var(--color-error-light, #f8d7da);
+  color: var(--color-error, #721c24);
+  border: 1px solid var(--color-error-border, #f5c6cb);
+}
+
+/* Fix for dropdown menus */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+}
+
+/* Style the select content */
+.select-content-dropdown {
+  z-index: 9999 !important;
+  background-color: white !important;
+  border: 1px solid var(--color-gray-200);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem !important;
+  overflow: hidden !important;
+  max-height: 300px !important;
+  padding: 0.5rem !important;
+}
+
+/* Ensure proper layering */
+.select-item {
+  position: relative;
+  z-index: 1;
+  background-color: white !important;
+  transition: background-color 0.2s;
+}
+
+.select-item:hover {
+  background-color: var(--color-gray-50);
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .entry-item {
-    flex-direction: column;
+  .education-level-selection {
+    padding: 1rem;
   }
   
-  .entry-actions {
-    margin-left: 0;
-    margin-top: 1rem;
-    justify-content: flex-end;
+  .education-step {
+    padding: 0.5rem;
   }
 }
