@@ -78,11 +78,11 @@ classDiagram
     }
     
     class ResidenceEntry {
+        country: string
         address: string
         city: string
         state_province: string
         zip_postal: string
-        country: string
         start_date: string
         end_date: string | null
         is_current: boolean
@@ -96,33 +96,45 @@ classDiagram
     }
     
     class EmploymentEntry {
-        type: string
-        company: string
-        position: string
-        city: string
-        state_province: string
-        start_date: string
-        end_date: string | null
-        is_current: boolean
-        description: string
-        contact_name: string
-        contact_info: string
-        duration_years: number
-    }
+            type: string
+            company: string
+            position: string
+            country: string
+            city: string
+            state_province: string
+            description: string
+            contact_name: string
+            contact_type: string
+            contact_email: string
+            contact_phone: string
+            contact_preferred_method: string
+            no_contact_attestation: boolean
+            contact_explanation: string
+            start_date: string
+            end_date: string | null
+            is_current: boolean
+            duration_years: number
+        }
     
     class Education {
         highest_level: string
-        degree: Degree
+        timelineEntries: EducationEntry[]
+        touchedHighestLevel: boolean
+        touchedTimelineEntries: boolean
+        forceUpdate: number
         completed_at: string
     }
     
-    class Degree {
-        school_name: string
-        degree_level: string
-        degree_title: string
-        major: string
-        award_date: string
-        gpa: string
+    class EducationEntry {
+        id: string
+        institution: string
+        degree: string
+        fieldOfStudy: string
+        startDate: string
+        endDate: string
+        isCurrent: boolean
+        description: string
+        location: string
     }
     
     class ProfessionalLicenses {
@@ -131,16 +143,19 @@ classDiagram
     }
     
     class ProfessionalLicense {
-        category: string
-        type: string
-        class: string
-        identifier: string
-        identifier_descriptor: string
-        issuer: string
-        issue_date: string
-        expiration_date: string
-        status: string
-        notes: string
+        id: string
+        licenseType: string
+        licenseNumber: string
+        issuingAuthority: string
+        issueDate: string
+        expirationDate: string
+        isActive: boolean
+        state: string
+        country: string
+        description: string
+        startDate: string
+        endDate: string
+        isCurrent: boolean
     }
     
     class Signature {
@@ -322,11 +337,11 @@ The `ResidenceHistory` structure represents the collection of residence entries.
 A `ResidenceEntry` represents a single address in the candidate's residence history.
 
 **Attributes**:
+- `country`: string - Country
 - `address`: string - Street address
 - `city`: string - City
 - `state_province`: string - State, province, or region
 - `zip_postal`: string - ZIP or postal code
-- `country`: string - Country
 - `start_date`: string - When the candidate began residing at this address (ISO format)
 - `end_date`: string | null - When the candidate stopped residing at this address (null if current)
 - `is_current`: boolean - Whether this is the current residence
@@ -364,14 +379,20 @@ An `EmploymentEntry` represents a single period in the candidate's employment hi
 - `type`: string - Type of entry (Job, Education, Unemployed, Other)
 - `company`: string - Company or organization name
 - `position`: string - Position or title
+- `country`: string - Country
 - `city`: string - City
 - `state_province`: string - State, province, or region
+- `description`: string - Additional details about the period
+- `contact_name`: string - Name of reference contact
+- `contact_type`: string - Type of contact (Manager, HR, Colleague, Other)
+- `contact_email`: string - Email of reference contact
+- `contact_phone`: string - Phone number of reference contact
+- `contact_preferred_method`: string - Preferred contact method (Email, Phone)
+- `no_contact_attestation`: boolean - Whether the candidate attests that the employer cannot be contacted
+- `contact_explanation`: string - Explanation for why the employer cannot be contacted
 - `start_date`: string - When the period began (ISO format)
 - `end_date`: string | null - When the period ended (null if current)
 - `is_current`: boolean - Whether this is the current position
-- `description`: string - Additional details about the period
-- `contact_name`: string - Name of reference contact
-- `contact_info`: string - Email or phone of reference contact
 - `duration_years`: number - Duration of employment in years
 
 **Relationships**:
@@ -387,28 +408,34 @@ The `Education` structure represents the candidate's education information.
 
 **Attributes**:
 - `highest_level`: string - Highest level of education achieved
-- `degree`: Degree - Degree information
+- `timelineEntries`: EducationEntry[] - Array of education entries
+- `touchedHighestLevel`: boolean - Whether the highest level has been modified
+- `touchedTimelineEntries`: boolean - Whether the timeline entries have been modified
+- `forceUpdate`: number - Timestamp for forcing UI updates
 - `completed_at`: string - When this section was completed (ISO format)
 
 **Relationships**:
 - Belongs to one `Claim`
-- Has one `Degree`
+- Has many `EducationEntry` objects
 
 **Storage**:
 - Nested within the `Claim` JSON structure
 - Displayed in the PDF document
 
-### Degree
+### EducationEntry
 
-The `Degree` structure represents detailed information about a degree.
+The `EducationEntry` structure represents a single education entry.
 
 **Attributes**:
-- `school_name`: string - Name of the educational institution
-- `degree_level`: string - Level of the degree (e.g., "Bachelor's")
-- `degree_title`: string - Title of the degree (e.g., "Bachelor of Science")
-- `major`: string - Field of study
-- `award_date`: string - When the degree was awarded (ISO format)
-- `gpa`: string - Grade Point Average
+- `id`: string - Unique identifier for the entry
+- `institution`: string - Name of the educational institution
+- `degree`: string - Degree obtained
+- `fieldOfStudy`: string - Field of study
+- `startDate`: string - When the education began (ISO format)
+- `endDate`: string - When the education ended (ISO format)
+- `isCurrent`: boolean - Whether this is the current education
+- `description`: string - Additional details about the education
+- `location`: string - Location of the institution
 
 **Relationships**:
 - Belongs to one `Education` structure
@@ -438,16 +465,19 @@ The `ProfessionalLicenses` structure represents the collection of professional l
 A `ProfessionalLicense` represents a single professional license or certification.
 
 **Attributes**:
-- `category`: string - Category of the license
-- `type`: string - Type of the license
-- `class`: string - Class or level of the license
-- `identifier`: string - License identifier or number
-- `identifier_descriptor`: string - Description of the identifier
-- `issuer`: string - Organization that issued the license
-- `issue_date`: string - When the license was issued (ISO format)
-- `expiration_date`: string - When the license expires (ISO format)
-- `status`: string - Current status of the license
-- `notes`: string - Additional notes about the license
+- `id`: string - Unique identifier for the license
+- `licenseType`: string - Type of the license
+- `licenseNumber`: string - License identifier or number
+- `issuingAuthority`: string - Organization that issued the license
+- `issueDate`: string - When the license was issued (ISO format)
+- `expirationDate`: string - When the license expires (ISO format)
+- `isActive`: boolean - Whether the license is currently active
+- `state`: string - State or province where the license is valid
+- `country`: string - Country where the license is valid
+- `description`: string - Additional details about the license
+- `startDate`: string - When the license became valid (ISO format)
+- `endDate`: string - When the license expires (ISO format)
+- `isCurrent`: boolean - Whether this is a current license
 
 **Relationships**:
 - Belongs to one `ProfessionalLicenses` collection
@@ -647,11 +677,11 @@ interface Consents {
 }
 
 interface ResidenceEntry {
+  country: string;
   address: string;
   city: string;
   state_province: string;
   zip_postal: string;
-  country: string;
   start_date: string;
   end_date: string | null;
   is_current: boolean;
@@ -668,15 +698,21 @@ interface EmploymentEntry {
   type: string;
   company: string;
   position: string;
+  country: string;
   city: string;
   state_province: string;
+  description: string;
+  contact_name: string;
+  contact_type: string;
+  contact_email: string;
+  contact_phone: string;
+  contact_preferred_method: string;
+  no_contact_attestation: boolean;
+  contact_explanation?: string;
   start_date: string;
   end_date: string | null;
   is_current: boolean;
-  description: string;
-  contact_name: string;
-  contact_info: string;
-  duration_years: number;
+  duration_years?: number;
 }
 
 interface EmploymentHistory {
@@ -685,32 +721,41 @@ interface EmploymentHistory {
   completed_at: string;
 }
 
-interface Degree {
-  school_name: string;
-  degree_level: string;
-  degree_title: string;
-  major: string;
-  award_date: string;
-  gpa: string;
+interface EducationEntry {
+  id: string;
+  institution: string;
+  degree: string;
+  fieldOfStudy: string;
+  startDate: string;
+  endDate: string;
+  isCurrent: boolean;
+  description: string;
+  location: string;
 }
 
 interface Education {
   highest_level: string;
-  degree: Degree;
+  timelineEntries: EducationEntry[];
+  touchedHighestLevel: boolean;
+  touchedTimelineEntries: boolean;
+  forceUpdate: number;
   completed_at: string;
 }
 
 interface ProfessionalLicense {
-  category: string;
-  type: string;
-  class: string;
-  identifier: string;
-  identifier_descriptor: string;
-  issuer: string;
-  issue_date: string;
-  expiration_date: string;
-  status: string;
-  notes: string;
+  id: string;
+  licenseType: string;
+  licenseNumber: string;
+  issuingAuthority: string;
+  issueDate: string;
+  expirationDate: string;
+  isActive: boolean;
+  state: string;
+  country: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  isCurrent: boolean;
 }
 
 interface ProfessionalLicenses {

@@ -1,8 +1,29 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useForm } from '../context/FormContext';
+import { useTranslation } from '../context/TranslationContext';
 import { PdfService } from '../services/PdfService';
-// Import jsPDF
+import { DocumentService } from '../services/DocumentService';
+import { JsonDocument } from '../types/documents';
+import { Requirements } from '../types/requirements';
+import { formatDisplayDate } from '../utils/dateUtils';
+import { getCountryByCode } from '../utils/countries';
+import { getStateByCode } from '../utils/states';
 import { jsPDF } from 'jspdf';
-import Footer from './Footer'; // Import the Footer component
+import Footer from './Footer';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
+import { Button } from './ui/button';
+import { Download, Check } from 'lucide-react';
+import './ConfirmationPage.css';
+import {
+  PersonalInfoStepValues,
+  ResidenceHistoryStepValues,
+  EmploymentHistoryStepValues,
+  EducationStepValues,
+  ProfessionalLicensesStepValues
+} from '../types/steps';
+import { JsonDocumentGenerator } from '../services/JsonDocumentGenerator';
+import { FormState } from '../types/form';
 
 // Extend the jsPDF type to include methods we need
 declare module 'jspdf' {
@@ -13,182 +34,223 @@ declare module 'jspdf' {
     setPage: (pageNumber: number) => jsPDF;
   }
 }
-import './ConfirmationPage.css';
 
 interface ConfirmationPageProps {
+  formState: FormState;
   trackingId: string;
+  onSuccess: () => void;
+  onError: (error: string) => void;
 }
 
-/**
- * ConfirmationPage component
- *
- * This component implements step M in the data flow diagram.
- * It displays a success message, shows the claimant name,
- * and provides a PDF download link.
- */
-const ConfirmationPage: React.FC<ConfirmationPageProps> = ({ trackingId }) => {
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+interface DisplayEntry {
+  startDate: string;
+  endDate: string;
+  isCurrent: boolean;
+}
+
+interface DisplayEmploymentEntry extends DisplayEntry {
+  company: string;
+  position: string;
+  type: string;
+  city: string;
+  state_province: string;
+  country: string;
+  description?: string;
+  contact_name?: string;
+  contact_type?: string;
+  no_contact_attestation?: boolean;
+}
+
+interface DisplayResidenceEntry extends DisplayEntry {
+  address: string;
+  city: string;
+  state_province: string;
+  country: string;
+  zip_postal: string;
+}
+
+interface DisplayEducationEntry extends DisplayEntry {
+  institution: string;
+  degree: string;
+  fieldOfStudy?: string;
+  location?: string;
+  description?: string;
+}
+
+interface DisplayLicenseEntry extends DisplayEntry {
+  licenseType: string;
+  licenseNumber: string;
+  issuingAuthority: string;
+  state: string;
+  country: string;
+  issueDate: string;
+  expirationDate?: string;
+  isActive: boolean;
+  description?: string;
+}
+
+interface DocumentGenerationResult {
+  success: boolean;
+  error?: string;
+  url?: string;
+}
+
+const formatDate = (date: string | null | undefined): string => {
+  if (!date) return '';
+  return new Date(date).toLocaleDateString();
+};
+
+export const ConfirmationPage: React.FC<ConfirmationPageProps> = ({
+  formState,
+  trackingId,
+  onSuccess,
+  onError
+}) => {
+  const { t } = useTranslation();
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [claimantName, setClaimantName] = useState<string>('Applicant');
-  
-  // Generate PDF on component mount
-  useEffect(() => {
-    const generatePdf = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Try to get form data from localStorage
-        const formDataStr = localStorage.getItem('formState');
-        let formData = null;
-        
-        if (formDataStr) {
-          try {
-            formData = JSON.parse(formDataStr);
-            // Get claimant name if available
-            if (formData && formData.steps && formData.steps['personal-info']) {
-              setClaimantName(formData.steps['personal-info'].values.fullName || 'Applicant');
-            }
-          } catch (e) {
-            console.error('Error parsing form data from localStorage:', e);
-          }
-        }
-        // Create a simplified PDF document
-        const doc = new jsPDF();
-        
-        // Add header
-        doc.setFontSize(24);
-        doc.setTextColor(49, 130, 206); // Primary blue color
-        doc.text('TRUA VERIFY', 20, 20);
-        
-        doc.setFontSize(16);
-        doc.setTextColor(74, 85, 104); // Secondary gray color
-        doc.text('Employment Verification Report', 20, 30);
-        
-        // Add tracking ID and date
-        doc.setFontSize(10);
-        doc.text(`Tracking ID: ${trackingId}`, 20, 40);
-        doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 45);
-        
-        // Create data for the main table
-        const tableData = [
-          ['Full Name', claimantName]
-        ];
-        
-        // Add personal info if available
-        if (formData && formData.steps && formData.steps['personal-info']) {
-          const personalInfo = formData.steps['personal-info'].values;
-          if (personalInfo.email) {
-            tableData.push(['Email', personalInfo.email]);
-          }
-          if (personalInfo.phone) {
-            tableData.push(['Phone', personalInfo.phone]);
-          }
-        }
-        
-        // Add signature info if available
-        if (formData && formData.steps && formData.steps.signature) {
-          tableData.push(['Signature Date', new Date().toLocaleDateString()]);
-        }
-        
-        // Add attestation
-        tableData.push(['Attestation', 'I hereby certify that the information provided is true and accurate.']);
-        
-        // Create a simple table manually
-        doc.setFontSize(12);
-        doc.text('Verification Information:', 20, 50);
-        
-        let yPos = 60;
-        
-        // Draw header
-        doc.setFillColor(49, 130, 206);
-        doc.setTextColor(255, 255, 255);
-        doc.rect(20, yPos, 80, 10, 'F');
-        doc.rect(100, yPos, 80, 10, 'F');
-        doc.text('Field', 25, yPos + 7);
-        doc.text('Value', 105, yPos + 7);
-        
-        yPos += 10;
-        doc.setTextColor(0, 0, 0);
-        
-        // Draw rows
-        tableData.forEach(([field, value], index) => {
-          // Set background color for alternating rows
-          if (index % 2 === 0) {
-            doc.setFillColor(240, 240, 240);
-            doc.rect(20, yPos, 80, 10, 'F');
-            doc.rect(100, yPos, 80, 10, 'F');
-          }
-          
-          doc.text(field, 25, yPos + 7);
-          // Handle long values by truncating or wrapping
-          const valueStr = String(value);
-          const truncatedValue = valueStr.length > 40 ? valueStr.substring(0, 37) + '...' : valueStr;
-          doc.text(truncatedValue, 105, yPos + 7);
-          
-          yPos += 10;
-        });
-        
-        // Add footer
-        const pageCount = doc.getNumberOfPages();
-        
-        for (let i = 1; i <= pageCount; i++) {
-          doc.setPage(i);
-          
-          // Add page number
-          doc.setFontSize(8);
-          doc.setTextColor(74, 85, 104);
-          doc.text(
-            `Page ${i} of ${pageCount}`,
-            105,
-            285,
-            { align: 'center' }
-          );
-          
-          // Add tracking ID
-          doc.text(
-            `Tracking ID: ${trackingId}`,
-            190,
-            285,
-            { align: 'right' }
-          );
-          
-          // Add copyright
-          doc.text(
-            `© ${new Date().getFullYear()} Trua Verify. All rights reserved.`,
-            20,
-            285
-          );
-        }
-        
-        // Get data URL for download
-        const dataUrl = doc.output('datauristring');
-        setPdfUrl(dataUrl);
-        
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error generating PDF:', error);
-        setError('There was an error generating your PDF. Please try again later.');
-        setIsLoading(false);
-      }
-    };
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [jsonDocument, setJsonDocument] = useState<JsonDocument | null>(null);
+
+  const handleGenerateDocument = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Generate JSON document
+      const generator = new JsonDocumentGenerator(formState);
+      const document = generator.generateJsonDocument(trackingId);
+      setJsonDocument(document);
+
+      // Generate PDF document
+      const pdfService = new PdfService();
+      const pdfDoc = await pdfService.generateVerificationPdf(formState);
+      const pdfBlob = new Blob([pdfDoc.output('blob')], { type: 'application/pdf' });
+      const pdfObjectUrl = URL.createObjectURL(pdfBlob);
+      setPdfUrl(pdfObjectUrl);
+
+      // Save documents
+      const documentService = new DocumentService();
+      await documentService.saveDocuments(document, pdfDoc);
+
+      setIsLoading(false);
+      onSuccess();
+    } catch (error) {
+      setIsLoading(false);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate document';
+      setError(errorMessage);
+      onError(errorMessage);
+    }
+  }, [formState, trackingId, onSuccess, onError]);
+
+  // Call handleGenerateDocument when component mounts
+  React.useEffect(() => {
+    handleGenerateDocument();
+  }, [handleGenerateDocument]);
+
+  // Validate formState
+  if (!formState) {
+    console.error('Form state is undefined');
+    return (
+      <div className="confirmation-page">
+        <div className="confirmation-container error">
+          <h2>{t('error.invalid_form_state')}</h2>
+          <p>{t('error.missing_form_data')}</p>
+          <button
+            className="retry-button"
+            onClick={() => window.location.reload()}
+          >
+            {t('common.try_again')}
+          </button>
+          <Footer />
+        </div>
+      </div>
+    );
+  }
+
+  // Map entries from form state with proper validation
+  const employmentEntries = (formState?.employmentHistory?.entries || []).map(entry => ({
+    ...entry,
+    company: entry?.employer || '',
+    type: 'employment',
+    isCurrent: !entry?.endDate,
+    position: entry?.position || '',
+    city: entry?.city || '',
+    state_province: entry?.state_province || '',
+    country: entry?.country || '',
+    description: entry?.description,
+    contact_name: entry?.contact_name,
+    contact_type: entry?.contact_type,
+    no_contact_attestation: entry?.no_contact_attestation
+  })) as DisplayEmploymentEntry[];
+
+  const residenceEntries = (formState?.residenceHistory?.entries || []).map(entry => ({
+    ...entry,
+    isCurrent: !entry?.endDate,
+    address: entry?.address || '',
+    city: entry?.city || '',
+    state_province: entry?.state_province || '',
+    country: entry?.country || '',
+    zip_postal: entry?.zip_postal || ''
+  })) as DisplayResidenceEntry[];
+
+  const educationEntries = (formState?.education?.entries || []).map(entry => ({
+    ...entry,
+    startDate: entry?.completionDate || '',
+    endDate: entry?.completionDate || '',
+    isCurrent: false,
+    institution: entry?.institution || '',
+    degree: entry?.degree || '',
+    fieldOfStudy: entry?.fieldOfStudy,
+    location: entry?.location
+  })) as DisplayEducationEntry[];
+
+  const licenseEntries = (formState?.professionalLicenses?.entries || []).map(entry => ({
+    ...entry,
+    startDate: entry?.expirationDate || new Date().toISOString(),
+    endDate: entry?.expirationDate || new Date().toISOString(),
+    isCurrent: true,
+    licenseType: entry?.licenseType || '',
+    licenseNumber: entry?.licenseNumber || '',
+    issuingAuthority: entry?.issuingAuthority || '',
+    state: entry?.state || '',
+    country: entry?.country || '',
+    issueDate: entry?.issueDate || '',
+    expirationDate: entry?.expirationDate,
+    isActive: entry?.isActive || false
+  })) as DisplayLicenseEntry[];
+
+  const personalInfo = formState?.personalInfo?.entries?.[0] || { fullName: '', email: '' };
+  const claimantName = personalInfo?.fullName || t('common.applicant');
+
+  const handleJsonDownload = () => {
+    if (!jsonDocument) return;
     
-    generatePdf();
-  }, [trackingId, claimantName]);
-  
+    const jsonString = JSON.stringify(jsonDocument, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `verification-${trackingId}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // Handle PDF download
   const handleDownload = () => {
     if (!pdfUrl) return;
     
-    // Create a link element and trigger download
     const link = document.createElement('a');
     link.href = pdfUrl;
-    link.download = PdfService.generateFilename(trackingId);
+    link.download = `verification-${trackingId}.pdf`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
-  
+
   // Render loading state
   if (isLoading) {
     return (
@@ -222,55 +284,116 @@ const ConfirmationPage: React.FC<ConfirmationPageProps> = ({ trackingId }) => {
     );
   }
   
-  // Render success state
+  // Render success state with detailed summary
   return (
     <div className="confirmation-page">
       <div className="confirmation-container">
-        <div className="success-icon">✓</div>
-        
-        <h1>Verification Submitted Successfully!</h1>
-        
+        <div className="success-header">
+          <div className="success-icon">
+            <Check size={32} />
+          </div>
+          <h1>Verification Submitted Successfully!</h1>
+        </div>
         <div className="confirmation-details">
-          <p>Thank you, <strong>{claimantName}</strong>!</p>
-          <p>Your verification information has been submitted successfully.</p>
-          <p>Tracking ID: <strong>{trackingId}</strong></p>
-          <p>Submission Date: <strong>{new Date().toLocaleDateString()}</strong></p>
+          <p>{t('confirmation.thank_you', { name: claimantName })}</p>
+          <p>{t('confirmation.success_message')}</p>
+          <p>{t('confirmation.tracking_id', { id: trackingId })}</p>
+          <p>{t('confirmation.submission_date', { date: new Date().toLocaleDateString() })}</p>
+          <div className="timeline-section">
+            <h3>{t('employment_history')}</h3>
+            {employmentEntries.length > 0 ? (
+              employmentEntries.map((entry, index) => (
+                <div key={index} className="timeline-entry">
+                  <div className="date-range">
+                    {formatDate(entry.startDate)} - {entry.isCurrent ? t('present') : formatDate(entry.endDate)}
+                  </div>
+                  <div className="entry-details">
+                    <div>{entry.company}</div>
+                    <div>{entry.position}</div>
+                    <div>{entry.city}, {entry.state_province}, {entry.country}</div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p>{t('no_employment_history')}</p>
+            )}
+          </div>
+
+          <div className="timeline-section">
+            <h3>{t('residence_history')}</h3>
+            {residenceEntries.length > 0 ? (
+              residenceEntries.map((entry, index) => (
+                <div key={index} className="timeline-entry">
+                  <div className="date-range">
+                    {formatDate(entry.startDate)} - {entry.isCurrent ? t('present') : formatDate(entry.endDate)}
+                  </div>
+                  <div className="entry-details">
+                    <div>{entry.address}</div>
+                    <div>{entry.city}, {entry.state_province}, {entry.country}</div>
+                    <div>{entry.zip_postal}</div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p>{t('no_residence_history')}</p>
+            )}
+          </div>
+
+          <div className="timeline-section">
+            <h3>{t('education')}</h3>
+            {educationEntries.length > 0 ? (
+              educationEntries.map((entry, index) => (
+                <div key={index} className="timeline-entry">
+                  <div className="date-range">
+                    {formatDate(entry.startDate)} - {entry.isCurrent ? t('present') : formatDate(entry.endDate)}
+                  </div>
+                  <div className="entry-details">
+                    <div>{entry.institution}</div>
+                    <div>{entry.degree}</div>
+                    {entry.fieldOfStudy && <div>{entry.fieldOfStudy}</div>}
+                    {entry.location && <div>{entry.location}</div>}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p>{t('no_education_history')}</p>
+            )}
+          </div>
+
+          <div className="timeline-section">
+            <h3>{t('professional_licenses')}</h3>
+            {licenseEntries.length > 0 ? (
+              licenseEntries.map((entry, index) => (
+                <div key={index} className="timeline-entry">
+                  <div className="date-range">
+                    {formatDate(entry.startDate)} - {entry.isCurrent ? t('present') : formatDate(entry.endDate)}
+                  </div>
+                  <div className="entry-details">
+                    <div>{entry.licenseType}</div>
+                    <div>{t('license_number')}: {entry.licenseNumber}</div>
+                    <div>{t('issuing_authority')}: {entry.issuingAuthority}</div>
+                    <div>{entry.state}, {entry.country}</div>
+                    <div>{t('status')}: {entry.isActive ? t('active') : t('inactive')}</div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p>{t('no_licenses')}</p>
+            )}
+          </div>
         </div>
         
         <div className="download-section">
-          <h2>Your Verification Document</h2>
-          <p>
-            Please download a copy of your verification document for your records.
-            This document contains all the information you&apos;ve provided.
-          </p>
-          
-          {pdfUrl ? (
-            <button 
-              className="download-button"
-              onClick={handleDownload}
-            >
-              Download PDF
-            </button>
-          ) : (
-            <p className="error-message">
-              PDF document is not available for download.
-            </p>
-          )}
+          <Button onClick={handleDownload} disabled={!pdfUrl}>
+            <Download className="mr-2 h-4 w-4" />
+            Download PDF
+          </Button>
+          <Button onClick={handleJsonDownload} disabled={!jsonDocument} variant="outline">
+            <Download className="mr-2 h-4 w-4" />
+            Download JSON
+          </Button>
         </div>
         
-        <div className="next-steps">
-          <h2>Next Steps</h2>
-          <p>
-            Your verification information will be reviewed by our team.
-            You may be contacted if additional information is needed.
-          </p>
-          <p>
-            If you have any questions, please contact our support team
-            and reference your tracking ID.
-          </p>
-        </div>
-        
-        {/* Add the Footer component */}
         <Footer />
       </div>
     </div>

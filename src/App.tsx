@@ -2,10 +2,11 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import VerificationEntry from './components/VerificationEntry';
-import { FormState } from './context/FormContext';
+import { FormState, FormProvider } from './context/FormContext';
 import { TranslationProvider } from './context/TranslationContext';
 import FormStateViewer from './components/FormStateViewer';
 import { getConfig } from './utils/EnvironmentConfig';
+import { Requirements } from './utils/collectionKeyParser';
 import './App.css';
 
 // Import the ConfirmationPage component
@@ -44,22 +45,60 @@ const App: React.FC = () => {
     });
   };
 
+  // Default form requirements
+  const defaultRequirements: Requirements = {
+    language: 'en',
+    consentsRequired: { 
+      driverLicense: false, 
+      drugTest: false, 
+      biometric: false 
+    },
+    verificationSteps: {
+      personalInfo: { 
+        enabled: true,
+        modes: {
+          email: true,
+          phone: true,
+          fullName: true,
+          nameAlias: false
+        }
+      },
+      residenceHistory: { 
+        enabled: true,
+        years: 3
+      },
+      employmentHistory: { 
+        enabled: true,
+        mode: 'years',
+        modes: { years: 3 }
+      },
+      education: { enabled: true },
+      professionalLicense: { enabled: true }
+    },
+    signature: { 
+      required: true,
+      mode: 'wet'
+    }
+  };
+
   // Ensure English language is used
   console.log('Initializing TranslationProvider with language: en');
   
   return (
     <TranslationProvider initialLanguage="en">
       <Router>
-        <Routes>
-          <Route path="/" element={<VerificationEntry onSubmit={handleSubmit} urlKey={keyParam || undefined} urlToken={tokenParam || undefined} />} />
-          <Route path="/verify" element={<VerificationEntry onSubmit={handleSubmit} urlKey={keyParam || undefined} urlToken={tokenParam || undefined} />} />
-          <Route path="/confirmation" element={
-            <ConfirmationPage
-              trackingId={new URLSearchParams(window.location.search).get('trackingId') || 'unknown'}
-            />
-          } />
-          <Route path="/logs" element={<FormStateViewer />} />
-        </Routes>
+        <FormProvider requirements={defaultRequirements} onSubmit={handleSubmit}>
+          <Routes>
+            <Route path="/" element={<VerificationEntry onSubmit={handleSubmit} urlKey={keyParam || undefined} urlToken={tokenParam || undefined} />} />
+            <Route path="/verify" element={<VerificationEntry onSubmit={handleSubmit} urlKey={keyParam || undefined} urlToken={tokenParam || undefined} />} />
+            <Route path="/confirmation" element={
+              <ConfirmationPage
+                trackingId={new URLSearchParams(window.location.search).get('trackingId') || 'unknown'}
+              />
+            } />
+            <Route path="/logs" element={<FormStateViewer />} />
+          </Routes>
+        </FormProvider>
       </Router>
     </TranslationProvider>
   );

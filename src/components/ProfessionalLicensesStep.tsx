@@ -3,6 +3,9 @@ import { useForm, TimelineEntry } from '../context/FormContext';
 import { useTranslation } from '../context/TranslationContext';
 import { ProfessionalLicenseEntry, ProfessionalLicenseEntryData } from './ProfessionalLicenseEntry';
 import StepNavigation from './StepNavigation';
+import StepHeader from './StepHeader';
+import { PushButton } from './ui/push-button';
+import { PlusCircle } from 'lucide-react';
 import './ProfessionalLicensesStep.css';
 
 export const ProfessionalLicensesStep: React.FC = () => {
@@ -22,6 +25,7 @@ export const ProfessionalLicensesStep: React.FC = () => {
   const [editingEntry, setEditingEntry] = useState<ProfessionalLicenseEntryData | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [errors, setErrors] = useState<Record<string, Record<string, string>>>({});
+  const [hasAttemptedNext, setHasAttemptedNext] = useState(false);
   
   // Add proper type assertions for license entries
   const licenseEntries = (getValue('professional-licenses', 'entries') || []) as unknown as ProfessionalLicenseEntryData[];
@@ -112,12 +116,10 @@ export const ProfessionalLicensesStep: React.FC = () => {
   
   return (
     <div className="licenses-step">
-      <div className="step-header">
-        <h2>{t('licenses.title') || 'Professional Licenses'}</h2>
-        <p className="step-description">
-          {t('licenses.intro') || 'Please provide information about your professional licenses and certifications.'}
-        </p>
-      </div>
+      <StepHeader
+        title={t('licenses.title') || 'Professional Licenses'}
+        description={t('licenses.intro') || 'Please provide information about your professional licenses and certifications.'}
+      />
       
       {/* List of existing entries */}
       {entries.length > 0 && (
@@ -184,26 +186,21 @@ export const ProfessionalLicensesStep: React.FC = () => {
       
       {/* Add button (only show if not currently adding/editing) */}
       {!showAddForm && (
-        <div className="add-entry-container">
-          <button
-            type="button"
-            className="btn btn-primary btn-lg btn-block"
-            onClick={handleAddEntry}
-          >
-            {t('licenses.add_button') || 'Add Professional License'}
-          </button>
-        </div>
+        <PushButton
+          onClick={handleAddEntry}
+          className="w-full max-w-md mx-auto mb-8 py-6 text-lg font-medium bg-primary hover:bg-primary/90"
+          size="lg"
+          icon={PlusCircle}
+        >
+          {t('licenses.add_button') || 'Add Professional License'}
+        </PushButton>
       )}
       
-      {/* Form status */}
+      {/* Form status - only show when validation is needed */}
       <div className="form-status">
-        {isStepValid('professional-licenses') ? (
-          <div className="valid-status">
-            {t('licenses.valid') || 'Professional license information is complete'}
-          </div>
-        ) : (
+        {hasAttemptedNext && !isStepValid('professional-licenses') && (
           <div className="invalid-status">
-            {t('licenses.invalid') || 'Please complete all required professional license information'}
+            {t('licenses.invalid') || 'Please add at least one professional license'}
           </div>
         )}
       </div>
@@ -212,19 +209,11 @@ export const ProfessionalLicensesStep: React.FC = () => {
       <StepNavigation
         onPrevious={moveToPreviousStep}
         onNext={() => {
-          console.log('Next button clicked');
-          console.log('Can move next:', canMoveNext);
+          // Set that user has attempted to navigate
+          setHasAttemptedNext(true);
           
-          // Check if the professional-licenses step is complete
-          const isComplete = entries.length > 0;
-          console.log('Is professional-licenses complete:', isComplete);
-          
-          if (isComplete) {
-            console.log('Moving to next step');
-            moveToNextStep();
-          } else {
-            console.log('Professional-licenses step is not complete, cannot move next');
-          }
+          // Professional licenses are optional, so always allow moving to next step
+          moveToNextStep();
         }}
         canMovePrevious={canMovePrevious}
         canMoveNext={canMoveNext}

@@ -1,27 +1,79 @@
+import { 
+  PersonalInfo, 
+  ResidenceHistoryEntry, 
+  EmploymentHistoryEntry,
+  EducationEntry,
+  ProfessionalLicenseEntry,
+  Signature
+} from './documents';
+
 export type FormStepId = 
   | 'personal-info'
-  | 'education'
   | 'residence-history'
   | 'employment-history'
+  | 'education'
   | 'professional-licenses'
-  | 'consents'
   | 'signature';
 
+interface PersonalInfoStepValues {
+  fullName: string;
+  email: string;
+}
+
+interface ResidenceHistoryStepValues {
+  entries: ResidenceHistoryEntry[];
+}
+
+interface EmploymentHistoryStepValues {
+  entries: EmploymentHistoryEntry[];
+}
+
+interface EducationStepValues {
+  entries: EducationEntry[];
+}
+
+interface ProfessionalLicensesStepValues {
+  entries: ProfessionalLicenseEntry[];
+}
+
+interface SignatureStepValues {
+  signature: string;
+  confirmation: boolean;
+  trackingId?: string;
+}
+
+type StepValues = 
+  | PersonalInfoStepValues 
+  | ResidenceHistoryStepValues
+  | EmploymentHistoryStepValues
+  | EducationStepValues
+  | ProfessionalLicensesStepValues
+  | SignatureStepValues;
+
 export interface StepState {
+  values?: StepValues;
   isValid: boolean;
-  isComplete: boolean;
-  errors: Record<string, string>;
-  values: Record<string, unknown>;
-  touched: Set<string>;
-  _initialized: boolean;
-  _complete: boolean;
-  _config?: Record<string, unknown>;
+  isDirty: boolean;
+  isSubmitted: boolean;
 }
 
 export interface FormState {
-  steps: Record<FormStepId, StepState>;
-  currentStepId: FormStepId;
-  isSubmitting: boolean;
-  isComplete: boolean;
-  completedSteps: FormStepId[];
+  personalInfo?: {
+    entries: PersonalInfo[];
+  };
+  residenceHistory?: {
+    entries: ResidenceHistoryEntry[];
+  };
+  employmentHistory?: {
+    entries: EmploymentHistoryEntry[];
+  };
+  education?: {
+    entries: EducationEntry[];
+  };
+  professionalLicenses?: {
+    entries: ProfessionalLicenseEntry[];
+  };
+  signature?: {
+    entries: Signature[];
+  };
 } 
