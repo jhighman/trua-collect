@@ -3,7 +3,7 @@ import { translations } from '../utils/translations';
 
 // Define the structure of a translation dictionary
 interface TranslationDictionary {
-  [key: string]: string;
+  [key: string]: string | TranslationDictionary;
 }
 
 // Define the structure of all translations
@@ -33,11 +33,24 @@ export const TranslationProvider: React.FC<TranslationProviderProps> = ({
 }) => {
   const [language, setLanguage] = useState(initialLanguage || 'en');
 
+  const getNestedValue = (obj: TranslationDictionary, path: string): string | undefined => {
+    const parts = path.split('.');
+    let current: string | TranslationDictionary | undefined = obj;
+    
+    for (const part of parts) {
+      if (current === undefined || current === null) return undefined;
+      if (typeof current === 'string') return undefined;
+      current = current[part];
+    }
+    
+    return typeof current === 'string' ? current : undefined;
+  };
+
   const t = (key: string, params?: Record<string, string>): string => {
-    // Use the typed translations object
+    // Get the translation using the nested path
     const translatedText =
-      typedTranslations[language]?.[key] ??
-      typedTranslations['en']?.[key] ??
+      getNestedValue(typedTranslations[language], key) ??
+      getNestedValue(typedTranslations['en'], key) ??
       key;
     
     // Log translation lookup for debugging

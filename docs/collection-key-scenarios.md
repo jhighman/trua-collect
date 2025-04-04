@@ -84,8 +84,8 @@ Below are common scenarios with their corresponding collection keys and direct U
 **Scenario**: Complete verification with all steps and 5-year history.
 
 **Collection Key**: en-EPMA-DTB-R5-E5-E-P-W
-
-**URL**: [http://localhost:3000/?key=en-EPMA-DTB-R5-E5-E-P-W](http://localhost:3000/?key=en-EPMA-DTB-R5-E5-E-P-W)
+http://localhost:3000/?key=en-EPMA-DTB-R5-E5-E-P-W
+**URL**: [](http://localhost:3000/?key=en-EPMA-DTB-R5-E5-E-P-W)
 
 **Description**: Email/phone/full name/alias, all consents, 5-year residence/employment history, education, professional licenses, wet signature. Starts at personal-info step.
 

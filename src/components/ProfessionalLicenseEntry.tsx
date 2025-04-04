@@ -85,15 +85,18 @@ export const ProfessionalLicenseEntry: React.FC<ProfessionalLicenseEntryProps> =
     };
     onSave(updatedFormData);
   };
+
+  // Get today's date in YYYY-MM-DD format for date input max attribute
+  const today = new Date().toISOString().split('T')[0];
   
   return (
     <div className="license-entry">
-      <h3>{formData.id ? t('licenses.edit_title') || 'Edit Professional License' : t('licenses.add_title') || 'Add Professional License'}</h3>
+      <h3>{formData.id ? t('licenses.edit_title') : t('licenses.add_title')}</h3>
       
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="licenseType">
-            {t('licenses.license_type') || 'License Type'}
+            {t('licenses.license_type')}
             <span className="required">*</span>
           </label>
           <input
@@ -105,17 +108,18 @@ export const ProfessionalLicenseEntry: React.FC<ProfessionalLicenseEntryProps> =
             className={errors.licenseType ? 'has-error' : ''}
             aria-invalid={!!errors.licenseType}
             aria-describedby={errors.licenseType ? 'licenseType-error' : undefined}
+            required
           />
           {errors.licenseType && (
             <div className="error-message" id="licenseType-error">
-              {errors.licenseType}
+              {t('licenses.validation.required')}
             </div>
           )}
         </div>
         
         <div className="form-group">
           <label htmlFor="licenseNumber">
-            {t('licenses.license_number') || 'License Number'}
+            {t('licenses.license_number')}
             <span className="required">*</span>
           </label>
           <input
@@ -127,17 +131,18 @@ export const ProfessionalLicenseEntry: React.FC<ProfessionalLicenseEntryProps> =
             className={errors.licenseNumber ? 'has-error' : ''}
             aria-invalid={!!errors.licenseNumber}
             aria-describedby={errors.licenseNumber ? 'licenseNumber-error' : undefined}
+            required
           />
           {errors.licenseNumber && (
             <div className="error-message" id="licenseNumber-error">
-              {errors.licenseNumber}
+              {t('licenses.validation.required')}
             </div>
           )}
         </div>
         
         <div className="form-group">
           <label htmlFor="issuingAuthority">
-            {t('licenses.issuing_authority') || 'Issuing Authority'}
+            {t('licenses.issuing_authority')}
             <span className="required">*</span>
           </label>
           <input
@@ -149,10 +154,11 @@ export const ProfessionalLicenseEntry: React.FC<ProfessionalLicenseEntryProps> =
             className={errors.issuingAuthority ? 'has-error' : ''}
             aria-invalid={!!errors.issuingAuthority}
             aria-describedby={errors.issuingAuthority ? 'issuingAuthority-error' : undefined}
+            required
           />
           {errors.issuingAuthority && (
             <div className="error-message" id="issuingAuthority-error">
-              {errors.issuingAuthority}
+              {t('licenses.validation.required')}
             </div>
           )}
         </div>
@@ -160,7 +166,7 @@ export const ProfessionalLicenseEntry: React.FC<ProfessionalLicenseEntryProps> =
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="country">
-              {t('licenses.country') || 'Country'}
+              {t('licenses.country')}
               <span className="required">*</span>
             </label>
             <div className={`select-container ${errors.country ? 'has-error' : ''}`}>
@@ -169,7 +175,7 @@ export const ProfessionalLicenseEntry: React.FC<ProfessionalLicenseEntryProps> =
                 onValueChange={handleCountryChange}
               >
                 <SelectTrigger className={`select-trigger ${errors.country ? 'has-error' : ''}`}>
-                  <SelectValue placeholder={t('licenses.select_country') || 'Select Country'} />
+                  <SelectValue placeholder={t('licenses.select_country')} />
                 </SelectTrigger>
                 <SelectContent className="select-content">
                   {countries.map(country => (
@@ -182,14 +188,14 @@ export const ProfessionalLicenseEntry: React.FC<ProfessionalLicenseEntryProps> =
             </div>
             {errors.country && (
               <div className="error-message" id="country-error">
-                {errors.country}
+                {t('licenses.validation.required')}
               </div>
             )}
           </div>
           
           <div className="form-group">
             <label htmlFor="state">
-              {t('licenses.state') || 'State/Province'}
+              {t('licenses.state')}
               <span className="required">*</span>
             </label>
             <div className={`select-container ${errors.state ? 'has-error' : ''}`}>
@@ -199,7 +205,7 @@ export const ProfessionalLicenseEntry: React.FC<ProfessionalLicenseEntryProps> =
                 disabled={!formData.country}
               >
                 <SelectTrigger className={`select-trigger ${errors.state ? 'has-error' : ''}`}>
-                  <SelectValue placeholder={t('licenses.select_state') || 'Select State/Province'} />
+                  <SelectValue placeholder={t('licenses.select_state')} />
                 </SelectTrigger>
                 <SelectContent className="select-content">
                   {availableStates.map(state => (
@@ -212,7 +218,7 @@ export const ProfessionalLicenseEntry: React.FC<ProfessionalLicenseEntryProps> =
             </div>
             {errors.state && (
               <div className="error-message" id="state-error">
-                {errors.state}
+                {t('licenses.validation.required')}
               </div>
             )}
           </div>
@@ -221,11 +227,11 @@ export const ProfessionalLicenseEntry: React.FC<ProfessionalLicenseEntryProps> =
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="issueDate">
-              {t('licenses.issue_date') || 'Issue Date'}
+              {t('licenses.issue_date')}
               <span className="required">*</span>
             </label>
             <input
-              type="month"
+              type="date"
               id="issueDate"
               name="issueDate"
               value={formData.issueDate}
@@ -233,91 +239,79 @@ export const ProfessionalLicenseEntry: React.FC<ProfessionalLicenseEntryProps> =
               className={errors.issueDate ? 'has-error' : ''}
               aria-invalid={!!errors.issueDate}
               aria-describedby={errors.issueDate ? 'issueDate-error' : undefined}
+              max={today}
+              required
             />
-            <p className="input-help-text">
-              {t('licenses.issue_date_help') || 'Month and year when the license was issued'}
-            </p>
             {errors.issueDate && (
               <div className="error-message" id="issueDate-error">
-                {errors.issueDate}
+                {errors.issueDate === 'future' 
+                  ? t('licenses.validation.future_date')
+                  : t('licenses.validation.invalid_date')}
               </div>
             )}
           </div>
           
-          <div className="form-group">
-            <label htmlFor="expirationDate">
-              {t('licenses.expiration_date') || 'Expiration Date'}
-              {!formData.isActive && <span className="required">*</span>}
-            </label>
-            {!formData.isActive ? (
-              <>
-                <input
-                  type="month"
-                  id="expirationDate"
-                  name="expirationDate"
-                  value={formData.expirationDate}
-                  onChange={handleChange}
-                  className={errors.expirationDate ? 'has-error' : ''}
-                  aria-invalid={!!errors.expirationDate}
-                  aria-describedby={errors.expirationDate ? 'expirationDate-error' : undefined}
-                />
-                <p className="input-help-text">
-                  {t('licenses.expiration_date_help') || 'Month and year when the license expires'}
-                </p>
-              </>
-            ) : (
-              <div className="current-indicator">
-                <span>{t('common.present') || 'Present'}</span>
-              </div>
-            )}
-            {errors.expirationDate && (
-              <div className="error-message" id="expirationDate-error">
-                {errors.expirationDate}
-              </div>
-            )}
-          </div>
+          {!formData.isActive && (
+            <div className="form-group">
+              <label htmlFor="expirationDate">
+                {t('licenses.expiration_date')}
+                <span className="required">*</span>
+              </label>
+              <input
+                type="date"
+                id="expirationDate"
+                name="expirationDate"
+                value={formData.expirationDate}
+                onChange={handleChange}
+                className={errors.expirationDate ? 'has-error' : ''}
+                aria-invalid={!!errors.expirationDate}
+                aria-describedby={errors.expirationDate ? 'expirationDate-error' : undefined}
+                min={formData.issueDate}
+                required={!formData.isActive}
+              />
+              {errors.expirationDate && (
+                <div className="error-message" id="expirationDate-error">
+                  {errors.expirationDate === 'before_issue'
+                    ? t('licenses.validation.expiration_before_issue')
+                    : t('licenses.validation.invalid_date')}
+                </div>
+              )}
+            </div>
+          )}
         </div>
         
         <div className="form-group checkbox-group">
-          <input
-            type="checkbox"
-            id="isActive"
-            name="isActive"
-            checked={formData.isActive}
-            onChange={handleCheckboxChange}
-          />
-          <label htmlFor="isActive">
-            {t('licenses.is_active') || 'This license is currently active'}
+          <label htmlFor="isActive" className="checkbox-label">
+            <input
+              type="checkbox"
+              id="isActive"
+              name="isActive"
+              checked={formData.isActive}
+              onChange={handleCheckboxChange}
+            />
+            {formData.isActive ? t('licenses.active') : t('licenses.inactive')}
           </label>
         </div>
         
         <div className="form-group">
           <label htmlFor="description">
-            {t('licenses.description') || 'Description'}
+            {t('licenses.description')}
           </label>
           <textarea
             id="description"
             name="description"
             value={formData.description}
             onChange={handleChange}
-            placeholder={t('licenses.description_placeholder') || 'Additional information about this license'}
-            className={errors.description ? 'has-error' : ''}
-            aria-invalid={!!errors.description}
-            aria-describedby={errors.description ? 'description-error' : undefined}
+            rows={3}
           />
-          {errors.description && (
-            <div className="error-message" id="description-error">
-              {errors.description}
-            </div>
-          )}
         </div>
         
         <div className="form-actions">
-          <button type="button" className="cancel-button" onClick={onCancel}>
-            {t('common.cancel') || 'Cancel'}
-          </button>
           <button type="submit" className="save-button">
-            {t('licenses.save_button') || 'Save License'}
+            {t('common.save')}
+          </button>
+          <button type="button" className="cancel-button" onClick={onCancel}>
+            {t('common.cancel')}
           </button>
         </div>
       </form>

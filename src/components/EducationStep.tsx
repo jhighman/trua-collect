@@ -60,20 +60,28 @@ export const EducationStep: React.FC = () => {
   };
   
   useEffect(() => {
-    const timelineEntries = getValue('education', 'timelineEntries') as EducationEntryData[];
-    if (timelineEntries && timelineEntries.length > 0) {
-      setEntries(timelineEntries);
+    const savedEntries = getValue('education', 'entries') as EducationEntryData[];
+    if (savedEntries && Array.isArray(savedEntries)) {
+      setEntries(savedEntries);
     }
     
-    if (highestEducationLevel) {
+    const savedLevel = getValue('education', 'highestLevel') as string;
+    if (savedLevel) {
+      setHighestEducationLevel(savedLevel);
+      setShowDropdown(false);
+    }
+  }, [getValue]);
+
+  useEffect(() => {
+    if (entries.length > 0 || highestEducationLevel) {
+      setValue('education', 'entries', entries);
       setValue('education', 'highestLevel', highestEducationLevel);
-      
-      if (timelineEntries && timelineEntries.length > 0) {
-        setValue('education', 'timelineEntries', timelineEntries);
-      }
+      setValue('education', 'isValid', true);
+      setValue('education', 'isComplete', true);
+      setValue('education', '_complete', true);
       setValue('education', 'forceUpdate', Date.now());
     }
-  }, [getValue, setValue, highestEducationLevel]);
+  }, [entries, highestEducationLevel, setValue]);
   
   useEffect(() => {
     setErrors({} as Record<string, Record<string, string>>);
@@ -156,16 +164,15 @@ export const EducationStep: React.FC = () => {
     }
     
     setEntries(newEntries);
-    
+    setValue('education', 'entries', newEntries);
     setValue('education', 'highestLevel', highestEducationLevel);
-    setValue('education', 'timelineEntries', newEntries);
-    
-    setValue('education', 'touchedHighestLevel', true);
-    setValue('education', 'touchedTimelineEntries', true);
+    setValue('education', 'isValid', true);
+    setValue('education', 'isComplete', true);
+    setValue('education', '_complete', true);
+    setValue('education', 'forceUpdate', Date.now());
     
     setEditingEntry(null);
     setShowAddForm(false);
-    setValue('education', 'forceUpdate', Date.now());
   };
   
   // Handle canceling entry edit/add
@@ -266,7 +273,7 @@ export const EducationStep: React.FC = () => {
                     onClick={() => setShowDropdown(true)}
                     className="text-sm text-primary hover:underline"
                   >
-                    Change Education Level
+                    {t('education.change_level')}
                   </button>
                 </div>
                 <p className="section-description">
@@ -318,17 +325,17 @@ export const EducationStep: React.FC = () => {
           ) : (
             <div className="non-college-education-section">
               <div className="flex items-center justify-between">
-                <h3>Education Level: {getEducationLevelText(highestEducationLevel)}</h3>
+                <h3>{t('education.education_level')} {getEducationLevelText(highestEducationLevel)}</h3>
                 <button
                   type="button"
                   onClick={() => setShowDropdown(true)}
                   className="text-sm text-primary hover:underline"
                 >
-                  Change Education Level
+                  {t('education.change_level')}
                 </button>
               </div>
               <p className="section-description mt-2">
-                No additional education details required.
+                {t('education.no_details_required')}
               </p>
             </div>
           )}

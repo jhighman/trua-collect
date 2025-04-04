@@ -160,9 +160,9 @@ export class PdfService {
    */
   public getPdfDataUrl(doc: jsPDF): string {
     try {
-      return saveToDataUrl(doc);
+      return doc.output('dataurlstring');
     } catch (error) {
-      console.error('Error generating PDF data URL:', error);
+      this.logger.error('Error generating PDF data URL:', error);
       throw new Error('Failed to generate PDF data URL');
     }
   }
@@ -191,78 +191,172 @@ export class PdfService {
 
   public async generatePdf(jsonDocument: JsonDocument): Promise<Blob> {
     try {
-      // In a real implementation, this would use a PDF generation library
-      // For now, we'll create a simple PDF blob
-      const pdfContent = this.generatePdfContent(jsonDocument);
-      return new Blob([pdfContent], { type: 'application/pdf' });
+      const doc = new jsPDF();
+      
+      // Add title and metadata
+      doc.setFontSize(20);
+      doc.text('Verification Document', 20, 20);
+      
+      let yPosition = 40;
+      
+      // Add metadata
+      doc.setFontSize(12);
+      doc.text(`Document ID: ${jsonDocument.metadata.trackingId}`, 20, yPosition);
+      doc.text(`Generated: ${new Date(jsonDocument.metadata.submissionDate).toLocaleDateString()}`, 20, yPosition + 10);
+      yPosition += 30;
+
+      // Add personal information
+      if (jsonDocument.personalInfo) {
+        doc.setFontSize(16);
+        doc.text('Personal Information', 20, yPosition);
+        doc.setFontSize(12);
+        yPosition += 10;
+        doc.text(`Full Name: ${jsonDocument.personalInfo.fullName}`, 30, yPosition);
+        if (jsonDocument.personalInfo.email) {
+          yPosition += 10;
+          doc.text(`Email: ${jsonDocument.personalInfo.email}`, 30, yPosition);
+        }
+        if (jsonDocument.personalInfo.phone) {
+          yPosition += 10;
+          doc.text(`Phone: ${jsonDocument.personalInfo.phone}`, 30, yPosition);
+        }
+        yPosition += 20;
+      }
+
+      // Add residence history
+      if (jsonDocument.residenceHistory && jsonDocument.residenceHistory.length > 0) {
+        doc.setFontSize(16);
+        doc.text('Residence History', 20, yPosition);
+        doc.setFontSize(12);
+        yPosition += 10;
+        
+        jsonDocument.residenceHistory.forEach(entry => {
+          doc.text(`${entry.address}`, 30, yPosition);
+          yPosition += 10;
+          doc.text(`${entry.city}, ${entry.state_province}, ${entry.country}`, 30, yPosition);
+          yPosition += 10;
+          doc.text(`From: ${new Date(entry.startDate).toLocaleDateString()} - To: ${entry.endDate ? new Date(entry.endDate).toLocaleDateString() : 'Present'}`, 30, yPosition);
+          yPosition += 20;
+        });
+      }
+
+      // Add employment history
+      if (jsonDocument.employmentHistory && jsonDocument.employmentHistory.length > 0) {
+        // Check if we need a new page
+        if (yPosition > 250) {
+          doc.addPage();
+          yPosition = 20;
+        }
+        
+        doc.setFontSize(16);
+        doc.text('Employment History', 20, yPosition);
+        doc.setFontSize(12);
+        yPosition += 10;
+        
+        jsonDocument.employmentHistory.forEach(entry => {
+          doc.text(`${entry.employer}`, 30, yPosition);
+          yPosition += 10;
+          doc.text(`Position: ${entry.position}`, 30, yPosition);
+          yPosition += 10;
+          doc.text(`Location: ${entry.city}, ${entry.state_province}, ${entry.country}`, 30, yPosition);
+          yPosition += 10;
+          doc.text(`From: ${new Date(entry.startDate).toLocaleDateString()} - To: ${entry.endDate ? new Date(entry.endDate).toLocaleDateString() : 'Present'}`, 30, yPosition);
+          if (entry.description) {
+            yPosition += 10;
+            doc.text(`Description: ${entry.description}`, 30, yPosition);
+          }
+          yPosition += 20;
+        });
+      }
+
+      // Add education history
+      if (jsonDocument.education && jsonDocument.education.length > 0) {
+        // Check if we need a new page
+        if (yPosition > 250) {
+          doc.addPage();
+          yPosition = 20;
+        }
+        
+        doc.setFontSize(16);
+        doc.text('Education', 20, yPosition);
+        doc.setFontSize(12);
+        yPosition += 10;
+        
+        jsonDocument.education.forEach(entry => {
+          doc.text(`${entry.institution}`, 30, yPosition);
+          yPosition += 10;
+          doc.text(`Degree: ${entry.degree}`, 30, yPosition);
+          if (entry.fieldOfStudy) {
+            yPosition += 10;
+            doc.text(`Field of Study: ${entry.fieldOfStudy}`, 30, yPosition);
+          }
+          yPosition += 10;
+          doc.text(`From: ${new Date(entry.startDate).toLocaleDateString()} - To: ${entry.endDate ? new Date(entry.endDate).toLocaleDateString() : 'Present'}`, 30, yPosition);
+          yPosition += 20;
+        });
+      }
+
+      // Add professional licenses
+      if (jsonDocument.professionalLicenses && jsonDocument.professionalLicenses.length > 0) {
+        // Check if we need a new page
+        if (yPosition > 250) {
+          doc.addPage();
+          yPosition = 20;
+        }
+        
+        doc.setFontSize(16);
+        doc.text('Professional Licenses', 20, yPosition);
+        doc.setFontSize(12);
+        yPosition += 10;
+        
+        jsonDocument.professionalLicenses.forEach(entry => {
+          doc.text(`${entry.licenseType}`, 30, yPosition);
+          yPosition += 10;
+          doc.text(`License Number: ${entry.licenseNumber}`, 30, yPosition);
+          yPosition += 10;
+          doc.text(`Issuing Authority: ${entry.issuingAuthority}`, 30, yPosition);
+          yPosition += 10;
+          doc.text(`Location: ${entry.state}, ${entry.country}`, 30, yPosition);
+          yPosition += 10;
+          doc.text(`Status: ${entry.isActive ? 'Active' : 'Inactive'}`, 30, yPosition);
+          if (entry.description) {
+            yPosition += 10;
+            doc.text(`Description: ${entry.description}`, 30, yPosition);
+          }
+          yPosition += 20;
+        });
+      }
+
+      // Add signature
+      if (jsonDocument.signature) {
+        // Check if we need a new page
+        if (yPosition > 250) {
+          doc.addPage();
+          yPosition = 20;
+        }
+        
+        doc.setFontSize(16);
+        doc.text('Signature', 20, yPosition);
+        doc.setFontSize(12);
+        yPosition += 10;
+        doc.text(`Date: ${new Date(jsonDocument.signature.signatureDate).toLocaleDateString()}`, 30, yPosition);
+        
+        // Add signature image if available
+        if (jsonDocument.signature.signatureImage) {
+          yPosition += 20;
+          try {
+            doc.addImage(jsonDocument.signature.signatureImage, 'PNG', 30, yPosition, 50, 20);
+          } catch (error) {
+            this.logger.error('Error adding signature image:', error);
+          }
+        }
+      }
+
+      // Convert to blob
+      return new Blob([doc.output('blob')], { type: 'application/pdf' });
     } catch (error) {
       this.logger.error('Error generating PDF:', error);
       throw error;
     }
-  }
-
-  private generatePdfContent(jsonDocument: JsonDocument): string {
-    // This is a placeholder implementation
-    // In a real application, you would use a proper PDF generation library
-    return `
-      Document ID: ${jsonDocument.metadata.trackingId}
-      Generated: ${jsonDocument.metadata.submissionDate}
-      Version: ${jsonDocument.metadata.version}
-      ${jsonDocument.metadata.referenceToken ? `Reference: ${jsonDocument.metadata.referenceToken}` : ''}
-      
-      Timeline:
-      From: ${jsonDocument.timeline.startDate}
-      To: ${jsonDocument.timeline.endDate}
-      
-      ${jsonDocument.personalInfo ? `
-      Personal Information:
-      Full Name: ${jsonDocument.personalInfo.fullName}
-      Email: ${jsonDocument.personalInfo.email}
-      ${jsonDocument.personalInfo.phone ? `Phone: ${jsonDocument.personalInfo.phone}` : ''}
-      ` : ''}
-      
-      ${jsonDocument.residenceHistory ? `
-      Residence History:
-      ${jsonDocument.residenceHistory.map((entry: ResidenceHistoryEntry) => `
-        Address: ${entry.address}
-        From: ${entry.startDate}
-        To: ${entry.endDate}
-      `).join('\n')}
-      ` : ''}
-      
-      ${jsonDocument.employmentHistory ? `
-      Employment History:
-      ${jsonDocument.employmentHistory.map((entry: EmploymentHistoryEntry) => `
-        Employer: ${entry.employer}
-        Position: ${entry.position}
-        From: ${entry.startDate}
-        To: ${entry.endDate}
-      `).join('\n')}
-      ` : ''}
-      
-      ${jsonDocument.education ? `
-      Education:
-      ${jsonDocument.education.map((entry: EducationEntry) => `
-        Institution: ${entry.institution}
-        Degree: ${entry.degree}
-        Completion Date: ${entry.completionDate}
-      `).join('\n')}
-      ` : ''}
-      
-      ${jsonDocument.professionalLicenses ? `
-      Professional Licenses:
-      ${jsonDocument.professionalLicenses.map((entry: ProfessionalLicenseEntry) => `
-        License Type: ${entry.licenseType}
-        License Number: ${entry.licenseNumber}
-        Expiration Date: ${entry.expirationDate}
-      `).join('\n')}
-      ` : ''}
-      
-      ${jsonDocument.signature ? `
-      Signature:
-      Date: ${jsonDocument.signature.signatureDate}
-      Confirmation: ${jsonDocument.signature.confirmation ? 'Yes' : 'No'}
-      ` : ''}
-    `;
   }
 }

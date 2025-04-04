@@ -1,6 +1,7 @@
 import { FormState } from '../context/FormContext';
 import { jsPDF } from 'jspdf';
-import { JsonDocument } from './JsonDocumentGenerator';
+import { JsonDocument, EmploymentHistoryEntry, ResidenceHistoryEntry, EducationEntry, ProfessionalLicenseEntry } from '../types/documents';
+import { SignatureStepValues } from '../utils/FormStateManager';
 
 /**
  * Generate a PDF document from form data
@@ -25,7 +26,7 @@ export const generatePdfDocument = (formState: FormState, trackingId: string): j
   doc.text(`Date: ${new Date().toLocaleDateString()}`, 105, yPos, { align: 'center' });
   
   // Add personal information
-  if (formState.steps['personal-info']) {
+  if (formState.steps['personal-info']?.values) {
     const personalInfo = formState.steps['personal-info'].values;
     
     yPos += 12;
@@ -49,28 +50,31 @@ export const generatePdfDocument = (formState: FormState, trackingId: string): j
     doc.setTextColor(0, 0, 0);
     
     Object.entries(personalInfo).forEach(([key, value], index) => {
-      // Format key from camelCase to Title Case
-      const formattedKey = key
-        .replace(/([A-Z])/g, ' $1')
-        .replace(/^./, (str) => str.toUpperCase());
-      
-      // Set background color for alternating rows
-      if (index % 2 === 0) {
-        doc.setFillColor(240, 240, 240);
-        doc.rect(14, yPos, 80, 10, 'F');
-        doc.rect(94, yPos, 100, 10, 'F');
+      if (value !== undefined) {
+        // Format key from camelCase to Title Case
+        const formattedKey = key
+          .replace(/([A-Z])/g, ' $1')
+          .replace(/^./, (str) => str.toUpperCase());
+        
+        // Set background color for alternating rows
+        if (index % 2 === 0) {
+          doc.setFillColor(240, 240, 240);
+          doc.rect(14, yPos, 80, 10, 'F');
+          doc.rect(94, yPos, 100, 10, 'F');
+        }
+        
+        doc.text(formattedKey, 16, yPos + 7);
+        doc.text(String(value), 96, yPos + 7);
+        
+        yPos += 10;
       }
-      
-      doc.text(formattedKey, 16, yPos + 7);
-      doc.text(String(value), 96, yPos + 7);
-      
-      yPos += 10;
     });
   }
   
   // Add signature if available
-  if (formState.steps['signature'] && formState.steps['signature'].values.signature) {
-    const signatureData = formState.steps['signature'].values.signature;
+  const signatureStep = formState.steps['signature'];
+  if (signatureStep?.values && (signatureStep.values as SignatureStepValues).signature) {
+    const signatureData = (signatureStep.values as SignatureStepValues).signature;
     
     // Add some space after the table
     yPos += 20;
@@ -132,29 +136,112 @@ export const generatePdfFromJson = (jsonDocument: JsonDocument): jsPDF => {
     doc.setTextColor(0, 0, 0);
     
     Object.entries(jsonDocument.personalInfo).forEach(([key, value], index) => {
-      // Format key from camelCase to Title Case
-      const formattedKey = key
-        .replace(/([A-Z])/g, ' $1')
-        .replace(/^./, (str) => str.toUpperCase());
-      
-      // Set background color for alternating rows
-      if (index % 2 === 0) {
-        doc.setFillColor(240, 240, 240);
-        doc.rect(14, yPos, 80, 10, 'F');
-        doc.rect(94, yPos, 100, 10, 'F');
+      if (value !== undefined) {
+        // Format key from camelCase to Title Case
+        const formattedKey = key
+          .replace(/([A-Z])/g, ' $1')
+          .replace(/^./, (str) => str.toUpperCase());
+        
+        // Set background color for alternating rows
+        if (index % 2 === 0) {
+          doc.setFillColor(240, 240, 240);
+          doc.rect(14, yPos, 80, 10, 'F');
+          doc.rect(94, yPos, 100, 10, 'F');
+        }
+        
+        doc.text(formattedKey, 16, yPos + 7);
+        doc.text(String(value), 96, yPos + 7);
+        
+        yPos += 10;
       }
-      
-      doc.text(formattedKey, 16, yPos + 7);
-      doc.text(String(value), 96, yPos + 7);
-      
-      yPos += 10;
     });
+  }
+
+  // Add timeline sections
+  if (jsonDocument.timeline) {
+    // Employment History
+    if (jsonDocument.timeline.employmentTimeline?.entries.length) {
+      yPos += 20;
+      doc.setFontSize(16);
+      doc.text('Employment History', 14, yPos);
+      yPos += 10;
+      
+      jsonDocument.timeline.employmentTimeline.entries.forEach((entry: EmploymentHistoryEntry) => {
+        doc.setFontSize(14);
+        doc.text(`${entry.employer} - ${entry.position}`, 14, yPos);
+        yPos += 7;
+        doc.setFontSize(12);
+        doc.text(`${entry.startDate} - ${entry.endDate}`, 14, yPos);
+        if (entry.description) {
+          yPos += 7;
+          doc.text(entry.description, 14, yPos);
+        }
+        yPos += 10;
+      });
+    }
+
+    // Residence History
+    if (jsonDocument.timeline.residenceTimeline?.entries.length) {
+      yPos += 20;
+      doc.setFontSize(16);
+      doc.text('Residence History', 14, yPos);
+      yPos += 10;
+      
+      jsonDocument.timeline.residenceTimeline.entries.forEach((entry: ResidenceHistoryEntry) => {
+        doc.setFontSize(14);
+        doc.text(`${entry.address}, ${entry.city}, ${entry.state_province} ${entry.zip_postal}`, 14, yPos);
+        yPos += 7;
+        doc.setFontSize(12);
+        doc.text(`${entry.startDate} - ${entry.endDate}`, 14, yPos);
+        yPos += 10;
+      });
+    }
+
+    // Education
+    if (jsonDocument.timeline.educationTimeline?.entries.length) {
+      yPos += 20;
+      doc.setFontSize(16);
+      doc.text('Education', 14, yPos);
+      yPos += 10;
+      
+      jsonDocument.timeline.educationTimeline.entries.forEach((entry: EducationEntry) => {
+        doc.setFontSize(14);
+        doc.text(`${entry.institution} - ${entry.degree}`, 14, yPos);
+        yPos += 7;
+        doc.setFontSize(12);
+        doc.text(`${entry.startDate} - ${entry.endDate}`, 14, yPos);
+        if (entry.fieldOfStudy) {
+          yPos += 7;
+          doc.text(`Field: ${entry.fieldOfStudy}`, 14, yPos);
+        }
+        yPos += 10;
+      });
+    }
+
+    // Professional Licenses
+    if (jsonDocument.timeline.licensesTimeline?.entries.length) {
+      yPos += 20;
+      doc.setFontSize(16);
+      doc.text('Professional Licenses', 14, yPos);
+      yPos += 10;
+      
+      jsonDocument.timeline.licensesTimeline.entries.forEach((entry: ProfessionalLicenseEntry) => {
+        doc.setFontSize(14);
+        doc.text(`${entry.licenseType} - ${entry.licenseNumber}`, 14, yPos);
+        yPos += 7;
+        doc.setFontSize(12);
+        doc.text(`Issued by: ${entry.issuingAuthority}`, 14, yPos);
+        yPos += 7;
+        doc.text(`Issue Date: ${entry.issueDate}`, 14, yPos);
+        yPos += 7;
+        doc.text(`Expiration: ${entry.isActive ? entry.expirationDate : 'Inactive'}`, 14, yPos);
+        yPos += 10;
+      });
+    }
   }
   
   // Add signature if available
-  if (jsonDocument.signature && jsonDocument.signature.signatureImage) {
-    const signatureData = jsonDocument.signature.signatureImage;
-    
+  if (jsonDocument.signature) {
     // Add some space after the table
     yPos += 20;
     
@@ -162,8 +249,8 @@ export const generatePdfFromJson = (jsonDocument: JsonDocument): jsPDF => {
     doc.text('Signature', 14, yPos);
     
     // Add signature image if it's a data URL
-    if (signatureData.startsWith('data:image')) {
-      doc.addImage(signatureData, 'PNG', 14, yPos + 5, 80, 40);
+    if (jsonDocument.signature.signatureImage.startsWith('data:image')) {
+      doc.addImage(jsonDocument.signature.signatureImage, 'PNG', 14, yPos + 5, 80, 40);
       doc.text(`Date: ${new Date(jsonDocument.signature.signatureDate).toLocaleDateString()}`, 14, yPos + 50);
     }
   }
@@ -200,6 +287,6 @@ export const saveToBlob = (doc: jsPDF): Blob => {
  * @returns A data URL containing the PDF data
  */
 export const saveToDataUrl = (doc: jsPDF): string => {
-  const dataUrl = doc.output('datauristring');
-  return dataUrl;
+  const pdfOutput = doc.output('datauristring');
+  return pdfOutput;
 };

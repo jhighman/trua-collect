@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+/// <reference types="vite/client" />
 import { FormState } from '../types/form';
 import { Requirements } from '../types/requirements';
 import { JsonDocument } from '../types/documents';
@@ -20,14 +20,14 @@ import jsPDF from 'jspdf';
  */
 export class DocumentService {
   private readonly CLAIMS_DIRECTORY = 'claims';
-  private jsonGenerator: JsonDocumentGenerator;
+  private readonly API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+  private jsonGenerator!: JsonDocumentGenerator;
   private pdfService: PdfService;
   private logger: Logger;
 
-  constructor() {
-    this.jsonGenerator = new JsonDocumentGenerator();
+  constructor(logger?: Logger) {
     this.pdfService = new PdfService();
-    this.logger = new Logger('DocumentService');
+    this.logger = logger || new Logger('DocumentService');
   }
 
   /**
@@ -38,7 +38,8 @@ export class DocumentService {
    */
   public async generateJsonDocument(formState: FormState, trackingId: string): Promise<JsonDocument> {
     try {
-      return this.jsonGenerator.generateJsonDocument(formState, trackingId);
+      this.jsonGenerator = new JsonDocumentGenerator(formState);
+      return this.jsonGenerator.generateJsonDocument(trackingId);
     } catch (error) {
       this.logger.error('Error generating JSON document:', error);
       throw new Error('Failed to generate JSON document');
@@ -48,12 +49,11 @@ export class DocumentService {
   /**
    * Save a JSON document to storage
    * @param document The JSON document to save
-   * @param trackingId The unique tracking ID for this submission
-   * @returns Promise resolving to the path where the document was saved
+   * @returns Promise resolving when the document is saved
    */
   public async saveJsonDocument(document: JsonDocument): Promise<void> {
     try {
-      const response = await fetch('/api/documents/json', {
+      const response = await fetch(`${this.API_BASE_URL}/documents/json`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -74,15 +74,12 @@ export class DocumentService {
    * Generate and save a JSON document from form data
    * @param formState The complete form state
    * @param trackingId The unique tracking ID for this submission
-   * @returns Promise resolving to the saved document path
+   * @returns Promise resolving when the document is saved
    */
-  public async generateAndSaveJsonDocument(
-    formState: FormState, 
-    trackingId: string
-  ): Promise<string> {
+  public async generateAndSaveJsonDocument(formState: FormState, trackingId: string): Promise<void> {
     try {
       const document = await this.generateJsonDocument(formState, trackingId);
-      return this.saveJsonDocument(document);
+      await this.saveJsonDocument(document);
     } catch (error) {
       this.logger.error('Error generating and saving JSON document:', error);
       throw new Error('Failed to generate and save JSON document');
@@ -128,7 +125,7 @@ export class DocumentService {
    */
   public getJsonBlob(document: JsonDocument): Blob {
     try {
-      const jsonString = this.jsonGenerator.saveToString(document);
+      const jsonString = JSON.stringify(document, null, 2);
       return new Blob([jsonString], { type: 'application/json' });
     } catch (error) {
       this.logger.error('Error creating JSON blob:', error);
@@ -177,15 +174,22 @@ export class DocumentService {
     }
   }
 
-  public async generateDocuments(formState: FormState, requirements: Requirements) {
+  /**
+   * Generate documents from form state
+   * @param formState The complete form state
+   * @returns Promise resolving to the generated documents
+   */
+  public async generateDocuments(formState: FormState): Promise<{ json: JsonDocument; pdf: Blob }> {
     try {
-      // Validate form state before generating documents
-      if (!this.validateFormState(formState, requirements)) {
-        throw new Error('Form validation failed');
+      const signatureValues = formState.steps.signature?.values as { trackingId?: string } | undefined;
+      const trackingId = signatureValues?.trackingId;
+      
+      if (!trackingId) {
+        throw new Error('Missing tracking ID in form state');
       }
 
       // Generate JSON document first
-      const jsonDocument = this.jsonGenerator.generateJsonDocument(formState, requirements);
+      const jsonDocument = await this.generateJsonDocument(formState, trackingId);
 
       // Generate PDF document using the JSON document
       const pdfDocument = await this.pdfService.generatePdf(jsonDocument);
@@ -264,7 +268,7 @@ export class DocumentService {
     return !!(values?.signature && values?.confirmation);
   }
 
-  public async saveDocuments(jsonDoc: JsonDocument, pdfDoc: jsPDF): Promise<void> {
+  public async saveDocuments(jsonDoc: JsonDocument, pdfDoc: Blob): Promise<void> {
     try {
       // Save JSON document
       await this.saveJsonDocument(jsonDoc);
@@ -277,11 +281,10 @@ export class DocumentService {
     }
   }
 
-  private async savePdfDocument(pdfDoc: jsPDF): Promise<void> {
+  private async savePdfDocument(pdfDoc: Blob): Promise<void> {
     try {
-      const pdfBlob = pdfDoc.output('blob');
       const formData = new FormData();
-      formData.append('file', pdfBlob, 'document.pdf');
+      formData.append('file', pdfDoc, 'document.pdf');
 
       const response = await fetch('/api/documents/pdf', {
         method: 'POST',

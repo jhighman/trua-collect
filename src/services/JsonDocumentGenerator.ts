@@ -53,6 +53,14 @@ export class JsonDocumentGenerator {
         version: '1.0'
       };
 
+      // Get education entries and transform them
+      const educationValues = (this.formState.steps['education']?.values as EducationStepValues)?.entries || [];
+      const educationEntries = educationValues.map((entry: EducationEntry) => ({
+        ...entry,
+        startDate: entry.startDate || entry.completionDate,
+        endDate: entry.endDate || entry.completionDate
+      }));
+
       const timeline = this.generateTimeline(this.formState);
       const personalInfoValues = this.formState.steps['personal-info']?.values as PersonalInfoStepValues;
       const signatureValues = this.formState.steps['signature']?.values as SignatureStepValues;
@@ -64,7 +72,7 @@ export class JsonDocumentGenerator {
         personalInfo: personalInfoValues ? this.transformPersonalInfo(personalInfoValues) : undefined,
         residenceHistory: (this.formState.steps['residence-history']?.values as ResidenceHistoryStepValues)?.entries,
         employmentHistory: (this.formState.steps['employment-history']?.values as EmploymentHistoryStepValues)?.entries,
-        education: (this.formState.steps['education']?.values as EducationStepValues)?.entries,
+        education: educationEntries,
         professionalLicenses: (this.formState.steps['professional-licenses']?.values as ProfessionalLicensesStepValues)?.entries,
         consents: consentsValues ? this.transformConsents(consentsValues) : undefined,
         signature: signatureValues ? this.transformSignature(signatureValues) : undefined

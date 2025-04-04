@@ -117,30 +117,30 @@ export const ProfessionalLicensesStep: React.FC = () => {
   return (
     <div className="licenses-step">
       <StepHeader
-        title={t('licenses.title') || 'Professional Licenses'}
-        description={t('licenses.intro') || 'Please provide information about your professional licenses and certifications.'}
+        title={t('licenses.title')}
+        description={t('licenses.intro')}
       />
       
       {/* List of existing entries */}
       {entries.length > 0 && (
         <div className="entries-list">
           <div className="entries-subtitle">
-            {t('licenses.entries_title') || 'Your Professional Licenses'}
+            {t('licenses.entries_title')}
           </div>
           
           {entries.map(entry => (
             <div key={entry.id} className="entry-item">
               <div className="entry-content">
                 <strong className="entry-type">{entry.licenseType}</strong>
-                <p className="entry-number">{t('licenses.license_number') || 'License Number'}: {entry.licenseNumber}</p>
-                <p className="entry-authority">{t('licenses.issuing_authority') || 'Issuing Authority'}: {entry.issuingAuthority}</p>
+                <p className="entry-number">{t('licenses.license_number')}: {entry.licenseNumber}</p>
+                <p className="entry-authority">{t('licenses.issuing_authority')}: {entry.issuingAuthority}</p>
                 <p className="entry-dates">
-                  {t('licenses.issue_date') || 'Issue Date'}: {formatDate(entry.issueDate)}
+                  {t('licenses.issue_date')}: {formatDate(entry.issueDate)}
                   {!entry.isActive && entry.expirationDate && (
-                    <> | {t('licenses.expiration_date') || 'Expiration Date'}: {formatDate(entry.expirationDate)}</>
+                    <> | {t('licenses.expiration_date')}: {formatDate(entry.expirationDate)}</>
                   )}
                   {entry.isActive && (
-                    <> | <span className="active-badge">{t('licenses.active') || 'Active'}</span></>
+                    <> | <span className="active-badge">{t('licenses.active')}</span></>
                   )}
                 </p>
                 {(entry.state || entry.country) && (
@@ -156,17 +156,17 @@ export const ProfessionalLicensesStep: React.FC = () => {
                   type="button"
                   className="edit-button"
                   onClick={() => handleEditEntry(entry)}
-                  aria-label={t('common.edit') || 'Edit'}
+                  aria-label={t('common.edit')}
                 >
-                  {t('common.edit') || 'Edit'}
+                  {t('common.edit')}
                 </button>
                 <button
                   type="button"
                   className="remove-button"
                   onClick={() => handleRemoveEntry(entry.id)}
-                  aria-label={t('common.remove') || 'Remove'}
+                  aria-label={t('common.remove')}
                 >
-                  {t('common.remove') || 'Remove'}
+                  {t('common.remove')}
                 </button>
               </div>
             </div>
@@ -192,31 +192,30 @@ export const ProfessionalLicensesStep: React.FC = () => {
           size="lg"
           icon={PlusCircle}
         >
-          {t('licenses.add_button') || 'Add Professional License'}
+          {t('licenses.add_button')}
         </PushButton>
       )}
       
       {/* Form status - only show when validation is needed */}
       <div className="form-status">
         {hasAttemptedNext && !isStepValid('professional-licenses') && (
-          <div className="invalid-status">
-            {t('licenses.invalid') || 'Please add at least one professional license'}
+          <div className="validation-error">
+            {t('licenses.validation.required')}
           </div>
         )}
       </div>
       
-      {/* Navigation buttons */}
+      {/* Navigation */}
       <StepNavigation
-        onPrevious={moveToPreviousStep}
-        onNext={() => {
-          // Set that user has attempted to navigate
-          setHasAttemptedNext(true);
-          
-          // Professional licenses are optional, so always allow moving to next step
-          moveToNextStep();
-        }}
         canMovePrevious={canMovePrevious}
         canMoveNext={canMoveNext}
+        onNext={() => {
+          setHasAttemptedNext(true);
+          if (isStepValid('professional-licenses')) {
+            moveToNextStep();
+          }
+        }}
+        onPrevious={moveToPreviousStep}
       />
     </div>
   );
