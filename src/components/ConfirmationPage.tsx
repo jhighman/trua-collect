@@ -152,8 +152,114 @@ export const ConfirmationPage: React.FC<ConfirmationPageProps> = ({
   // Use the prop formState if available, otherwise use the one from localStorage
   const effectiveFormState = (formState && Object.keys(formState).length > 0) ? formState : localFormState;
 
+  const getDisplayEntries = useCallback((jsonDocument: JsonDocument | null) => {
+    if (!jsonDocument) {
+      return {
+        employmentEntries: [],
+        residenceEntries: [],
+        educationEntries: [],
+        professionalLicenseEntries: []
+      };
+    }
+
+    const timeline = jsonDocument.timeline;
+    if (!timeline) {
+      return {
+        employmentEntries: [],
+        residenceEntries: [],
+        educationEntries: [],
+        professionalLicenseEntries: []
+      };
+    }
+
+    // Helper functions to safely get timeline entries with type checking
+    const getEmploymentEntries = (timeline: { entries: EmploymentHistoryEntry[] } | undefined): EmploymentHistoryEntry[] => {
+      if (!timeline || !Array.isArray(timeline.entries)) return [];
+      return timeline.entries.filter((entry): entry is EmploymentHistoryEntry => 
+        entry && typeof entry === 'object' && 'employer' in entry
+      );
+    };
+
+    const getResidenceEntries = (timeline: { entries: ResidenceHistoryEntry[] } | undefined): ResidenceHistoryEntry[] => {
+      if (!timeline || !Array.isArray(timeline.entries)) return [];
+      return timeline.entries.filter((entry): entry is ResidenceHistoryEntry => 
+        entry && typeof entry === 'object' && 'address' in entry
+      );
+    };
+
+    const getEducationEntries = (timeline: { entries: EducationEntry[] } | undefined): EducationEntry[] => {
+      if (!timeline || !Array.isArray(timeline.entries)) return [];
+      return timeline.entries.filter((entry): entry is EducationEntry => 
+        entry && typeof entry === 'object' && 'institution' in entry
+      );
+    };
+
+    const getLicenseEntries = (timeline: { entries: ProfessionalLicenseEntry[] } | undefined): ProfessionalLicenseEntry[] => {
+      if (!timeline || !Array.isArray(timeline.entries)) return [];
+      return timeline.entries.filter((entry): entry is ProfessionalLicenseEntry => 
+        entry && typeof entry === 'object' && 'licenseType' in entry
+      );
+    };
+
+    const employmentEntries = getEmploymentEntries(timeline.employmentTimeline).map(entry => ({
+      ...entry,
+      company: entry.employer || '',
+      type: 'employment',
+      isCurrent: !entry.endDate,
+      position: entry.position || '',
+      city: entry.city || '',
+      state_province: entry.state_province || '',
+      country: entry.country || '',
+      description: entry.description,
+      contact_name: entry.contact_name,
+      contact_type: entry.contact_type,
+      no_contact_attestation: entry.no_contact_attestation
+    })) as DisplayEmploymentEntry[];
+
+    const residenceEntries = getResidenceEntries(timeline.residenceTimeline).map(entry => ({
+      ...entry,
+      isCurrent: !entry.endDate,
+      address: entry.address || '',
+      city: entry.city || '',
+      state_province: entry.state_province || '',
+      country: entry.country || '',
+      zip_postal: entry.zip_postal || ''
+    })) as DisplayResidenceEntry[];
+
+    const educationEntries = getEducationEntries(timeline.educationTimeline).map(entry => ({
+      ...entry,
+      isCurrent: false,
+      institution: entry.institution || '',
+      degree: entry.degree || '',
+      fieldOfStudy: entry.fieldOfStudy,
+      location: entry.location
+    })) as DisplayEducationEntry[];
+
+    const professionalLicenseEntries = getLicenseEntries(timeline.licensesTimeline).map(entry => ({
+      ...entry,
+      isCurrent: entry.isActive || false,
+      licenseType: entry.licenseType || '',
+      licenseNumber: entry.licenseNumber || '',
+      issuingAuthority: entry.issuingAuthority || '',
+      state: entry.state || '',
+      country: entry.country || '',
+      issueDate: entry.issueDate || '',
+      expirationDate: entry.expirationDate,
+      isActive: entry.isActive || false,
+      description: entry.description
+    })) as DisplayLicenseEntry[];
+
+    return {
+      employmentEntries,
+      residenceEntries,
+      educationEntries,
+      professionalLicenseEntries
+    };
+  }, []);
+
   const handleGenerateDocument = useCallback(async () => {
     if (!effectiveFormState) {
+      console.error('Form state is undefined and not available in localStorage');
       setError(t('error.missing_form_data'));
       onError(t('error.missing_form_data'));
       return;
@@ -168,9 +274,9 @@ export const ConfirmationPage: React.FC<ConfirmationPageProps> = ({
       const document = generator.generateJsonDocument(trackingId);
       setJsonDocument(document);
 
-      // Generate PDF document
+      // Generate PDF document from JSON
       const pdfService = new PdfService();
-      const pdfDoc = await pdfService.generateVerificationPdf(effectiveFormState);
+      const pdfDoc = await pdfService.generatePdfFromJson(document);
       const pdfBlob = new Blob([pdfDoc.output('blob')], { type: 'application/pdf' });
       const pdfObjectUrl = URL.createObjectURL(pdfBlob);
       setPdfUrl(pdfObjectUrl);
@@ -189,6 +295,7 @@ export const ConfirmationPage: React.FC<ConfirmationPageProps> = ({
     } catch (error) {
       setIsLoading(false);
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate document';
+      console.error('Document generation failed:', error); // Log full error for debugging
       setError(errorMessage);
       onError(errorMessage);
     }
@@ -219,61 +326,68 @@ export const ConfirmationPage: React.FC<ConfirmationPageProps> = ({
     );
   }
 
-  // Map entries from form state with proper validation and default values
-  const employmentEntries = ((effectiveFormState?.steps['employment-history']?.values as EmploymentHistoryStepValues)?.entries || []).map((entry: EmploymentHistoryEntry) => ({
-    ...entry,
-    company: entry?.employer || '',
-    type: 'employment',
-    isCurrent: !entry?.endDate,
-    position: entry?.position || '',
-    city: entry?.city || '',
-    state_province: entry?.state_province || '',
-    country: entry?.country || '',
-    description: entry?.description,
-    contact_name: entry?.contact_name,
-    contact_type: entry?.contact_type,
-    no_contact_attestation: entry?.no_contact_attestation
-  })) as DisplayEmploymentEntry[];
+  // Render loading state
+  if (isLoading) {
+    return (
+      <div className="confirmation-page">
+        <div className="confirmation-container">
+          <h2>{t('preparing_document')}</h2>
+          <div className="loading-spinner"></div>
+          <p>{t('please_wait')}</p>
+          <Footer />
+        </div>
+      </div>
+    );
+  }
+  
+  // Render error state
+  if (error) {
+    return (
+      <div className="confirmation-page">
+        <div className="confirmation-container error">
+          <h2>{t('error.something_went_wrong')}</h2>
+          <p>{error}</p>
+          <button
+            className="retry-button"
+            onClick={() => window.location.reload()}
+          >
+            {t('common.try_again')}
+          </button>
+          <Footer />
+        </div>
+      </div>
+    );
+  }
 
-  const residenceEntries = ((effectiveFormState?.steps['residence-history']?.values as ResidenceHistoryStepValues)?.entries || []).map((entry: ResidenceHistoryEntry) => ({
-    ...entry,
-    isCurrent: !entry?.endDate,
-    address: entry?.address || '',
-    city: entry?.city || '',
-    state_province: entry?.state_province || '',
-    country: entry?.country || '',
-    zip_postal: entry?.zip_postal || ''
-  })) as DisplayResidenceEntry[];
+  // Check for missing document
+  if (!jsonDocument) {
+    console.error('JSON document is missing after generation');
+    return (
+      <div className="confirmation-page">
+        <div className="confirmation-container error">
+          <h2>{t('error.invalid_document')}</h2>
+          <p>{t('error.missing_document_data')}</p>
+          <button
+            className="retry-button"
+            onClick={() => window.location.reload()}
+          >
+            {t('common.try_again')}
+          </button>
+          <Footer />
+        </div>
+      </div>
+    );
+  }
+  
+  // Get display entries from jsonDocument
+  const {
+    employmentEntries,
+    residenceEntries,
+    educationEntries,
+    professionalLicenseEntries
+  } = getDisplayEntries(jsonDocument);
 
-  const educationEntries = ((effectiveFormState?.steps['education']?.values as EducationStepValues)?.entries || []).map((entry: EducationEntry) => ({
-    ...entry,
-    startDate: entry?.completionDate || '',
-    endDate: entry?.completionDate || '',
-    isCurrent: false,
-    institution: entry?.institution || '',
-    degree: entry?.degree || '',
-    fieldOfStudy: entry?.fieldOfStudy,
-    location: entry?.location
-  })) as DisplayEducationEntry[];
-
-  const professionalLicenseEntries = ((effectiveFormState?.steps['professional-licenses']?.values as ProfessionalLicensesStepValues)?.entries || []).map((entry: ProfessionalLicenseEntry) => ({
-    ...entry,
-    startDate: entry?.issueDate || '',
-    endDate: entry?.expirationDate || '',
-    isCurrent: entry?.isActive || false,
-    licenseType: entry?.licenseType || '',
-    licenseNumber: entry?.licenseNumber || '',
-    issuingAuthority: entry?.issuingAuthority || '',
-    state: entry?.state || '',
-    country: entry?.country || '',
-    issueDate: entry?.issueDate || '',
-    expirationDate: entry?.expirationDate,
-    isActive: entry?.isActive || false,
-    description: entry?.description
-  })) as DisplayLicenseEntry[];
-
-  const personalInfo = ((effectiveFormState?.steps['personal-info']?.values as PersonalInfoStepValues) || { fullName: '', email: '' });
-  const claimantName = personalInfo?.fullName || t('common.applicant');
+  const claimantName = jsonDocument.personalInfo?.fullName || t('common.applicant');
 
   const handleJsonDownload = () => {
     if (!jsonDocument) return;
@@ -302,39 +416,6 @@ export const ConfirmationPage: React.FC<ConfirmationPageProps> = ({
     link.click();
     document.body.removeChild(link);
   };
-
-  // Render loading state
-  if (isLoading) {
-    return (
-      <div className="confirmation-page">
-        <div className="confirmation-container">
-          <h2>Preparing Your Verification Document</h2>
-          <div className="loading-spinner"></div>
-          <p>Please wait while we prepare your document...</p>
-          <Footer />
-        </div>
-      </div>
-    );
-  }
-  
-  // Render error state
-  if (error) {
-    return (
-      <div className="confirmation-page">
-        <div className="confirmation-container error">
-          <h2>Something Went Wrong</h2>
-          <p>{error}</p>
-          <button
-            className="retry-button"
-            onClick={() => window.location.reload()}
-          >
-            Try Again
-          </button>
-          <Footer />
-        </div>
-      </div>
-    );
-  }
   
   // Render success state with detailed summary
   return (
@@ -344,7 +425,7 @@ export const ConfirmationPage: React.FC<ConfirmationPageProps> = ({
           <div className="success-icon">
             <Check size={32} />
           </div>
-          <h1>Verification Submitted Successfully!</h1>
+          <h1>{t('verification_submitted')}</h1>
         </div>
         <div className="confirmation-details">
           <p>{t('confirmation.thank_you', { name: claimantName })}</p>
@@ -438,11 +519,11 @@ export const ConfirmationPage: React.FC<ConfirmationPageProps> = ({
         <div className="download-section">
           <Button onClick={handleDownload} disabled={!pdfUrl}>
             <Download className="mr-2 h-4 w-4" />
-            Download PDF
+            {t('download_pdf')}
           </Button>
           <Button onClick={handleJsonDownload} disabled={!jsonDocument} variant="outline">
             <Download className="mr-2 h-4 w-4" />
-            Download JSON
+            {t('download_json')}
           </Button>
         </div>
         

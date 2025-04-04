@@ -1,5 +1,5 @@
-import { DocumentMetadata, EducationEntry, EmploymentHistoryEntry, JsonDocument, PersonalInfo, ProfessionalLicenseEntry, ResidenceHistoryEntry, Signature, Timeline } from '../types/documents';
-import { FormState, ProfessionalLicensesStepValues, EmploymentHistoryStepValues, ResidenceHistoryStepValues, EducationStepValues, PersonalInfoStepValues, SignatureStepValues } from '../types/form';
+import { DocumentMetadata, EducationEntry, EmploymentHistoryEntry, JsonDocument, PersonalInfo, ProfessionalLicenseEntry, ResidenceHistoryEntry, Signature, Timeline, Consents } from '../types/documents';
+import { FormState, ProfessionalLicensesStepValues, EmploymentHistoryStepValues, ResidenceHistoryStepValues, EducationStepValues, PersonalInfoStepValues, SignatureStepValues, ConsentsStepValues } from '../types/form';
 import { Logger } from '../utils/logger';
 
 export class JsonDocumentGenerator {
@@ -7,6 +7,42 @@ export class JsonDocumentGenerator {
 
   constructor(private readonly formState: FormState) {
     this.logger = new Logger('JsonDocumentGenerator');
+  }
+
+  private transformPersonalInfo(values: PersonalInfoStepValues): PersonalInfo {
+    return {
+      ...values
+    };
+  }
+
+  private transformSignature(values: SignatureStepValues): Signature {
+    return {
+      signatureImage: values.signature,
+      signatureDate: new Date().toISOString(),
+      confirmation: values.confirmation,
+    };
+  }
+
+  private transformConsents(values: ConsentsStepValues): Consents {
+    return {
+      driverLicense: values.driverLicenseConsent,
+      drugTest: values.drugTestConsent,
+      biometric: values.biometricConsent,
+      consentDate: new Date().toISOString(),
+    };
+  }
+
+  private getTimelineDates(entries: { startDate: string; endDate: string }[]): { startDate: string; endDate: string } {
+    if (!entries || entries.length === 0) {
+      const now = new Date().toISOString();
+      return { startDate: now, endDate: now };
+    }
+
+    const sortedEntries = [...entries].sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+    return {
+      startDate: sortedEntries[0].startDate,
+      endDate: sortedEntries[sortedEntries.length - 1].endDate
+    };
   }
 
   public generateJsonDocument(trackingId: string): JsonDocument {
@@ -18,16 +54,20 @@ export class JsonDocumentGenerator {
       };
 
       const timeline = this.generateTimeline(this.formState);
+      const personalInfoValues = this.formState.steps['personal-info']?.values as PersonalInfoStepValues;
+      const signatureValues = this.formState.steps['signature']?.values as SignatureStepValues;
+      const consentsValues = this.formState.steps['consents']?.values as ConsentsStepValues;
 
       return {
         metadata,
         timeline,
-        personalInfo: (this.formState.steps['personal-info']?.values as PersonalInfoStepValues),
+        personalInfo: personalInfoValues ? this.transformPersonalInfo(personalInfoValues) : undefined,
         residenceHistory: (this.formState.steps['residence-history']?.values as ResidenceHistoryStepValues)?.entries,
         employmentHistory: (this.formState.steps['employment-history']?.values as EmploymentHistoryStepValues)?.entries,
         education: (this.formState.steps['education']?.values as EducationStepValues)?.entries,
         professionalLicenses: (this.formState.steps['professional-licenses']?.values as ProfessionalLicensesStepValues)?.entries,
-        signature: (this.formState.steps['signature']?.values as SignatureStepValues)?.signature
+        consents: consentsValues ? this.transformConsents(consentsValues) : undefined,
+        signature: signatureValues ? this.transformSignature(signatureValues) : undefined
       };
     } catch (error) {
       this.logger.error('Error generating JSON document:', error);
@@ -36,48 +76,61 @@ export class JsonDocumentGenerator {
   }
 
   private generateTimeline(formState: FormState): Timeline {
-    const entries: (ResidenceHistoryEntry | EmploymentHistoryEntry | EducationEntry | ProfessionalLicenseEntry)[] = [];
+    // Get residence history timeline
+    const residenceHistory = (formState.steps['residence-history']?.values as ResidenceHistoryStepValues)?.entries || [];
+    const residenceTimeline = {
+      entries: residenceHistory,
+      ...this.getTimelineDates(residenceHistory)
+    };
 
-    // Add residence history entries
-    const residenceHistory = (formState.steps['residence-history']?.values as ResidenceHistoryStepValues)?.entries;
-    if (residenceHistory) {
-      entries.push(...residenceHistory);
-    }
+    // Get employment history timeline
+    const employmentHistory = (formState.steps['employment-history']?.values as EmploymentHistoryStepValues)?.entries || [];
+    const employmentTimeline = {
+      entries: employmentHistory,
+      ...this.getTimelineDates(employmentHistory)
+    };
 
-    // Add employment history entries
-    const employmentHistory = (formState.steps['employment-history']?.values as EmploymentHistoryStepValues)?.entries;
-    if (employmentHistory) {
-      entries.push(...employmentHistory);
-    }
+    // Get education timeline
+    const education = (formState.steps['education']?.values as EducationStepValues)?.entries || [];
+    const educationEntries = education.map((entry: EducationEntry) => ({
+      ...entry,
+      startDate: entry.startDate || entry.completionDate,
+      endDate: entry.endDate || entry.completionDate
+    }));
+    const educationTimeline = {
+      entries: educationEntries,
+      ...this.getTimelineDates(educationEntries)
+    };
 
-    // Add education entries
-    const education = (formState.steps['education']?.values as EducationStepValues)?.entries;
-    if (education) {
-      entries.push(...education.map((entry: EducationEntry) => ({
-        ...entry,
-        startDate: entry.completionDate,
-        endDate: entry.completionDate
-      })));
-    }
+    // Get professional licenses timeline
+    const professionalLicenses = (formState.steps['professional-licenses']?.values as ProfessionalLicensesStepValues)?.entries || [];
+    const licensesEntries = professionalLicenses.map((entry: ProfessionalLicenseEntry) => ({
+      ...entry,
+      startDate: entry.startDate || entry.issueDate || entry.expirationDate,
+      endDate: entry.endDate || entry.expirationDate,
+      isActive: entry.isActive || true
+    }));
+    const licensesTimeline = {
+      entries: licensesEntries,
+      ...this.getTimelineDates(licensesEntries)
+    };
 
-    // Add professional license entries
-    const professionalLicenses = (formState.steps['professional-licenses']?.values as ProfessionalLicensesStepValues)?.entries;
-    if (professionalLicenses) {
-      entries.push(...professionalLicenses.map((entry: ProfessionalLicenseEntry) => ({
-        ...entry,
-        startDate: entry.startDate || entry.expirationDate,
-        endDate: entry.endDate || entry.expirationDate,
-        isActive: entry.isActive || true
-      })));
-    }
-
-    // Sort entries by date
-    entries.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+    // Calculate overall timeline dates
+    const allDates = [
+      ...residenceHistory,
+      ...employmentHistory,
+      ...educationEntries,
+      ...licensesEntries
+    ];
+    const { startDate, endDate } = this.getTimelineDates(allDates);
 
     return {
-      startDate: entries.length > 0 ? entries[entries.length - 1].startDate : new Date().toISOString(),
-      endDate: entries.length > 0 ? entries[0].endDate : new Date().toISOString(),
-      entries
+      startDate,
+      endDate,
+      residenceTimeline,
+      employmentTimeline,
+      educationTimeline,
+      licensesTimeline
     };
   }
 } 

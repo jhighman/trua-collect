@@ -1,0 +1,256 @@
+{
+  "metadata": {
+    "trackingId": "TRK-2024-03-21-001",
+    "submissionDate": "2024-03-21T15:30:00Z",
+    "version": "1.0",
+    "referenceToken": "REF-ABC-123-XYZ"
+  },
+  "personalInfo": {
+    "fullName": "Sarah Jane Wilson",
+    "email": "sarah.wilson@email.com",
+    "phone": "+1-555-123-4567"
+  },
+  "residenceHistory": [
+    {
+      "address": "789 Pine Street, Apt 4B",
+      "startDate": "2022-01-15",
+      "endDate": "2024-03-21",
+      "city": "Seattle",
+      "state_province": "WA",
+      "country": "United States",
+      "zip_postal": "98101"
+    },
+    {
+      "address": "456 Oak Avenue",
+      "startDate": "2019-06-01",
+      "endDate": "2022-01-14",
+      "city": "Portland",
+      "state_province": "OR",
+      "country": "United States",
+      "zip_postal": "97201"
+    },
+    {
+      "address": "123 Maple Drive",
+      "startDate": "2017-08-15",
+      "endDate": "2019-05-31",
+      "city": "Vancouver",
+      "state_province": "BC",
+      "country": "Canada",
+      "zip_postal": "V6B 1S4"
+    }
+  ],
+  "employmentHistory": [
+    {
+      "employer": "Tech Innovations Inc.",
+      "position": "Senior Software Engineer",
+      "startDate": "2022-03-01",
+      "endDate": "2024-03-21",
+      "city": "Seattle",
+      "state_province": "WA",
+      "country": "United States",
+      "description": "Lead developer for cloud infrastructure projects",
+      "contact_name": "Michael Chen",
+      "contact_type": "supervisor",
+      "no_contact_attestation": false
+    },
+    {
+      "employer": "Digital Solutions Ltd.",
+      "position": "Software Engineer",
+      "startDate": "2019-07-15",
+      "endDate": "2022-02-28",
+      "city": "Portland",
+      "state_province": "OR",
+      "country": "United States",
+      "description": "Full-stack development for enterprise applications",
+      "contact_name": "Emily Rodriguez",
+      "contact_type": "hr_representative",
+      "no_contact_attestation": false
+    },
+    {
+      "employer": "Unemployed",
+      "position": "N/A",
+      "startDate": "2019-05-15",
+      "endDate": "2019-07-14",
+      "city": "Portland",
+      "state_province": "OR",
+      "country": "United States",
+      "description": "Career transition period and relocation",
+      "no_contact_attestation": true
+    },
+    {
+      "employer": "Canadian Tech Corp",
+      "position": "Junior Developer",
+      "startDate": "2017-09-01",
+      "endDate": "2019-05-14",
+      "city": "Vancouver",
+      "state_province": "BC",
+      "country": "Canada",
+      "description": "Backend development for financial systems",
+      "contact_name": "David Thompson",
+      "contact_type": "supervisor",
+      "no_contact_attestation": false
+    }
+  ],
+  "education": [
+    {
+      "institution": "University of Washington",
+      "degree": "Master of Science",
+      "fieldOfStudy": "Computer Science",
+      "completionDate": "2017-06-15",
+      "startDate": "2015-09-01",
+      "endDate": "2017-06-15",
+      "location": "Seattle, WA, United States"
+    },
+    {
+      "institution": "University of British Columbia",
+      "degree": "Bachelor of Science",
+      "fieldOfStudy": "Computer Science",
+      "completionDate": "2015-05-15",
+      "startDate": "2011-09-01",
+      "endDate": "2015-05-15",
+      "location": "Vancouver, BC, Canada"
+    }
+  ],
+  "professionalLicenses": [
+    {
+      "licenseType": "Professional Engineer (P.Eng)",
+      "licenseNumber": "PE-2023-45678",
+      "expirationDate": "2026-03-21",
+      "startDate": "2023-03-21",
+      "endDate": "2026-03-21",
+      "issuingAuthority": "Engineers and Geoscientists BC",
+      "state": "BC",
+      "country": "Canada",
+      "isActive": true,
+      "description": "Professional Engineering License",
+      "issueDate": "2023-03-21"
+    },
+    {
+      "licenseType": "AWS Certified Solutions Architect",
+      "licenseNumber": "AWS-2022-98765",
+      "expirationDate": "2025-02-15",
+      "startDate": "2022-02-15",
+      "endDate": "2025-02-15",
+      "issuingAuthority": "Amazon Web Services",
+      "state": "WA",
+      "country": "United States",
+      "isActive": true,
+      "description": "Professional cloud architecture certification",
+      "issueDate": "2022-02-15"
+    }
+  ],
+  "consents": {
+    "driverLicense": true,
+    "drugTest": true,
+    "biometric": true,
+    "consentDate": "2024-03-21T15:30:00Z"
+  },
+  "signature": {
+    "signatureImage": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...",
+    "signatureDate": "2024-03-21T15:30:00Z",
+    "confirmation": true
+  },
+  "timeline": {
+    "startDate": "2011-09-01",
+    "endDate": "2024-03-21",
+    "entries": [
+      {
+        "employer": "Tech Innovations Inc.",
+        "position": "Senior Software Engineer",
+        "startDate": "2022-03-01",
+        "endDate": "2024-03-21",
+        "city": "Seattle",
+        "state_province": "WA",
+        "country": "United States"
+      },
+      {
+        "address": "789 Pine Street, Apt 4B",
+        "startDate": "2022-01-15",
+        "endDate": "2024-03-21",
+        "city": "Seattle",
+        "state_province": "WA",
+        "country": "United States",
+        "zip_postal": "98101"
+      },
+      {
+        "licenseType": "Professional Engineer (P.Eng)",
+        "licenseNumber": "PE-2023-45678",
+        "startDate": "2023-03-21",
+        "endDate": "2026-03-21",
+        "issuingAuthority": "Engineers and Geoscientists BC",
+        "state": "BC",
+        "country": "Canada",
+        "isActive": true
+      },
+      {
+        "licenseType": "AWS Certified Solutions Architect",
+        "licenseNumber": "AWS-2022-98765",
+        "startDate": "2022-02-15",
+        "endDate": "2025-02-15",
+        "issuingAuthority": "Amazon Web Services",
+        "state": "WA",
+        "country": "United States",
+        "isActive": true
+      },
+      {
+        "employer": "Digital Solutions Ltd.",
+        "position": "Software Engineer",
+        "startDate": "2019-07-15",
+        "endDate": "2022-02-28",
+        "city": "Portland",
+        "state_province": "OR",
+        "country": "United States"
+      },
+      {
+        "address": "456 Oak Avenue",
+        "startDate": "2019-06-01",
+        "endDate": "2022-01-14",
+        "city": "Portland",
+        "state_province": "OR",
+        "country": "United States",
+        "zip_postal": "97201"
+      },
+      {
+        "employer": "Unemployed",
+        "position": "N/A",
+        "startDate": "2019-05-15",
+        "endDate": "2019-07-14",
+        "city": "Portland",
+        "state_province": "OR",
+        "country": "United States"
+      },
+      {
+        "employer": "Canadian Tech Corp",
+        "position": "Junior Developer",
+        "startDate": "2017-09-01",
+        "endDate": "2019-05-14",
+        "city": "Vancouver",
+        "state_province": "BC",
+        "country": "Canada"
+      },
+      {
+        "address": "123 Maple Drive",
+        "startDate": "2017-08-15",
+        "endDate": "2019-05-31",
+        "city": "Vancouver",
+        "state_province": "BC",
+        "country": "Canada",
+        "zip_postal": "V6B 1S4"
+      },
+      {
+        "institution": "University of Washington",
+        "degree": "Master of Science",
+        "startDate": "2015-09-01",
+        "endDate": "2017-06-15",
+        "completionDate": "2017-06-15"
+      },
+      {
+        "institution": "University of British Columbia",
+        "degree": "Bachelor of Science",
+        "startDate": "2011-09-01",
+        "endDate": "2015-05-15",
+        "completionDate": "2015-05-15"
+      }
+    ]
+  }
+} 

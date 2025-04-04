@@ -66,10 +66,29 @@ export interface Signature {
   confirmation: boolean;
 }
 
-export interface Timeline {
+export interface Consents {
+  driverLicense?: boolean;
+  drugTest?: boolean;
+  biometric?: boolean;
+  consentDate: string;
+}
+
+export interface TimelineEntry {
   startDate: string;
   endDate: string;
-  entries: (ResidenceHistoryEntry | EmploymentHistoryEntry | EducationEntry | ProfessionalLicenseEntry)[];
+  isCurrent?: boolean;
+}
+
+export interface TimelineData {
+  employmentTimeline?: { entries: EmploymentHistoryEntry[] };
+  residenceTimeline?: { entries: ResidenceHistoryEntry[] };
+  educationTimeline?: { entries: EducationEntry[] };
+  licensesTimeline?: { entries: ProfessionalLicenseEntry[] };
+}
+
+export interface Timeline extends TimelineData {
+  startDate: string;
+  endDate: string;
 }
 
 export interface JsonDocument {
@@ -80,5 +99,6 @@ export interface JsonDocument {
   employmentHistory?: EmploymentHistoryEntry[];
   education?: EducationEntry[];
   professionalLicenses?: ProfessionalLicenseEntry[];
+  consents?: Consents;
   signature?: Signature;
 } 

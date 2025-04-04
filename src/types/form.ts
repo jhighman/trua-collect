@@ -13,6 +13,7 @@ export type FormStepId =
   | 'employment-history'
   | 'education'
   | 'professional-licenses'
+  | 'consents'
   | 'signature';
 
 export interface PersonalInfoStepValues {
@@ -36,6 +37,19 @@ export interface ProfessionalLicensesStepValues {
   entries: ProfessionalLicenseEntry[];
 }
 
+export interface ConsentsStepValues {
+  _config?: {
+    consentsRequired?: {
+      driverLicense: boolean;
+      drugTest: boolean;
+      biometric: boolean;
+    };
+  };
+  driverLicenseConsent?: boolean;
+  drugTestConsent?: boolean;
+  biometricConsent?: boolean;
+}
+
 export interface SignatureStepValues {
   signature: string;
   confirmation: boolean;
@@ -48,6 +62,7 @@ type StepValues =
   | EmploymentHistoryStepValues
   | EducationStepValues
   | ProfessionalLicensesStepValues
+  | ConsentsStepValues
   | SignatureStepValues;
 
 export interface StepState {
